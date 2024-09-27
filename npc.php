@@ -1,24 +1,16 @@
 <?php
-require_once('include/mysqldb.php');
-$db = new mysqldb();  // Create an instance of the Database class
+declare(strict_types=1);
+require_once('app/settings.php');
+
+use Pardusmapper\Core\Settings;
+use Pardusmapper\Core\MySqlDB;
+
+$db = new MySqlDB();  // Create an instance of the Database class
 
 // Set Univers Variable and Session Name
 if (!isset($_REQUEST['uni'])) { exit; }
 
 session_name($uni = $db->real_escape_string($_REQUEST['uni']));
-
-$testing = Settings::TESTING;
-$debug = Settings::DEBUG;
-
-if ($testing || $debug) {
-	error_reporting(E_STRICT | E_ALL | E_NOTICE);
-}
-
-$base_url = 'https://pardusmapper.com';
-if ($testing) { $base_url .= '/TestMap'; }
-
-$css = $base_url . '/main.css';
-$n_css = $base_url. '/npc.css';
 
 // Start the Session
 session_start();
@@ -26,7 +18,6 @@ session_start();
 $security = 0;
 if (isset($_SESSION['security'])) { $security = $db->real_escape_string($_SESSION['security']); }
 
-$img_url = Settings::IMG_DIR;
 if (isset($_COOKIE['imagepack'])) {
     $img_url = $_COOKIE['imagepack'];
     
@@ -81,7 +72,7 @@ if (isset($_SESSION['loaded']) && ((strtotime($today) - strtotime($_SESSION['loa
 		<?php if (isset($_REQUEST['cluster'])) { echo '<title>' . $cluster . '\'s NPC Listing</title>'; } ?>
 		<link rel="stylesheet" type="text/css" href="<?= $css; ?>" />
 		<link rel="stylesheet" type="text/css" href="<?= $n_css; ?>" />
-		<script type="text/javascript" src="<?= $base_url; ?>/include/main.js"></script>
+		<script type="text/javascript" src="<?= $base_url; ?>/resources/main.js"></script>
 		<script language="Javascript">
 			//<![CDATA[
 			function loadList() {
@@ -179,7 +170,7 @@ if (isset($_SESSION['loaded']) && ((strtotime($today) - strtotime($_SESSION['loa
 					if (bodyhttp.readyState == 4) {
 						document.getElementById("npc_body").innerHTML = bodyhttp.responseText;
 					} else {
-						document.getElementById("npc_body").innerHTML = "<img src=\"https://pardusmapper.com/images/ajax-loader.gif\" />";
+						document.getElementById("npc_body").innerHTML = "<img src=\"<?= Settings::$IMG_DIR_MAPPER ?>/ajax-loader.gif\" />";
 					}
 				}
 				bodyhttp.send(params);
@@ -257,4 +248,4 @@ if (isset($_SESSION['loaded']) && ((strtotime($today) - strtotime($_SESSION['loa
 		<div id="footer"><?php include('include/footer.php'); ?></div>
 	</body>
 </html>
-<?php } ?>
+<?php }

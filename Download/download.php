@@ -1,5 +1,7 @@
 <?php
- 
+
+use Pardusmapper\Core\Settings;
+
  if ($_REQUEST['dl'] == 0) {
  
 	/* File we want to send to the browser */
@@ -30,14 +32,6 @@
 
 	session_name($uni = $db->protect($_REQUEST['uni']));
 
-	$testing = Settings::TESTING;
-	$debug = Settings::DEBUG;
-
-	$base_url = 'https://pardusmapper.com';
-	if ($testing) { $base_url .= '/TestMap'; }
-
-	$css = $base_url . '/main.css';
-
 	// Start the Session
 	session_start();
 
@@ -66,9 +60,9 @@
 				<li>I am currently not actively trying to get the script to work with Opera and the below directions are old.
 				<li>For help using User Scripts in Opera follow this <a href="http://www.opera.com/browser/tutorials/userjs/using/">Link</a>
 				<li>You will need to install two other User Scripts before mine will work they are
-					<a href="https://pardusmapper.com/Download/a-lib-stacktrace.js">a-lib-stacktrace.js</a>
+					<a href="<?= Settings::$BASE_URL ?>/Download/a-lib-stacktrace.js">a-lib-stacktrace.js</a>
 					and
-					<a href="https://pardusmapper.com/Download/a-lib-xmlhttp-cd.js">a-lib-xmlhttp-cd.js</a>
+					<a href="<?= Settings::$BASE_URL ?>/Download/a-lib-xmlhttp-cd.js">a-lib-xmlhttp-cd.js</a>
 				</h2>
 			</ul>
 			<li><h1>Google Chrome</h1>
@@ -77,7 +71,7 @@
 				<li>Install <a href="http://tampermonkey.net/">Tamper Monkey</a>
 				</h2>
 			</ul>
-			<li><h1>Once you have done one of the above steps you can download my User Script <a href="https://pardusmapper.com/Download/pardus_mapper.user.js">Here</a></h1>
+			<li><h1>Once you have done one of the above steps you can download my User Script <a href="<?= Settings::$BASE_URL ?>/Download/pardus_mapper.user.js">Here</a></h1>
 		</ul>
 		</div>
 	</body>

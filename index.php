@@ -1,23 +1,17 @@
 <?php
-require_once('include/mysqldb.php');
-$db = new mysqldb;
+declare(strict_types=1);
+require_once('app/settings.php');
+
+use Pardusmapper\Core\MySqlDB;
+
+$db = new MySqlDB();
 
 // Set Univers Variable and Session Name
-if (!isset($_REQUEST['uni'])) { include('index.html'); exit; }
+if (!isset($_REQUEST['uni'])) { require_once('landing.php'); exit; }
 
 session_name($uni = $db->protect($_REQUEST['uni']));
 
 session_start();
-
-$testing = Settings::TESTING;
-
-//$base_url = Settings::URL;
-$base_url = 'https://pardusmapper.com';
-if ($testing) { $base_url .= '/TestMap'; }
-
-$css = $base_url . '/main.css';
-$index_css = $base_url . '/index.css';
-$cluster_css = $base_url . '/cluster.css';
 
 if (isset($_REQUEST['cluster'])) { $cluster = $db->protect($_REQUEST['cluster']); }
 $db->close();
@@ -32,7 +26,7 @@ $db->close();
 		<link rel="stylesheet" type="text/css" href="<?= $css; ?>" />
 		<link rel="stylesheet" type="text/css" href="<?= $index_css; ?>" />
 		<link rel="stylesheet" type="text/css" href="<?= $cluster_css; ?>" />
-		<script type="text/javascript" src="<?= $base_url; ?>/include/main.js"></script>
+		<script type="text/javascript" src="<?= $base_url; ?>/resources/main.js"></script>
 		<script type="text/javascript">
 			function getGemMerchant(uni) {
 				var url = "<?= $base_url ?>/info/gemmerchant.php";
@@ -123,7 +117,10 @@ $db->close();
 				<a href="https://www.pardus.at" id="pardus"><i>PARDUS</i></a>
 			</div>
 			<div id="cluster-map">
-				<?php if (isset($_REQUEST['cluster'])) { include('clusters/' . strtolower($cluster) . '.php'); } ?>
+				<?php if (isset($_REQUEST['cluster'])) { 
+                    $url = rtrim($base_url) . '/' . $uni . '/';
+                    include('clusters/' . strtolower($cluster) . '.php'); 
+                } ?>
 			</div>
 			<div id="gem_merchant"></div>
 			<div id="overview" name="gem"></div>

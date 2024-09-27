@@ -1,23 +1,15 @@
 <?php
-require_once('include/mysqldb.php');
-$db = new mysqldb();  // Create an instance of the Database class//not clear as to why sometimes ChatGPT suggests a dbClass at this point
+declare(strict_types=1);
+require_once('app/settings.php');
+
+use Pardusmapper\Core\MySqlDB;
+use Pardusmapper\Core\Settings;
+
+$db = new MySqlDB();  // Create an instance of the Database class//not clear as to why sometimes ChatGPT suggests a dbClass at this point
 // Set Univers Variable and Session Name
 if (!isset($_REQUEST['uni'])) { exit; }
 
 session_name($uni = $db->real_escape_string($_REQUEST['uni']));
-
-$testing = Settings::TESTING;
-$debug = Settings::DEBUG;
-
-if ($testing || $debug) { 
-	error_reporting(E_STRICT | E_ALL | E_NOTICE);
-}
-
-$base_url = Settings::base_URL;
-if ($testing) { $base_url .= '/TestMap'; }
-
-$css = $base_url . '/main.css';
-$m_css = $base_url. '/mission.css';
 
 // Start the Session
 session_start();
@@ -37,7 +29,6 @@ if (isset($_SESSION['faction'])) { $faction = $db->real_escape_string($_SESSION[
 $syndicate = 0;
 if (isset($_SESSION['syndicate'])) { $syndicate = $db->real_escape_string($_SESSION['syndicate']); }
 
-$img_url = Settings::IMG_DIR;
 if (isset($_COOKIE['imagepack'])) {
     $img_url = $_COOKIE['imagepack'];
     
@@ -66,7 +57,7 @@ sort($mission_list);
 
 $db->close();
 
-if (($_SESSION['loaded']) && ((strtotime($today) - strtotime($_SESSION['loaded'])) < 172800)) {
+if (isset($_SESSION['loaded']) && ((strtotime($today) - strtotime($_SESSION['loaded'])) < 172800)) {
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -83,7 +74,7 @@ if (($_SESSION['loaded']) && ((strtotime($today) - strtotime($_SESSION['loaded']
 		</title>
 		<link rel="stylesheet" type="text/css" href="<?php echo $css; ?>" />
 		<link rel="stylesheet" type="text/css" href="<?php echo $m_css; ?>" />
-		<script type="text/javascript" src="<?php echo $base_url; ?>/include/main.js"></script>
+		<script type="text/javascript" src="<?php echo $base_url; ?>/resources/main.js"></script>
 		<script language="Javascript">
 			//<![CDATA[
 			function getCheckedValue(radioObj) {
@@ -220,7 +211,7 @@ if (($_SESSION['loaded']) && ((strtotime($today) - strtotime($_SESSION['loaded']
 						var el = document.getElementById("mission_body");
 						el.innerHTML = bodyhttp.responseText;
 					} else {
-						document.getElementById("mission_body").innerHTML = "<img src=\"https://pardusmapper.com/images/ajax-loader.gif\" />";
+						document.getElementById("mission_body").innerHTML = "<img src=\"<?= Settings::$IMG_DIR_MAPPER ?>/ajax-loader.gif\" />";
 					}
 				}
 				bodyhttp.send(params);
@@ -320,4 +311,4 @@ if (($_SESSION['loaded']) && ((strtotime($today) - strtotime($_SESSION['loaded']
 		<div id="footer"><?php include('include/footer.php'); ?></div>
 	</body>
 </html>
-<?php } ?>
+<?php }

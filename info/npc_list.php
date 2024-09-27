@@ -1,9 +1,17 @@
 <?php
-require_once('../include/mysqldb.php');
-$db = new mysqldb;
+declare(strict_types=1);
+require_once('../app/settings.php');
+
+use Pardusmapper\Core\Settings;
+use Pardusmapper\Core\MySqlDB;
+
+header('Access-Control-Allow-Origin: ' . Settings::$BASE_URL);
+
+$db = new MySqlDB();  // Create an instance of the Database class
 
 $uni = $db->protect($_POST['uni']);
 
+$npc_list = [];
 $return = '';
 
 $db->query("SELECT * FROM Pardus_Static_Locations ");

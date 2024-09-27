@@ -1,8 +1,10 @@
 <?php
-require_once('include/mysqldb.php');
-$db = new mysqldb();
-$testing = Settings::TESTING;
-$debug = Settings::DEBUG;
+declare(strict_types=1);
+require_once('app/settings.php');
+
+use Pardusmapper\Core\MySqlDB;
+
+$db = new MySqlDB();
 
 // Set Univers Variable and Session Name
 if (!isset($_REQUEST['uni'])) { exit; }
@@ -11,11 +13,6 @@ session_name($uni = $db->protect($_REQUEST['uni']));
 
 // Start the Session
 session_start();
-
-$base_url = Settings::base_URL;
-if ($testing) { $base_url .= '/TestMap'; }
-
-$css = $base_url . '/main.css';
 
 $name = null;
 $pwd = null;

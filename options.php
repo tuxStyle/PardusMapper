@@ -1,30 +1,21 @@
 <?php
-require_once('include/mysqldb.php');
-$db = new mysqldb;
+declare(strict_types=1);
+require_once('app/settings.php');
+
+use Pardusmapper\Core\MySqlDB;
+
+$db = new MySqlDB();  // Create an instance of the Database class
 
 // Set Univers Variable and Session Name
-if (!isset($_REQUEST['uni'])) { include('index.html'); exit; }
+if (!isset($_REQUEST['uni'])) { include('landing.php'); exit; }
 
 session_name($uni = $db->protect($_REQUEST['uni']));
 
 session_start();
 
-$testing = Settings::TESTING;
-$debug = Settings::DEBUG;
-$debug = 0;
-
-$base_url = Settings::base_URL;
-if ($testing) { $base_url .= '/TestMap'; }
-
-$css = $base_url . '/main.css';
-
 $url = null;
 if (isset($_REQUEST['url'])) { $url = $db->protect($_REQUEST['url']); }
 else { $url = $_SERVER['HTTP_REFERER']; }
-
-
-// Start the Session
-session_start();
 
 if ($debug) print_r($_SESSION);
 if ($debug) echo '<br>';
@@ -187,7 +178,4 @@ $db->close();
 	</body>
 </html>
 <?php
-
 }
-
-?>

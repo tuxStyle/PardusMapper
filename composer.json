@@ -1,0 +1,18 @@
+{
+    "require-dev": {
+        "rector/rector": "^1.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "\\Pardusmapper\\Core\\": "app/Core"
+        },
+        "psr-0": {
+        },
+        "files": [
+            "app/functions.php"
+        ]
+    },
+    "require": {
+        "vlucas/phpdotenv": "^5.6"
+    }
+}

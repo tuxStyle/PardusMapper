@@ -1,14 +1,14 @@
-<?php declare(strict_types=1);
- 
-require_once('../include/mysqldb.php');
-$dbClass = new mysqldb();  // Create an instance of the Database class
+<?php 
+declare(strict_types=1);
+require_once('../app/settings.php');
+
+use Pardusmapper\Core\Settings;
+use Pardusmapper\Core\MySqlDB;
+
+header('Access-Control-Allow-Origin: ' . Settings::$BASE_URL);
+
+$dbClass = new MySqlDB();  // Create an instance of the Database class
 $db = $dbClass->getDb();    // Get the mysqli connection object
-
-$testing = Settings::TESTING;
-
-//$base_url = 'https://pardusmapper.com';
-$base_url = Settings::base_URL;
-if ($testing) { $base_url .= '/TestMap'; }
 
 $uni = isset($_POST['uni']) && !empty($_POST['uni']) ? $db->real_escape_string($_POST['uni']) : null;
 $sector = isset($_POST['sector']) && !empty($_POST['sector']) ? $db->real_escape_string($_POST['sector']) : null;
@@ -37,6 +37,7 @@ if (in_array($sector, $coreWH)) {
 $result = $db->query('SELECT * FROM Pardus_Sectors WHERE name = \'' . $sector . '\'');
 $s = $result->fetch_object();
 $result->free();
+// throw_when(is_null($s), sprintf('Sector(%s) not found!', $sector));
 
 // NPCs only shown to logged in users?
 $npc_list[] = 'opponents/energy_sparker.png';
@@ -229,7 +230,6 @@ $return .= '<tfoot><tr><th />';
 for ($i = 0;$i < $s->cols;$i++) { $return .= '<th>' . $i . '</th>'; }
 $return .= '<th /></tr></tfoot></table>';
 $result->free();
-$db->close();
+$dbClass->close();
 echo $return;
 //echo htmlentities($return);
-?>

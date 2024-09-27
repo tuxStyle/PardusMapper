@@ -1,18 +1,13 @@
-<?php
-	header('Access-Control-Allow-Origin: https://pardusmapper.com');
+<?php 
+declare(strict_types=1);
+require_once('../app/settings.php');
 
-require_once('../include/mysqldb.php');
+use Pardusmapper\Core\Settings;
+use Pardusmapper\Core\MySqlDB;
+
+header('Access-Control-Allow-Origin: ' . Settings::$BASE_URL);
+
 $db = new mysqldb;
-
-$testing = Settings::TESTING;
-$debug = Settings::DEBUG;
-
-if ($testing || $debug) { 
-	error_reporting(E_STRICT | E_ALL | E_NOTICE);
-}
-$base_url = 'https://pardusmapper.com';
-
-if ($testing) { $base_url .= '/TestMap'; }
 
 $uni = $db->protect($_POST['uni']);
 $sector = $db->protect($_POST['sector']);
@@ -28,12 +23,12 @@ session_start();
 $security = 0;
 if (isset($_SESSION['security'])) { $security = $db->protect($_SESSION['security']); }
 
-$img_url = Settings::IMG_DIR;
 if (isset($_COOKIE['imagepack'])) {
 	$img_url = $_COOKIE['imagepack'];
 	if ($img_url[count($img_url) - 1] != '/')	{$img_url .= '/'; }
 }
 
+$buildings = [];
 $return = '';
 $sort_by = '';
 
@@ -252,4 +247,3 @@ foreach ($buildings as $b) {
 
 $return .= '</table>';
 echo $return;
-?>

@@ -1,23 +1,18 @@
 <?php
-require_once('include/mysqldb.php');
-$dbClass = new mysqldb(); // Create an instance of the Database class
+declare(strict_types=1);
+require_once('app/settings.php');
+
+use Pardusmapper\Core\MySqlDB;
+
+$dbClass = new MySqlDB(); // Create an instance of the Database class
 $db = $dbClass->getDb();  // Get the mysqli connection object
 
 // Set Univers Variable and Session Name
-if (!isset($_REQUEST['uni'])) { include('index.html'); exit; }
+if (!isset($_REQUEST['uni'])) { include('landing.php'); exit; }
 
 session_name($uni = $db->real_escape_string($_REQUEST['uni']));
 
 session_start();
-
-$testing = Settings::TESTING;
-$debug = Settings::DEBUG;
-$debug = 0;
-
-$base_url = Settings::base_URL;
-if ($testing) { $base_url .= '/TestMap'; }
-
-$css = $base_url . '/main.css';
 
 if (isset($_REQUEST['login'])) {
     if (!isset($_SESSION['security'])) {
@@ -56,7 +51,7 @@ if (isset($_REQUEST['login'])) {
     session_write_close();
     $url = $db->real_escape_string($_REQUEST['url']);
     if ($debug) { echo $url . '<br>'; }
-    $db->close();
+    $dbClass->close();
     if (strpos($url, $base_url) === false) { $url = $base_url . '/' . $uni . '/index.php'; }
     if (!$debug) { header("Location: $url"); }
 } else {
@@ -66,7 +61,7 @@ if (isset($_REQUEST['login'])) {
     if (isset($_REQUEST['signedup'])) { $signedup = 1; $url = $db->real_escape_string($_REQUEST['url']); }
     if (isset($_REQUEST['alreadysignedup'])) { $alreadysignedup = 1; $url = $db->real_escape_string($_REQUEST['url']); }
     if (is_null($url)) { $url = $_SERVER['HTTP_REFERER']; }
-    $db->close();
+    $dbClass->close();
     ?>
     <!DOCTYPE html>
     <html>
@@ -120,5 +115,3 @@ if (isset($_REQUEST['login'])) {
     </html>
 <?php
 }
-?>
-

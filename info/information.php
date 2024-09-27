@@ -1,26 +1,25 @@
-<?php
-require_once('../include/mysqldb.php');
-$db = new mysqldb;
+<?php 
+declare(strict_types=1);
+require_once('../app/settings.php');
+
+use Pardusmapper\Core\Settings;
+use Pardusmapper\Core\MySqlDB;
+
+header('Access-Control-Allow-Origin: ' . Settings::$BASE_URL);
+
+$db = new MySqlDB();  // Create an instance of the Database class
 
 // Set Univers Variable and Session Name
 if (!isset($_REQUEST['uni'])) { exit; }
 
 session_name($uni = $db->protect($_REQUEST['uni']));
 
-$testing = Settings::TESTING;
-$debug = Settings::DEBUG;
-
-$base_url = 'https://pardusmapper.com';
-if ($testing) { $base_url .= '/TestMap'; }
-
-$css = $base_url . '/main.css';
-
 // Start the Session
 session_start();
 
 $db->close();
 
- ?>
+?>
 <html>
 	<head>
 		<title>News Page</title>

@@ -1,9 +1,13 @@
 <?php
+declare(strict_types=1);
+require_once('app/settings.php');
+
 header("Cache-Control: private, max-age=604800");
 header("Expires: ".gmdate('r', time()+604800));
 
-require_once('include/mysqldb.php');
-$dbClass = new mysqldb();  // Create an instance of the Database class
+use Pardusmapper\Core\MySqlDB;
+
+$dbClass = new MySqlDB();  // Create an instance of the Database class
 $db = $dbClass->getDb();    // Get the mysqli connection object
 
 // Set Univers Variable and Session Name
@@ -11,23 +15,12 @@ if (!isset($_REQUEST['uni'])) { exit; }
 
 session_name($uni = $dbClass->real_escape_string($_REQUEST['uni']));
 
-$testing = Settings::TESTING;
-$debug = Settings::DEBUG;
-
-$base_url = 'https://pardusmapper.com';
-if ($testing) { $base_url .= '/TestMap'; }
-
-$css = $base_url . '/main.css';
-$game_css = $base_url . '/game.css';
-$cluster_css = $base_url . '/cluster.css';
-
 // Start the Session
 session_start();
 
 $security = 0;
 if (isset($_SESSION['security'])) { $security = $dbClass->real_escape_string($_SESSION['security']); }
 
-$img_url = Settings::IMG_DIR;
 if (isset($_COOKIE['imagepack'])) {
 	$img_url = $_COOKIE['imagepack'];
 	//print($img_url);
@@ -39,7 +32,6 @@ if (isset($_COOKIE['imagepack'])) {
 if (isset($_REQUEST['sector'])) {
     // Protect the input by escaping dangerous characters
     $sector = $db->real_escape_string(urldecode($_REQUEST['sector']));
-    
     // Query for the cluster using a prepared statement
     $stmt = $db->prepare('SELECT * FROM Pardus_Clusters WHERE c_id = (SELECT c_id FROM Pardus_Sectors WHERE name = ?)');
     $stmt->bind_param('s', $sector);
@@ -47,7 +39,7 @@ if (isset($_REQUEST['sector'])) {
     
     $result = $stmt->get_result();
     $cluster = $result->fetch_object(); // Fetch the cluster object
-    
+
     if ($cluster) {
         $code = $cluster->code;
     } else {
@@ -94,7 +86,7 @@ $dbClass->close();
 		<link rel="stylesheet" type="text/css" href="<?php echo $css; ?>" />
 		<link rel="stylesheet" type="text/css" href="<?php echo $game_css; ?>" />
 		<link rel="stylesheet" type="text/css" href="<?php echo $cluster_css; ?>" />
-		<script type="text/javascript" src="<?php echo $base_url; ?>/include/main.js"></script>
+		<script type="text/javascript" src="<?php echo $base_url; ?>/resources/main.js"></script>
 		<script type="text/javascript">
 			//<![CDATA[
 			function getCheckedValue(radioObj) {

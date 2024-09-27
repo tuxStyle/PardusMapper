@@ -1,6 +1,11 @@
 <?php
-require_once('include/mysqldb.php');
-$db = new mysqldb;
+declare(strict_types=1);
+require_once('app/settings.php');
+
+use Pardusmapper\Core\Settings;
+use Pardusmapper\Core\MySqlDB;
+
+$db = new MySqlDB();  // Create an instance of the Database class
 
 // Set Univers Variable and Session Name
 if (!isset($_REQUEST['uni'])) { exit; }
@@ -8,21 +13,9 @@ if (!isset($_REQUEST['sector'])) { exit; }
 
 session_name($uni = $db->protect($_REQUEST['uni']));
 
-$testing = Settings::TESTING;
-$debug = Settings::DEBUG;
-
-if ($testing || $debug) {
-	error_reporting(E_STRICT | E_ALL | E_NOTICE);
-}
-
-$base_url = Settings::base_URL;
-if ($testing) { $base_url .= '/TestMap'; }
-
-$css = $base_url . '/main.css';
-$r_css = $base_url. '/resources.css';
-
 // Start the Session
 session_start();
+
 $sector = $db->protect($_REQUEST['sector']);
 $s = $db->getSector(0,$sector);
 $c = $db->getCluster($s->c_id,"");
@@ -40,7 +33,6 @@ if (!(isset($_REQUEST['pilot']) && $_REQUEST['pilot'] == $_SESSION['user'])) {
 $security = 0;
 if (isset($_SESSION['security'])) { $security = $db->protect($_SESSION['security']); }
 
-$img_url = Settings::IMG_DIR;
 if (isset($_COOKIE['imagepack'])) {
 	$img_url = $_COOKIE['imagepack'];
 	if ($img_url[count($img_url) - 1] != '/')	{$img_url .= '/'; }
@@ -78,7 +70,7 @@ $db->close();
 		<title><?php echo $pilot; ?>'s Upkeep Tables</title>
 		<link rel="stylesheet" type="text/css" href="<?php echo $css; ?>" />
 		<link rel="stylesheet" type="text/css" href="<?php echo $r_css; ?>" />
-		<script type="text/javascript" src="<?php echo $base_url; ?>/include/main.js"></script>
+		<script type="text/javascript" src="<?php echo $base_url; ?>/resources/main.js"></script>
 		<script language="Javascript">
 			//<![CDATA[
 			function multiSort(value) {
@@ -163,7 +155,7 @@ $db->close();
 					if (xmlhttp.readyState == 4) {
 						document.getElementById("resource_body").innerHTML = xmlhttp.responseText;
 					} else {
-						document.getElementById("resource_body").innerHTML = "<img src=\"https://pardusmapper.com/images/ajax-loader.gif\" />";
+						document.getElementById("resource_body").innerHTML = "<img src=\"<?= Settings::$IMG_DIR_MAPPER ?>/ajax-loader.gif\" />";
 					}
 				}
 				xmlhttp.send(params);

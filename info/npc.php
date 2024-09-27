@@ -1,17 +1,13 @@
 <?php
+declare(strict_types=1);
+require_once('../app/settings.php');
 
-require_once('../include/mysqldb.php');
-$db = new mysqldb;
+use Pardusmapper\Core\Settings;
+use Pardusmapper\Core\MySqlDB;
 
-$testing = Settings::TESTING;
-$debug = Settings::DEBUG;
+header('Access-Control-Allow-Origin: ' . Settings::$BASE_URL);
 
-if ($testing || $debug) { 
-	error_reporting(E_STRICT | E_ALL | E_NOTICE);
-}
-
-$base_url = 'https://pardusmapper.com';
-if ($testing) { $base_url .= '/TestMap'; }
+$db = new MySqlDB();  // Create an instance of the Database class
 
 $uni = $db->protect($_POST['uni']);
 $npc_filter = $db->protect($_POST['npc']);
@@ -25,7 +21,6 @@ session_start();
 $security = 0;
 if (isset($_SESSION['security'])) { $security = $db->protect($_SESSION['security']); }
 
-$img_url = Settings::IMG_DIR;
 if (isset($_COOKIE['imagepack'])) {
     $img_url = $_COOKIE['imagepack'];
     
@@ -36,8 +31,9 @@ if (isset($_COOKIE['imagepack'])) {
 }
 
 
+$delete = [];
+$npc = [];
 $return = '';
-
 $sort_by = '';
 
 if (strlen($sort)) {
