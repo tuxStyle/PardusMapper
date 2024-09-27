@@ -28,13 +28,13 @@ if (isset($_REQUEST['username']))  {
 			header("Location: $url");
 		} else {
 			$invalidpwd = 0;
-			if (strlen($_REQUEST['password1']) > 0){
+			if (strlen((string) $_REQUEST['password1']) > 0){
 				if ($_REQUEST['password1'] != $_REQUEST['password2']) {
 					$invalidpwd = 1;
 					unset($_REQUEST['signup']);
 				} else {
 					$pwd = $_REQUEST['password1'];
-					$db->query('UPDATE ' . $uni . '_Users SET password = \'' . sha1($pwd) . '\' WHERE username = \'' . $name . '\'');
+					$db->query('UPDATE ' . $uni . '_Users SET password = \'' . sha1((string) $pwd) . '\' WHERE username = \'' . $name . '\'');
 					$url = $base_url . '/' . $uni . '/login.php?signedup=1&url=' . $_REQUEST['url'];
 					header("Location: $url");
 				}

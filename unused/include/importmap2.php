@@ -9,7 +9,7 @@ else if($_SERVER['HTTP_ORIGIN'] == "http://pegasus.pardus.at")  {  header('Acces
 else { die('0,Information Not coming from Pardus'); }
 
 require_once("settings.php");
-if (strpos($_REQUEST['mapdata'],"sb_") !== false) {
+if (str_contains((string) $_REQUEST['mapdata'],"sb_")) {
 	$site = 'https://pardusmapper.com/include/importstarbasemap.php?';
 	$site .= $_SERVER['QUERY_STRING'];
 	header("Location: $site");
@@ -87,7 +87,7 @@ if ($debug) echo 'pilot s location = ' . $ps .  '<br>';
 
 $mapdata = $db->real_escape_string($_REQUEST['mapdata']);
 
-$maparray = explode('~',$mapdata);
+$maparray = explode('~',(string) $mapdata);
 $dataString = implode(",", $maparray);
 //$last = $db->query("SELECT payload FROM connection_log where username = '$user' order by id desc limit 1");
 //$last1 = implode('-',$last);
@@ -189,7 +189,7 @@ $dataString = implode(",", $maparray);
 	++$sqlcount;
 
 	// Initialize an array to hold the results
-	$static = array();
+	$static = [];
 
 	// Fetch each row as an object
 	while ($c = $result->fetch_object()) {
@@ -205,7 +205,7 @@ $dataString = implode(",", $maparray);
 		if ($debug) echo print_r($temp);
 		if ($temp[0] == $loc) { // this scenario will never happen as the foreground in map view can't be an opponent, it's always your ship.  Should look to "other ships" screen NOTED
 			if ($debug) echo strpos($temp[1],"ponents") != false . ' Evaluation Check';
-			if (strpos($temp[1],"ponents") != false && !(in_array($temp[1],$nonblocking))) {
+			if (str_contains($temp[1],"ponents") && !(in_array($temp[1],$nonblocking))) {
 				die("0,Fatal Error");
 			}
 			if ($debug) echo (strpos($temp[1],"ponents").' vs !strpos($temp[1],"ponents") ');
@@ -239,11 +239,11 @@ $dataString = implode(",", $maparray);
 			if ($debug) echo $temp[0] . ' Does Not Contain "nodata.png"<br>';
 			// Check to see if we got Building Info
 			$r_bg = 0;
-			if (strpos($temp[1],"foregrounds") !== false) {
+			if (str_contains($temp[1],"foregrounds")) {
 				if ($debug) echo $temp[0] . ' Contains "Foreground" Info<br>';
 				$r_fg = 1;
 				$r_npc = 0;
-				if ((strpos($temp[1],"wormhole") !== false) || (strpos($temp[1],"xhole") !== false) || (strpos($temp[1],"yhole") !== false)) {
+				if ((str_contains($temp[1],"wormhole")) || (str_contains($temp[1],"xhole")) || (str_contains($temp[1],"yhole"))) {
 					if (sizeof($temp) != 3) {
 						if ($debug) echo $temp[0] , ' Contains "Critter" Info not "Foreground" Info<br>';
 						$r_fg = 0;
@@ -251,7 +251,7 @@ $dataString = implode(",", $maparray);
 					}
 				}
 			// Check to see if we got Critter info
-			} elseif (strpos($temp[1],"ponents") !== false) {
+			} elseif (str_contains($temp[1],"ponents")) {
 				if ($debug) echo $temp[0] . ' Contains "Critter" Info<br>';
 				$r_fg = 0;
 				$r_npc = 1;
@@ -261,7 +261,7 @@ $dataString = implode(",", $maparray);
 					++$sqlcount; // Counting SQL iterations per connection
 				}
 			// Must be a Ship or something I don't want
-			} elseif (strpos($temp[1],"xmas-star") !== false) {
+			} elseif (str_contains($temp[1],"xmas-star")) {
 				if ($debug) echo $temp[0] . ' Contains Xmas Info<br>';
 				$r_fg = 1;
 				$r_npc = 0;
@@ -381,7 +381,7 @@ $dataString = implode(",", $maparray);
 					if (str_replace("_tradeoff","",$temp[$r_fg]) != str_replace("_tradeoff","",$r->fg)) {
 						if ($debug) echo $temp[0] . ' Foreground info Does Not Matches DB<br>';
 						// See if we have a Gem merchant
-						if (strpos($temp[$r_fg],"gem_merchant") !== false) {
+						if (str_contains($temp[$r_fg],"gem_merchant")) {
 							// Perform the query
 							$result = $db->query('SELECT * FROM ' . $uni . '_Maps WHERE fg = \'' . $temp[$r_fg] . '\' AND cluster = \'' . $r->cluster . '\'');
 
@@ -394,7 +394,7 @@ $dataString = implode(",", $maparray);
 							++$sqlcount;
 
 							// Initialize an array to hold the results
-							$gems = array();
+							$gems = [];
 
 							// Fetch each row as an object
 							while ($g = $result->fetch_object()) {
@@ -456,7 +456,7 @@ $dataString = implode(",", $maparray);
 						$npc = $temp[$r_npc];
 						if (in_array($npc,$hack)) {
 							$ip = $_SERVER['REMOTE_ADDR'];
-							$db->query("SELECT * FROM ${uni}_Users WHERE `ip` = '$ip'");
+							$db->query("SELECT * FROM {$uni}_Users WHERE `ip` = '$ip'");
 							++$sqlcount; // Counting SQL iterations per connection
 							//if ($user = $dbClass->nextObject()) { //removed in debugging 9.16.24
 								//not sure what this was for but it won't work in current instance as the DB fields have changed
@@ -466,7 +466,7 @@ $dataString = implode(",", $maparray);
 						}
 						if (in_array($temp[$r_npc],$single)) {
 							// NPC is only one per Cluster Find location of previous Instance
-							$db->query("SELECT * FROM ${uni}_Maps WHERE cluster = '$r->cluster' AND npc = '$npc'");
+							$db->query("SELECT * FROM {$uni}_Maps WHERE cluster = '$r->cluster' AND npc = '$npc'");
 							++$sqlcount; // Counting SQL iterations per connection
 							while ($t = $dbClass->nextObject()) { $to_delete[] = $t->id; }
 							if ($to_delete) { 
@@ -522,12 +522,12 @@ $dataString = implode(",", $maparray);
 				}
 			if (!(is_null($r->npc))) { // Check if NPC exists
 				if ($debug) {
-					if (($temp[0] == $_REQUEST['id']) && (isset($temp[2]) && $temp[2] !== false) && (strpos($temp[1], "ships") !== false) && !(in_array($r->npc, $nonblocking))) {
+					if (($temp[0] == $_REQUEST['id']) && (isset($temp[2]) && $temp[2] !== false) && (str_contains($temp[1], "ships")) && !(in_array($r->npc, $nonblocking))) {
 						echo '--result of test for Blow Away 3';
 					}
 				}
 				
-				if (($temp[0] == $_REQUEST['id']) && (isset($temp[2]) && $temp[2] !== false) && (strpos($temp[1], "ships") !== false) && !(in_array($r->npc, $nonblocking))) {
+				if (($temp[0] == $_REQUEST['id']) && (isset($temp[2]) && $temp[2] !== false) && (str_contains($temp[1], "ships")) && !(in_array($r->npc, $nonblocking))) {
 					if ($debug) echo 'is this working or what<br>';
 					if ($debug) echo '??NPC has been killed<br>';
 					if ($debug) echo 'Blow Away 3<br>';

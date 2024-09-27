@@ -193,9 +193,8 @@ if (isset($_REQUEST['lud'])) {
 		} else {
 			$db->query('UPDATE `' . $uni . '_Users` SET `loaded` = UTC_TIMESTAMP(), `comp` = \'' . $comp . '\', `rank` = \'' . $rank . '\' WHERE username = \'' . $user . '\'');
 		}
-		$db->query("UPDATE ${uni}_Users SET ip = '$ip' WHERE username = '$user'");
+		$db->query("UPDATE {$uni}_Users SET ip = '$ip' WHERE username = '$user'");
 	}
 }
 
 $db->close();
-?>

@@ -29,7 +29,7 @@ if (isset($_REQUEST['image'])) {
 	if ($logged_in) {
 		$db->query('UPDATE ' . $uni . '_Users set imagepack = \'' . $db->protect($loc2 . $loc3) . '\' where username = \'' . $_SESSION['user'] .  '\'');
 	}
-	setcookie("imagepack",$loc2 . $loc3,time()+60*60*24*365,"/");
+	setcookie("imagepack",$loc2 . $loc3, ['expires' => time()+60*60*24*365, 'path' => "/"]);
 }
 if (!isset($_REQUEST['oldpwd'])) {
 	if ($debug) echo 'Old Password was not entered<br>';
@@ -50,7 +50,7 @@ if (!isset($_REQUEST['oldpwd'])) {
 
 $invalidpwd = 0;
 $newpwdnotentered = 0;
-if (strlen($_REQUEST['newpwd1']) > 0){
+if (strlen((string) $_REQUEST['newpwd1']) > 0){
 	if ($_REQUEST['newpwd1'] != $_REQUEST['newpwd2']) {
 		if ($debug) echo 'New Passwords do not Match<br>';
 		$invalidpwd = 1;
@@ -67,7 +67,7 @@ if (strlen($_REQUEST['newpwd1']) > 0){
 
 
 if (isset($_REQUEST['change'])) {
-	$db->query('UPDATE ' . $uni . '_Users SET password = \'' . sha1($newpwd) . '\' WHERE username = \'' . $_SESSION['user'] . '\'');
+	$db->query('UPDATE ' . $uni . '_Users SET password = \'' . sha1((string) $newpwd) . '\' WHERE username = \'' . $_SESSION['user'] . '\'');
 	$db->close();
 	header("Location: $url");
 } else {

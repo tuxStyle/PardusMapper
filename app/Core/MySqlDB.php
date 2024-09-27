@@ -16,7 +16,7 @@ class MySqlDB
     public function connect(): \mysqli
     {
         $dbRandy = Settings::$DB_USER;
-        $dbRandy .= rand(1, Settings::$DB_TOTAL_USERS); // Randomly append 1 or 2 to the DB_USER (or as many as you create), this was done when there was a limit to the number of queries the single user could perform
+        $dbRandy .= random_int(1, Settings::$DB_TOTAL_USERS); // Randomly append 1 or 2 to the DB_USER (or as many as you create), this was done when there was a limit to the number of queries the single user could perform
 
         try {
             // Connect to the database using mysqli_connect
@@ -42,7 +42,7 @@ class MySqlDB
     public function connect2(): \mysqli
     { //this is/was used to split the DB connection between inbound and site usage
         $dbRandy = Settings::$DB_USER;
-        $dbRandy .= rand(1, Settings::$DB_TOTAL_USERS); // Randomly append 1 or 2 to the DB_USER (or as many as you create), this was done when there was a limit to the number of queries the single user could perform
+        $dbRandy .= random_int(1, Settings::$DB_TOTAL_USERS); // Randomly append 1 or 2 to the DB_USER (or as many as you create), this was done when there was a limit to the number of queries the single user could perform
 
         try {
             // Connect to the database using mysqli_connect
@@ -489,8 +489,8 @@ class MySqlDB
             } //Pegasus is 3 days out of sync with Orion/Artemis
             $shift =  floor($days / 2) % 4; //closed WH switches every two days, new cycle every four WHs
             //var nextDay = 2 - Math.floor(days) % 2; //days until closed WH changes
-            $WHs = array(162194, 160536, 139222, 163055);
-            $PWHs = array(159205, 159794, 151630, 156058);
+            $WHs = [162194, 160536, 139222, 163055];
+            $PWHs = [159205, 159794, 151630, 156058];
             $closedWH = $WHs[$shift]; //163055;//
             $closedPWH = $PWHs[$shift]; //156058; //
             //var_dump($shift);

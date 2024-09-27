@@ -31,7 +31,7 @@ if (isset($_COOKIE['imagepack'])) {
 }
 
 if (isset($_REQUEST['cluster'])) {
-	$cluster = $db->protect(urldecode($_REQUEST['cluster']));
+	$cluster = $db->protect(urldecode((string) $_REQUEST['cluster']));
 }
 if (isset($_REQUEST['sector'])) { 
 	$s = $db->getSector(0,$_REQUEST['sector']);
@@ -44,12 +44,12 @@ if (isset($_REQUEST['x1']) && isset($_REQUEST['y1'])) {
 	$id = $db->getID($s->s_id,$s->rows,$x1,$x2);
 }
 
-$mission_list = array("All","Assassination","Transport Packages","VIP Action Trip","Transport VIP","Transport Explosives","Clean Wormhole Exit","Plant Explosives","Spying","Deception","Smuggle Body Parts","Transport Military Explosives","Scout","Espionage");
+$mission_list = ["All", "Assassination", "Transport Packages", "VIP Action Trip", "Transport VIP", "Transport Explosives", "Clean Wormhole Exit", "Plant Explosives", "Spying", "Deception", "Smuggle Body Parts", "Transport Military Explosives", "Scout", "Espionage"];
 sort($mission_list);
 
 $db->close();
 
-if (($_SESSION['loaded']) && ((strtotime($today) - strtotime($_SESSION['loaded'])) < 172800)) {
+if (($_SESSION['loaded']) && ((strtotime((string) $today) - strtotime((string) $_SESSION['loaded'])) < 172800)) {
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">

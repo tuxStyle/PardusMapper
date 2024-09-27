@@ -121,15 +121,15 @@ if (!function_exists('xd')) {
 function mapper_exception_handler($exception) {
     // Custom output for uncaught exceptions
     echo '<div style="font-family: Arial, sans-serif; margin: 20px;">';
-    echo '<h2 style="color: #d9534f;">Uncaught Exception: ' . htmlspecialchars($exception->getMessage()) . '</h2>';
+    echo '<h2 style="color: #d9534f;">Uncaught Exception: ' . htmlspecialchars((string) $exception->getMessage()) . '</h2>';
     echo '<div style="border: 1px solid #ccc; padding: 15px; background-color: #f9f9f9;">';
     echo '<h3 style="color: #5bc0de;">Stack trace:</h3>';
     echo '<ul style="list-style: none; padding-left: 0;">';
 
     foreach ($exception->getTrace() as $key => $trace) {
         echo '<li style="margin-bottom: 10px;">';
-        echo '<strong>[' . $key . ']</strong> ' . (isset($trace['file']) ? $trace['file'] : '[internal function]') . ' ';
-        echo '<strong>Line:</strong> ' . (isset($trace['line']) ? $trace['line'] : 'N/A') . '<br />';
+        echo '<strong>[' . $key . ']</strong> ' . ($trace['file'] ?? '[internal function]') . ' ';
+        echo '<strong>Line:</strong> ' . ($trace['line'] ?? 'N/A') . '<br />';
         echo '<strong>Function:</strong> ' . $trace['function'] . '()';
         echo '</li>';
     }

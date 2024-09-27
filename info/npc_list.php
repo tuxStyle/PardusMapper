@@ -44,4 +44,3 @@ echo $return;
 
 $db->close();
 $db = null;
-?>

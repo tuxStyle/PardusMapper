@@ -147,7 +147,7 @@ if (isset($_REQUEST['mid'])) {
 				if ($debug) echo 'We have Existing Mission Data<br>';
 				if ($m[1]) {
 					if ($debug) echo 'Faction or Syndicate Mission Mission<br>';
-					if ((strpos($m[1], 'uni') !== false) || (strpos($m[1], 'emp') !== false) || (strpos($m[1], 'fed') !== false)) {
+					if ((str_contains($m[1], 'uni')) || (str_contains($m[1], 'emp')) || (str_contains($m[1], 'fed'))) {
 						if ($rank - 2 <= $q->rank && $q->rank <= $rank + 2) {
 							$db->query('UPDATE `' . $uni . '_Test_Missions` SET `rank` = ' . $rank . ' WHERE id = ' . $m[0]);
 						}
@@ -208,8 +208,8 @@ if (isset($_REQUEST['mid'])) {
 				if ($debug) echo 'Updating Type Img ' . $m[3] . '<br>';
 				if ($m[3]) {
 					if ($debug) echo 'STRPOS -->' . strpos($m[3], 'packages') . '<br>';
-					if (strpos($m[3], 'packages') !== false || strpos($m[3], 'smuggle') !== false || strpos($m[3], 'vip') !== false || strpos($m[3], 'scout') !== false || strpos($m[3], 'explosives') !== false || strpos($m[3], 'espionage') !== false) {
-						if (strpos($m[3], '/') !== false) {
+					if (str_contains($m[3], 'packages') || str_contains($m[3], 'smuggle') || str_contains($m[3], 'vip') || str_contains($m[3], 'scout') || str_contains($m[3], 'explosives') || str_contains($m[3], 'espionage')) {
+						if (str_contains($m[3], '/')) {
 							$m[3] = substr($m[3], strpos($m[3], '/') + 1);
 						}
 						if ($debug) echo 'Image = ' . $m[3] . '<br>';

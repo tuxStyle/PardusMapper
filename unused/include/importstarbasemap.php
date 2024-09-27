@@ -125,7 +125,7 @@ for ($i = 1; $i < sizeof($maparray); $i++) {
 			echo $temp[0] . ' Does Not Contain "nodata.png"<br>';
 		}
 		// Check to see if we got Building Info
-		if (strpos($temp[2], "foregrounds") !== false) {
+		if (str_contains($temp[2], "foregrounds")) {
 			if ($debug) {
 				echo $temp[0] . ' Contains "Foreground" Info<br>';
 			}
@@ -133,7 +133,7 @@ for ($i = 1; $i < sizeof($maparray); $i++) {
 			$r_fg = 2;
 			$r_npc = 0;
 			// Check to see if we got Background Info
-		} elseif (strpos($temp[2], "backgrounds") !== false) {
+		} elseif (str_contains($temp[2], "backgrounds")) {
 			if ($debug) {
 				echo $temp[0] . ' Contains "Background" Info Only<br>';
 			}
@@ -141,7 +141,7 @@ for ($i = 1; $i < sizeof($maparray); $i++) {
 			$r_fg = 0;
 			$r_npc = 0;
 			// Check to see if we got Critter info
-		} elseif (strpos($temp[2], "opponents") !== false) {
+		} elseif (str_contains($temp[2], "opponents")) {
 			if ($debug) {
 				echo $temp[0] . ' Contains "Critter" Info<br>';
 			}
@@ -149,7 +149,7 @@ for ($i = 1; $i < sizeof($maparray); $i++) {
 			$r_fg = 0;
 			$r_npc = 2;
 			// Must be a Ship or something I don't want
-		} elseif (strpos($temp[2], "xmas-star") !== false) {
+		} elseif (str_contains($temp[2], "xmas-star")) {
 			if ($debug) {
 				echo $temp[0] . ' Contains Xmas Info<br>';
 			}
@@ -166,7 +166,7 @@ for ($i = 1; $i < sizeof($maparray); $i++) {
 		}
 
 		// Ignore any tile that is energymax.png
-		if (strpos($temp[$r_bg], "background") !== false && strpos($temp[$r_bg], "energymax") != true) {
+		if (str_contains($temp[$r_bg], "background") && strpos($temp[$r_bg], "energymax") != true) {
 			// Check to see if we have Info for the current tile
 			// Insert new data if there is not current info
 			// Do Nothing if there is current info
@@ -187,7 +187,7 @@ for ($i = 1; $i < sizeof($maparray); $i++) {
 			}
 
 
-			if (strpos($temp[$r_bg], "\\") !== false) {
+			if (str_contains($temp[$r_bg], "\\")) {
 				$temp[$r_bg] = substr($temp[$r_bg], 0, strpos($temp[$r_bg], "\\"));
 			}
 			if ($debug) {
@@ -270,4 +270,3 @@ for ($i = 1; $i < sizeof($maparray); $i++) {
 }
 
 $db->close();
-?>

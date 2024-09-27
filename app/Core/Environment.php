@@ -15,7 +15,7 @@ class Environment
             $env = Dotenv::createImmutable(base_path());
 
             $env->load();
-        } catch (InvalidPathException $e) {
+        } catch (InvalidPathException) {
             throw_when(true, sprintf('Failed to load .env file from: %s.env', base_path()));
         }
     }

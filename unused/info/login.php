@@ -38,7 +38,7 @@ if (isset($_REQUEST['login'])) {
 				if ($u->syndicate) { $_SESSION['syndicate'] = $u->syndicate; }
 				if ($u->rank) { $_SESSION['rank'] = $u->rank; }
 				if ($u->comp) { $_SESSION['comp'] = $u->comp; }
-				if ($u->imagepack) { setcookie("imagepack",$u->imagepack,time()+60*60*24*365,"/"); }
+				if ($u->imagepack) { setcookie("imagepack",$u->imagepack, ['expires' => time()+60*60*24*365, 'path' => "/"]); }
 				$db->query('UPDATE ' . $uni . '_Users SET login = UTC_TIMESTAMP() WHERE LOWER(username) = \'' . $name . '\'');
 			}
 		}
@@ -47,7 +47,7 @@ if (isset($_REQUEST['login'])) {
 	$url =  $db->protect($_REQUEST['url']);
 	if ($debug) { echo $url . '<br>'; }
 	$db->close();
-	if (strpos($url,$base_url) === false) { $url = $base_url . '/' . $uni . '/index.php';}
+	if (!str_contains($url,(string) $base_url)) { $url = $base_url . '/' . $uni . '/index.php';}
 	if (!$debug) { header("Location: $url"); }
 } else {
 $signedup = 0;

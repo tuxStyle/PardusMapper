@@ -131,7 +131,7 @@ $return .= '<table id="resource_table">';
 $return .= '<tr>';
 if (isset($_SESSION['id']) && $_SESSION['id'] > 0) { $return .= '<th></th>'; }
 $return .= '<th>';
-if (strpos($sort,"L") !== false) { 
+if (str_contains($sort,"L")) { 
 	if ($order & 1) { $return .= '<span class="symbol">&uarr;</span>'; } else { $return .= '<span class="symbol">&darr;</span>'; }
 	$return .= '<a href="#" onClick="multiSort(\'L\');return false;">&nbsp;Location&nbsp;</a>';
 	$return .= '<a href="#" onClick="removeSort(\'L\');return false;"><span class="symbol">&times;</span></a>';
@@ -140,7 +140,7 @@ if (strpos($sort,"L") !== false) {
 }
 $return .= '</th>';
 $return .= '<th>';
-if (strpos($sort,"B") !== false) { 
+if (str_contains($sort,"B")) { 
 	if ($order & 2) { $return .= '<span class="symbol">&uarr;</span>'; } else { $return .= '<span class="symbol">&darr;</span>'; }
 	$return .= '<a href="#" onClick="multiSort(\'B\');return false;">&nbsp;Building&nbsp;</a>';
 	$return .= '<a href="#" onClick="removeSort(\'B\');return false;"><span class="symbol">&times;</span></a>';
@@ -150,7 +150,7 @@ if (strpos($sort,"B") !== false) {
 $return .= '</th>';
 if ($security == 1 || $security == 100) {
 	$return .= '<th colspan="2">';
-	if (strpos($sort,"O") !== false) { 
+	if (str_contains($sort,"O")) { 
 		if ($order & 16) { $return .= '<span class="symbol">&uarr;</span>'; } else { $return .= '<span class="symbol">&darr;</span>'; }
 		$return .= '<a href="#" onClick="multiSort(\'O\');return false;">&nbsp;Owner&nbsp;</a>';
 		$return .= '<a href="#" onClick="removeSort(\'O\');return false;"><span class="symbol">&times;</span></a>';
@@ -159,7 +159,7 @@ if ($security == 1 || $security == 100) {
 	}
 	$return .= '</th>';
 	$return .= '<th>';
-	if (strpos($sort,"A") !== false) { 
+	if (str_contains($sort,"A")) { 
 		if ($order & 32) { $return .= '<span class="symbol">&uarr;</span>'; } else { $return .= '<span class="symbol">&darr;</span>'; }
 		$return .= '<a href="#" onClick="multiSort(\'A\');return false;">&nbsp;Alliance&nbsp;</a>';
 		$return .= '<a href="#" onClick="removeSort(\'A\');return false;"><span class="symbol">&times;</span></a>';
@@ -169,7 +169,7 @@ if ($security == 1 || $security == 100) {
 	$return .= '</th>';
 }
 $return .= '<th>';
-if (strpos($sort,"S") !== false) { 
+if (str_contains($sort,"S")) { 
 	if ($order & 4) { $return .= '<span class="symbol">&uarr;</span>'; } else { $return .= '<span class="symbol">&darr;</span>'; }
 	$return .= '<a href="#" onClick="multiSort(\'S\');return false;">&nbsp;Stock Level&nbsp;</a>';
 	$return .= '<a href="#" onClick="removeSort(\'S\');return false;"><span class="symbol">&times;</span></a>';
@@ -178,7 +178,7 @@ if (strpos($sort,"S") !== false) {
 }
 $return .= '</th>';
 $return .= '<th>';
-if (strpos($sort,"T") !== false) { 
+if (str_contains($sort,"T")) { 
 	if ($order & 8) { $return .= '<span class="symbol">&uarr;</span>'; } else { $return .= '<span class="symbol">&darr;</span>'; }
 	$return .= '<a href="#" onClick="multiSort(\'T\');return false;">&nbsp;Last Updated&nbsp;</a>';
 	$return .= '<a href="#" onClick="removeSort(\'T\');return false;"><span class="symbol">&times;</span></a>';

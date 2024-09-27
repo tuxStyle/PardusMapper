@@ -28,7 +28,7 @@ session_start();
 $security = 0;
 if (isset($_SESSION['security'])) { $security = $db->real_escape_string($_SESSION['security']); }
 
-$coreWH = array('Pardus','Enif','Quaack','Nhandu','Procyon');
+$coreWH = ['Pardus', 'Enif', 'Quaack', 'Nhandu', 'Procyon'];
 if (in_array($sector, $coreWH)) {
     $dbClass->pardusWHStatus((string)$uni); // Call the method on the mysqldb instance
 }

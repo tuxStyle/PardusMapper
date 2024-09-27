@@ -107,7 +107,7 @@ if ($b = $db->nextObject()) {
 	}
 } else {
 	// Building not in DB
-	if (debug) {
+	if ($debug) {
 		echo 'Building not in DB Adding<br>';
 	}
 	$db->addBuilding($uni, $image, $loc, 0);

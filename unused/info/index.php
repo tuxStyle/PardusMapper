@@ -90,7 +90,7 @@ $db->close();
 				<a href="https://www.pardus.at" id="pardus"><i>PARDUS</i></a>
 			</div>
 			<div id="cluster-map">
-				<?php if (isset($_REQUEST['cluster'])) { include('clusters/' . strtolower($cluster) . '.php'); } ?>
+				<?php if (isset($_REQUEST['cluster'])) { include('clusters/' . strtolower((string) $cluster) . '.php'); } ?>
 			</div>
 			<div id="gem_merchant"></div>
 			<div id="overview" name="gem"></div>

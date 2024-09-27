@@ -97,7 +97,7 @@ if ($result) {
 $db->query('SELECT * FROM ' . $uni . '_Buildings WHERE id = ' . $loc);
 if ($b = $db->fetchObject()) {  // Use fetchObject() instead of nextObject()
 	// Building in DB - Verify Stock is in DB
-	if (strpos("sb_", $m->fg) === false) {  // Correct usage of strpos
+	if (!str_contains("sb_", $m->fg)) {  // Correct usage of strpos
 		if ($debug) {
 			echo 'Checking Stocking Info<br>';
 		}
@@ -119,7 +119,7 @@ if ($debug) {
 	echo '<br>';
 }
 
-if (strpos("sb_", $m->fg) !== false) {
+if (str_contains("sb_", $m->fg)) {
 	if ($debug) {
 		echo 'We are Flying Close to a SB<br>';
 	}

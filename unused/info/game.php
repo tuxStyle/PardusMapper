@@ -32,7 +32,7 @@ if (isset($_COOKIE['imagepack'])) {
 }
 
 if (isset($_REQUEST['sector'])) { 
-	$sector = $db->protect(urldecode($_REQUEST['sector']));
+	$sector = $db->protect(urldecode((string) $_REQUEST['sector']));
 	$db->query('SELECT * FROM Pardus_Clusters WHERE c_id = (SELECT c_id FROM Pardus_Sectors WHERE name = \'' . $sector . '\')'); 
 	$cluster = $db->nextObject();
 	$cluster = $cluster->code;
@@ -142,7 +142,7 @@ $db->close();
 		<div id="details" name="game"><div id="close_detail"><a href="#" onClick="closeDetail();return false;">Close Detail</a></div><div id="d_con"></div></div>
 		<div id="overview" name="game"></div>
 		<div id="body">
-			<div id="clusterMapDiv" onmouseover="this.style.zIndex=20" onmouseout="this.style.zIndex=0"><?php include('clusters/' . strtolower($cluster) . '.php');?></div>
+			<div id="clusterMapDiv" onmouseover="this.style.zIndex=20" onmouseout="this.style.zIndex=0"><?php include('clusters/' . strtolower((string) $cluster) . '.php');?></div>
 			<div id="mapSelection">
 				<form id="rf" action="">
 					<input type="radio" onclick="updateMap()" name="mode" value="all" checked />All

@@ -17,7 +17,7 @@ if (isset($_SESSION['security'])) { $security = $db->real_escape_string($_SESSIO
 
 if (isset($_COOKIE['imagepack'])) {
     $img_url = $_COOKIE['imagepack'];
-    if (strlen($img_url) > 0 && $img_url[strlen($img_url) - 1] != '/') {
+    if (strlen((string) $img_url) > 0 && $img_url[strlen((string) $img_url) - 1] != '/') {
         $img_url .= '/';
     }
 }

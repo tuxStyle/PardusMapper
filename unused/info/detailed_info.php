@@ -18,7 +18,7 @@ if (isset($_COOKIE['imagepack'])) {
     $img_url = $_COOKIE['imagepack'];
     
     // Check if the last character is not a '/'
-    if ($img_url[strlen($img_url) - 1] != '/') {
+    if ($img_url[strlen((string) $img_url) - 1] != '/') {
         $img_url .= '/';  // Append '/' if not already present
     }
 }
@@ -380,5 +380,3 @@ if (!($b_loc || $npc_loc)) {
 $db->close();
 
 echo $return;
-
-?>

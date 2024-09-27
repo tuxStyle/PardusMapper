@@ -6,7 +6,7 @@ else if($_SERVER['HTTP_ORIGIN'] == "https://pegasus.pardus.at")  {  header('Acce
 else { die('0,Information Not coming from Pardus'); }
 */
 require_once("settings.php");
-if (strpos($_REQUEST['mapdata'], "sb_") !== false) {
+if (str_contains((string) $_REQUEST['mapdata'], "sb_")) {
 	$site = 'https://pardusmapper.com/include/importstarbasemap.php?';
 	$site .= $_SERVER['QUERY_STRING'];
 	header("Location: $site");
@@ -107,14 +107,14 @@ for ($i = 1; $i < sizeof($maparray); $i++) {
 			echo $temp[0] . ' Does Not Contain "nodata.png"<br>';
 		}
 		// Check to see if we got Building Info
-		if (strpos($temp[2], "foregrounds") !== false) {
+		if (str_contains($temp[2], "foregrounds")) {
 			if ($debug) {
 				echo $temp[0] . ' Contains "Foreground" Info<br>';
 			}
 			$r_bg = 1;
 			$r_fg = 2;
 			$r_npc = 0;
-			if ((strpos($temp[2], "wormhole") !== false) || (strpos($temp[2], "xhole") !== false) || (strpos($temp[2], "yhole") !== false)) {
+			if ((str_contains($temp[2], "wormhole")) || (str_contains($temp[2], "xhole")) || (str_contains($temp[2], "yhole"))) {
 				if ($debug) {
 					echo $temp[0], ' Contains "Wormhole" Info<br>';
 				}
@@ -125,7 +125,7 @@ for ($i = 1; $i < sizeof($maparray); $i++) {
 				}
 			}
 			// Check to see if we got Background Info
-		} elseif (strpos($temp[2], "backgrounds") !== false) {
+		} elseif (str_contains($temp[2], "backgrounds")) {
 			if ($debug) {
 				echo $temp[0] . ' Contains "Background" Info Only<br>';
 			}
@@ -134,7 +134,7 @@ for ($i = 1; $i < sizeof($maparray); $i++) {
 			$r_fg = 0;
 			$r_npc = 0;
 			// Check to see if we got Critter info
-		} elseif (strpos($temp[2], "opponents") !== false) {
+		} elseif (str_contains($temp[2], "opponents")) {
 			if ($debug) {
 				echo $temp[0] . ' Contains "Critter" Info<br>';
 			}
@@ -142,7 +142,7 @@ for ($i = 1; $i < sizeof($maparray); $i++) {
 			$r_fg = 0;
 			$r_npc = 2;
 			// Must be a Ship or something I don't want
-		} elseif (strpos($temp[2], "xmas-star") !== false) {
+		} elseif (str_contains($temp[2], "xmas-star")) {
 			if ($debug) {
 				echo $temp[0] . ' Contains Xmas Info<br>';
 			}
@@ -159,7 +159,7 @@ for ($i = 1; $i < sizeof($maparray); $i++) {
 		}
 
 		// Ignore any tile that is energymax.png
-		if (strpos($temp[$r_bg], "background") !== false && strpos($temp[$r_bg], "energymax") !== true) {
+		if (str_contains($temp[$r_bg], "background") && strpos($temp[$r_bg], "energymax") !== true) {
 			// Check to see if we have Info for the current tile
 			// Insert new data if there is not current info
 			// Do Nothing if there is current info
@@ -200,7 +200,7 @@ for ($i = 1; $i < sizeof($maparray); $i++) {
 			$y = $db->getY($temp[0], $s->s_id, $s->rows, $x);
 			$db->query('UPDATE ' . $uni . '_Maps SET y = ' . $y . ' WHERE id = ' . $temp[0]);
 			//}
-			if (strpos($temp[$r_bg], "\\") !== false) {
+			if (str_contains($temp[$r_bg], "\\")) {
 				$temp[$r_bg] = substr($temp[$r_bg], 0, strpos($temp[$r_bg], "\\"));
 			}
 			if ($debug) {
@@ -238,7 +238,7 @@ for ($i = 1; $i < sizeof($maparray); $i++) {
 							echo $temp[0] . ' Foreground info Does Not Matches DB<br>';
 						}
 						// See if we have a Gem merchant
-						if (strpos($temp[$r_fg], "gem_merchant") !== false) {
+						if (str_contains($temp[$r_fg], "gem_merchant")) {
 							$db->query('SELECT * FROM ' . $uni . '_Maps WHERE fg = \'' . $temp[$r_fg] . '\' AND cluster = \'' . $r->cluster . '\'');
 							while ($g = $db->nextObject()) {
 								$gems[] = $g;

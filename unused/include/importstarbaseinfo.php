@@ -1,7 +1,7 @@
 <?php
 
 // Enable CORS for any subdomain of pardus.at
-if (isset($_SERVER['HTTP_ORIGIN']) && preg_match('/^https?:\/\/([a-zA-Z0-9-]+\.)?pardus\.at$/', $_SERVER['HTTP_ORIGIN'])) {
+if (isset($_SERVER['HTTP_ORIGIN']) && preg_match('/^https?:\/\/([a-zA-Z0-9-]+\.)?pardus\.at$/', (string) $_SERVER['HTTP_ORIGIN'])) {
     header('Access-Control-Allow-Origin: ' . $_SERVER['HTTP_ORIGIN']); // Dynamically allow the origin
     header('Access-Control-Allow-Methods: GET, POST, OPTIONS');         // Allow the necessary methods
     header('Access-Control-Allow-Headers: Content-Type');               // Allow custom headers (if necessary)
@@ -288,7 +288,7 @@ if (isset($_REQUEST['sbt'])) {
 	} else {
 		$cap = 0;
 	}
-	$sbt = explode('~', $dbClass->real_escape_string($_REQUEST['sbt']));
+	$sbt = explode('~', (string) $dbClass->real_escape_string($_REQUEST['sbt']));
 	if ($debug) {
 		print_r($sbt);
 	}
@@ -372,7 +372,7 @@ if (isset($_REQUEST['squads'])) {
 	// Erase old Squad info from DB.
 	$dbClass->query('DELETE FROM `' . $uni . '_Squadrons` WHERE id = ' . $loc);
 	//Collect Info
-	$squads = explode('~', $dbClass->real_escape_string($_REQUEST['squads']));
+	$squads = explode('~', (string) $dbClass->real_escape_string($_REQUEST['squads']));
 
 	for ($i = 0; $i < sizeOf($squads); $i++) {
 		$temp = explode(',', $squads[$i]);
@@ -425,4 +425,3 @@ if (isset($_REQUEST['sbb'])) {
 }
 
 $db->close();
-?>

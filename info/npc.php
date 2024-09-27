@@ -25,7 +25,7 @@ if (isset($_COOKIE['imagepack'])) {
     $img_url = $_COOKIE['imagepack'];
     
     // Check if the last character is not a '/'
-    if ($img_url[strlen($img_url) - 1] != '/') {
+    if ($img_url[strlen((string) $img_url) - 1] != '/') {
         $img_url .= '/';  // Append '/' if not already present
     }
 }
@@ -151,14 +151,14 @@ while ($q = $db->nextObject()) {
 	unset($aged);
 }
 
-if ($delete) { foreach ($delete as $d) { $db->removeNPC($uni,$d, $nid); } }
+if ($delete) { foreach ($delete as $d) { $db->removeNPC($uni,$d); } }
 
 $db->close();
 
 $return .= '<table id="npc_table">';
 $return .= '<tr>';
 $return .= '<th>';
-if (strpos($sort,"C") !== false)  {
+if (str_contains($sort,"C"))  {
 	if ($order & 1) { $return .= '<span class="symbol">&uarr;</span>'; } else { $return .= '<span class="symbol">&darr;</span>'; }
 	$return .= '<a href="#" onClick="multiSort(\'C\');return false;">&nbsp;Cluster&nbsp;</a>';
 	$return .= '<a href="#" onClick="removeSort(\'C\');return false;"><span class="symbol">&times;</span></a>';
@@ -167,7 +167,7 @@ if (strpos($sort,"C") !== false)  {
 }
 $return .= '</th>';
 $return .= '<th>';
-if (strpos($sort,"S") !== false) { 
+if (str_contains($sort,"S")) { 
 	if ($order & 2) { $return .= '<span class="symbol">&uarr;</span>'; } else { $return .= '<span class="symbol">&darr;</span>'; }
 	$return .= '<a href="#" onClick="multiSort(\'S\');return false;">&nbsp;Sector&nbsp;</a>';
 	$return .= '<a href="#" onClick="removeSort(\'S\');return false;"><span class="symbol">&times;</span></a>';
@@ -176,7 +176,7 @@ if (strpos($sort,"S") !== false) {
 }
 $return .= '</th>';
 $return .= '<th>';
-if (strpos($sort,"L") !== false) { 
+if (str_contains($sort,"L")) { 
 	if ($order & 4) { $return .= '<span class="symbol">&uarr;</span>'; } else { $return .= '<span class="symbol">&darr;</span>'; }
 	$return .= '<a href="#" onClick="multiSort(\'L\');return false;">&nbsp;Location&nbsp;</a>';
 	$return .= '<a href="#" onClick="removeSort(\'L\');return false;"><span class="symbol">&times;</span></a>';
@@ -185,7 +185,7 @@ if (strpos($sort,"L") !== false) {
 }
 $return .= '</th>';
 $return .= '<th colspan="2">';
-if (strpos($sort,"N") !== false) { 
+if (str_contains($sort,"N")) { 
 	if ($order & 8) { $return .= '<span class="symbol">&uarr;</span>'; } else { $return .= '<span class="symbol">&darr;</span>'; }
 	$return .= '<a href="#" onClick="multiSort(\'N\');return false;">&nbsp;NPC&nbsp;</a>';
 	$return .= '<a href="#" onClick="removeSort(\'N\');return false;"><span class="symbol">&times;</span></a>';
@@ -194,7 +194,7 @@ if (strpos($sort,"N") !== false) {
 }
 $return .= '</th>';
 $return .= '<th>';
-if (strpos($sort,"A") !== false) { 
+if (str_contains($sort,"A")) { 
 	if ($order & 16) { $return .= '<span class="symbol">&uarr;</span>'; } else { $return .= '<span class="symbol">&darr;</span>'; }
 	$return .= '<a href="#" onClick="multiSort(\'A\');return false;">&nbsp;First Spotted&nbsp;</a>';
 	$return .= '<a href="#" onClick="removeSort(\'A\');return false;"><span class="symbol">&times;</span></a>';
@@ -203,7 +203,7 @@ if (strpos($sort,"A") !== false) {
 }
 $return .= '</th>';
 $return .= '<th>';
-if (strpos($sort,"T") !== false) { 
+if (str_contains($sort,"T")) { 
 	if ($order & 32) { $return .= '<span class="symbol">&uarr;</span>'; } else { $return .= '<span class="symbol">&darr;</span>'; }
 	$return .= '<a href="#" onClick="multiSort(\'T\');return false;">&nbsp;Last Spotted&nbsp;</a>';
 	$return .= '<a href="#" onClick="removeSort(\'T\');return false;"><span class="symbol">&times;</span></a>';
@@ -243,5 +243,3 @@ if ($npc) {
 $return .= '</table>';
 
 echo $return;
-
-?>

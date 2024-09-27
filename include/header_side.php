@@ -8,19 +8,19 @@
 			// Ensure $cluster is a string and handle null or object cases
 			if (is_object($cluster)) {
 				// Extract the relevant property if $cluster is an object
-				$cluster = isset($cluster->code) ? $cluster->code : 'Unknown Cluster';
+				$cluster = $cluster->code ?? 'Unknown Cluster';
 			} else {
 				// Handle cases where $cluster is null or a string
-				$cluster = isset($cluster) ? $cluster : 'Unknown Cluster';
+				$cluster ??= 'Unknown Cluster';
 			}
 
 			// Output using the $cluster variable
-			echo '<tr><th><a href="' . $base_url . '/' . $_REQUEST['uni'] . '/' . urlencode($cluster) . '">' . htmlspecialchars($cluster) . '</a></th></tr>';
+			echo '<tr><th><a href="' . $base_url . '/' . $_REQUEST['uni'] . '/' . urlencode((string) $cluster) . '">' . htmlspecialchars((string) $cluster) . '</a></th></tr>';
 			//echo '<tr><th><a href="' . $base_url . '/' . $_REQUEST['uni'] . '/' . urlencode($_REQUEST['sector']) . '">' . htmlspecialchars(str_replace(" ", "<br />", $_REQUEST['sector'])) . '</a></th></tr>';
 			//echo '<pre>' . print_r($_REQUEST['sector'], true) . '</pre>';
 			//echo '<tr><th><a href="' . $base_url . '/' . $_REQUEST['uni'] . '/' . urlencode($_REQUEST['sector']) . '">' . htmlspecialchars(str_replace(" ", "<br />", urldecode($_REQUEST['sector']))) . '</a></th></tr>';
-			echo '<tr><th><a href="' . $base_url . '/' . $_REQUEST['uni'] . '/' . rawurlencode($_REQUEST['sector']) . '">'
-				. str_replace(" ", "&nbsp;<br />", htmlspecialchars(urldecode($_REQUEST['sector'])))
+			echo '<tr><th><a href="' . $base_url . '/' . $_REQUEST['uni'] . '/' . rawurlencode((string) $_REQUEST['sector']) . '">'
+				. str_replace(" ", "&nbsp;<br />", htmlspecialchars(urldecode((string) $_REQUEST['sector'])))
 				. '</a></th></tr>';
 		}
 

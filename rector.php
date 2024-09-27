@@ -14,15 +14,17 @@ use Rector\Set\ValueObject\LevelSetList;
 
 return static function (RectorConfig $rectorConfig): void {
 
-    $rectorConfig->bootstrapFiles([
-        __DIR__ . '/pardusmap.mhwva.net/globals.php',
-    ]);
+    // $rectorConfig->bootstrapFiles([
+    //     __DIR__ . '/pardusmap.mhwva.net/globals.php',
+    // ]);
 
     $rectorConfig->paths([
-        __DIR__ . '/pardusmap.mhwva.net/include',
-        __DIR__ . '/pardusmap.mhwva.net/clusters',
-        __DIR__ . '/pardusmap.mhwva.net/Download',
-        __DIR__ . '/pardusmap.mhwva.net/info',
+        __DIR__ . '/app',
+        __DIR__ . '/clusters',
+        __DIR__ . '/Download',
+        __DIR__ . '/include',
+        __DIR__ . '/info',
+        __DIR__ . '/unused',
     ]);
 
     // $rectorConfig->rule(LongArrayToShortArrayNewLinedRector::class);
