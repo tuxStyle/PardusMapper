@@ -1,15 +1,17 @@
 <?php
 declare(strict_types=1);
 
+use Pardusmapper\Core\ApiResponse;
+use Pardusmapper\Core\MySqlDB;
+
 // Enable CORS for any subdomain of pardus.at
 if (isset($_SERVER['HTTP_ORIGIN']) && preg_match('/^https?:\/\/(orion|artemis|pardus)?\.pardus\.at$/i', (string) $_SERVER['HTTP_ORIGIN'])) {
-    header('Access-Control-Allow-Origin: ' . $_SERVER['HTTP_ORIGIN']); // Dynamically allow the origin
+    header('Access-Control-Allow-Origin: ' . $_SERVER['HTTP_ORIGIN']);  // Dynamically allow the origin
     header('Access-Control-Allow-Methods: GET, POST, OPTIONS');         // Allow the necessary methods
     header('Access-Control-Allow-Headers: Content-Type');               // Allow custom headers (if necessary)
     header('Access-Control-Allow-Credentials: true');                   // Allow cookies (if necessary)
 } else {
-    header('HTTP/1.1 403 Forbidden');
-    exit('CORS policy does not allow access from this origin.');
+    http_response(true, ApiResponse::FORBIDDEN, 'CORS policy does not allow access from this origin.');
 }
 
 // Handle OPTIONS requests for CORS preflight (important for complex requests)
@@ -18,8 +20,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 }
 
 require_once('../app/settings.php');
-
-use Pardusmapper\Core\MySqlDB;
 
 $dbClass = new MySqlDB(); // Create an instance of the Database class
 $db = $dbClass->getDb();  // Get the mysqli connection object
