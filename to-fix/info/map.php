@@ -96,8 +96,6 @@ if ($whole == 1 || $_POST['whole'] == 1) {
 //Get NPC Information for Sector
 */
 
-date_default_timezone_set("UTC");
-
 $return = '<table id="sectorTableMap" >';
 $return .= '<thead><tr><th />';
 for ($i = 0;$i < $s->cols;$i++) { $return .= '<th>' . $i . '</th>'; }

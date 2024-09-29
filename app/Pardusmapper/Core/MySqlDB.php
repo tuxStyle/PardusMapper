@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Pardusmapper\Core;
 
+use \Pardusmapper\Core\Instance;
 use \Pardusmapper\Core\Settings;
 
 class MySqlDB
@@ -12,6 +13,25 @@ class MySqlDB
     public ?\mysqli_result $queryID = null;
     public $a_record;
     public $o_record;
+
+    use Instance {
+        getInstance as private _getInstance;
+    }
+
+    public static function instance(): MySqlDB
+    {
+        return self::_getInstance();
+    }
+
+    public function __construct()
+    {
+        $this->connect();  // Open connection when the class is instantiated
+    }
+
+    public function __destruct()
+    {
+        $this->close(); // Automatically close the connection when the object is destroyed
+    }
 
     public function connect(): \mysqli
     {
@@ -65,10 +85,6 @@ class MySqlDB
         return $this->db; // Return the connection
     }
 
-    public function __construct()
-    {
-        $this->connect();  // Open connection when the class is instantiated
-    }
     public function getDb(): \mysqli
     {
         // Ensure the database is connected
@@ -115,11 +131,23 @@ class MySqlDB
 
     public function real_escape_string(string $string): string
     {
-        if (empty($this->db)) {
-            $this->connect();  // Ensure connection is established
-        }
-        return mysqli_real_escape_string($this->db, $string);  // Escape the string using the mysqli connection
+        // if (empty($this->db)) {
+        //     $this->connect();  // Ensure connection is established
+        // }
+        // return mysqli_real_escape_string($this->db, $string);  // Escape the string using the mysqli connection
+
+        return $this->protect($string);
     }
+
+    public function protect(string $string): string
+    {
+        if (empty($this->db)) {
+            $this->connect(); // Make sure to establish the connection
+        }
+        // Escape the string using the established database connection
+        return mysqli_real_escape_string($this->db, $string);
+    }
+
 
     public function fetchObject(): ?object
     {
@@ -136,11 +164,6 @@ class MySqlDB
             $this->db->close(); // Close the database connection
             $this->isClosed = true;
         }
-    }
-
-    public function __destruct()
-    {
-        $this->close(); // Automatically close the connection when the object is destroyed
     }
 
     public function nextArray(): ?array
@@ -181,15 +204,6 @@ class MySqlDB
             $this->connect();
         }
         return @mysqli_data_seek($this->queryID, $seek);
-    }
-
-    public function protect(string $string): string
-    {
-        if (empty($this->db)) {
-            $this->connect(); // Make sure to establish the connection
-        }
-        // Escape the string using the established database connection
-        return mysqli_real_escape_string($this->db, $string);
     }
 
     // Get Sector and Cluster Info
@@ -236,7 +250,7 @@ class MySqlDB
     }
 
     // NPC Management
-    public function addNPC($uni, $image, $id, $sector, $x, $y, $nid = null)
+    public function addNPC(string $uni, string $image, ?int $id, ?string $sector, int $x, int $y, ?int $nid = null)
     {
         if (empty($this->db)) {
             $this->connect();
@@ -282,7 +296,7 @@ class MySqlDB
         $this->query('UPDATE ' . $uni . '_Maps SET npc_updated = UTC_TIMESTAMP() WHERE id = ' . $id);
     }
 
-    public function removeNPC($uni, $id = null)
+    public function removeNPC(string $uni, ?int $id = null)
     {
         if (empty($this->db)) {
             $this->connect();
@@ -294,168 +308,221 @@ class MySqlDB
         }
     }
 
-    public function updateNPCHealth($uni, $id, $hull, $armor, $shield, $nid = null)
+    public function updateNPCHealth(string $uni, ?int $id, int $hull, int $armor, int $shield, ?int $nid = null): bool
     {
+        if (is_null($id)) {
+            return false;
+        }
+
         if (empty($this->db)) {
             $this->connect();
         }
-        if ($id) {
-            $this->query('UPDATE ' . $uni . '_Test_Npcs SET `hull` = ' . $hull . ', `armor` = ' . $armor . ', `shield` = ' . $shield . ', `updated` = UTC_TIMESTAMP() WHERE id = ' . $id);
-            if ($nid) {
-                $this->query('UPDATE ' . $uni . '_Test_Npcs SET `nid` = ' . $nid . ' WHERE id = ' . $id);
-            }
-            $this->query('UPDATE ' . $uni . '_Maps SET `npc_updated` = UTC_TIMESTAMP() WHERE id = ' . $id);
+
+        $this->query('UPDATE ' . $uni . '_Test_Npcs SET `hull` = ' . $hull . ', `armor` = ' . $armor . ', `shield` = ' . $shield . ', `updated` = UTC_TIMESTAMP() WHERE id = ' . $id);
+        
+        if ($nid) {
+            $this->query('UPDATE ' . $uni . '_Test_Npcs SET `nid` = ' . $nid . ' WHERE id = ' . $id);
         }
+        
+        $this->query('UPDATE ' . $uni . '_Maps SET `npc_updated` = UTC_TIMESTAMP() WHERE id = ' . $id);
+
+        return true;
     }
-    public function addBuilding($uni, $image, $id, $sb)
+
+    public function addBuilding(string $uni, string $image, ?int $id, int $sb): bool
     {
+        if (is_null($id)) {
+            return false;
+        }
+
         if (empty($this->db)) {
             $this->connect2();
         }
-        if ($id) {
+
+        $this->query('SELECT * FROM ' . $uni . '_Buildings WHERE id = ' . $id);
+        if (!$b = $this->nextObject()) {
+            $this->query('INSERT INTO ' . $uni . '_Buildings (`id`,`security`) VALUES (' . $id . ', 0)');
+        } else {
+            $this->removeBuildingStock($uni, $id, $sb);
+        }
+        if ($sb) {
             $this->query('SELECT * FROM ' . $uni . '_Buildings WHERE id = ' . $id);
-            if (!$b = $this->nextObject()) {
-                $this->query('INSERT INTO ' . $uni . '_Buildings (`id`,`security`) VALUES (' . $id . ', 0)');
-            } else {
-                $this->removeBuildingStock($uni, $id);
-            }
-            if ($sb) {
-                $this->query('SELECT * FROM ' . $uni . '_Buildings WHERE id = ' . $id);
-                $b = $this->nextObject();
-                $x = $this->getX($id, $b->starbase, 13);
-                $y = $this->getY($id, $b->starbase, 13, $x);
-                $this->query('UPDATE ' . $uni . '_Buildings SET `cluster` = \'' . $b->cluster . '\' WHERE id = ' . $id);
-                $this->query('UPDATE ' . $uni . '_Buildings SET `sector` = \'' . $b->sector . '\' WHERE id = ' . $id);
-            } else {
-                // Get Sector Info
-                $s = $this->getSector($id, "");
-                // Get Cluster Info
-                $c = $this->getCluster($s->c_id, "");
-                // Calculate X and Y of NPC
-                $x = $this->getX($id, $s->s_id, $s->rows);
-                $y = $this->getY($id, $s->s_id, $s->rows, $x);
-                $this->query('UPDATE ' . $uni . '_Buildings SET `cluster` = \'' . $c->name . '\' WHERE id = ' . $id);
-                $this->query('UPDATE ' . $uni . '_Buildings SET `sector` = \'' . $s->name . '\' WHERE id = ' . $id);
-                $this->addBuildingStock($uni, $image, $id);
-            }
-            $this->query('UPDATE ' . $uni . '_Buildings SET `x` = ' . $x . ' WHERE id = ' . $id);
-            $this->query('UPDATE ' . $uni . '_Buildings SET `y` = ' . $y . ' WHERE id = ' . $id);
-            $this->query('UPDATE ' . $uni . '_Buildings SET `image` = \'' . $image . '\' WHERE id = ' . $id);
-            $this->query('UPDATE ' . $uni . '_Buildings SET `spotted` = UTC_TIMESTAMP() WHERE id = ' . $id);
-            $this->query('UPDATE ' . $uni . '_Buildings SET `updated` = UTC_TIMESTAMP() WHERE id = ' . $id);
+            $b = $this->nextObject();
+            $x = $this->getX($id, $b->starbase, 13);
+            $y = $this->getY($id, $b->starbase, 13, $x);
+            $this->query('UPDATE ' . $uni . '_Buildings SET `cluster` = \'' . $b->cluster . '\' WHERE id = ' . $id);
+            $this->query('UPDATE ' . $uni . '_Buildings SET `sector` = \'' . $b->sector . '\' WHERE id = ' . $id);
+        } else {
+            // Get Sector Info
+            $s = $this->getSector($id, "");
+            // Get Cluster Info
+            $c = $this->getCluster($s->c_id, "");
+            // Calculate X and Y of NPC
+            $x = $this->getX($id, $s->s_id, $s->rows);
+            $y = $this->getY($id, $s->s_id, $s->rows, $x);
+            $this->query('UPDATE ' . $uni . '_Buildings SET `cluster` = \'' . $c->name . '\' WHERE id = ' . $id);
+            $this->query('UPDATE ' . $uni . '_Buildings SET `sector` = \'' . $s->name . '\' WHERE id = ' . $id);
+            $this->addBuildingStock($uni, $image, $id);
+        }
+        $this->query('UPDATE ' . $uni . '_Buildings SET `x` = ' . $x . ' WHERE id = ' . $id);
+        $this->query('UPDATE ' . $uni . '_Buildings SET `y` = ' . $y . ' WHERE id = ' . $id);
+        $this->query('UPDATE ' . $uni . '_Buildings SET `image` = \'' . $image . '\' WHERE id = ' . $id);
+        $this->query('UPDATE ' . $uni . '_Buildings SET `spotted` = UTC_TIMESTAMP() WHERE id = ' . $id);
+        $this->query('UPDATE ' . $uni . '_Buildings SET `updated` = UTC_TIMESTAMP() WHERE id = ' . $id);
 
 
-            $this->query('UPDATE ' . $uni . '_Maps SET `fg` = \'' . $image . '\', `fg_spotted` = UTC_TIMESTAMP(), `fg_updated` = UTC_TIMESTAMP() WHERE id = ' . $id);
-        }
+        $this->query('UPDATE ' . $uni . '_Maps SET `fg` = \'' . $image . '\', `fg_spotted` = UTC_TIMESTAMP(), `fg_updated` = UTC_TIMESTAMP() WHERE id = ' . $id);
+
+        return true;
     }
-    public function addBuildingStock($uni, $image, $id)
+
+    public function addBuildingStock(string $uni, string $image, ?int $id): bool
     {
+        if (is_null($id)) {
+            return false;
+        }
+
         if (empty($this->db)) {
             $this->connect2();
         }
-        if ($id) {
-            $this->query('SELECT res,upkeep FROM Pardus_Buildings_Data b, Pardus_Upkeep_Data u WHERE b.name = u.name AND b.image = \'' . $image . '\'');
-            while ($r = $this->nextObject()) {
-                $res[] = $r;
+
+        $this->query('SELECT res,upkeep FROM Pardus_Buildings_Data b, Pardus_Upkeep_Data u WHERE b.name = u.name AND b.image = \'' . $image . '\'');
+        while ($r = $this->nextObject()) {
+            $res[] = $r;
+        }
+        if ($res) {
+            foreach ($res as $r) {
+                $this->query('INSERT INTO ' . $uni . '_New_Stock (id,name) VALUES (' . $id . ',\'' . $r->res . '\')');
             }
-            if ($res) {
-                foreach ($res as $r) {
-                    $this->query('INSERT INTO ' . $uni . '_New_Stock (id,name) VALUES (' . $id . ',\'' . $r->res . '\')');
-                }
-            }
-            $this->query('UPDATE ' . $uni . '_Buildings SET stock_updated = UTC_TIMESTAMP() WHERE id = ' . $id);
         }
+        $this->query('UPDATE ' . $uni . '_Buildings SET stock_updated = UTC_TIMESTAMP() WHERE id = ' . $id);
+        
+        return false;
     }
-    public function removeBuildingStock($uni, $id)
+
+    public function removeBuildingStock(string $uni, ?int $id): bool
     {
+        if (is_null($id)) {
+            return false;
+        }
+
         if (empty($this->db)) {
             $this->connect2();
         }
-        if ($id) {
-            $this->query('DELETE FROM ' . $uni . '_New_Stock WHERE id = ' . $id);
-        }
+
+        $this->query('DELETE FROM ' . $uni . '_New_Stock WHERE id = ' . $id);
+
+        return false;
     }
-    public function removeBuilding($uni, $id, $sb)
+
+    public function removeBuilding(string $uni, ?int $id, int $sb)
     {
+        if (is_null($id)) {
+            return false;
+        }
+
         if (empty($this->db)) {
             $this->connect2();
         }
-        if ($id) {
-            $this->query('UPDATE ' . $uni . '_Maps SET `fg` = NULL , `fg_spotted` = UTC_TIMESTAMP(), `fg_updated` = UTC_TIMESTAMP() WHERE id = ' . $id);
-            $this->query('DELETE FROM ' . $uni . '_Buildings WHERE id = ' . $id);
-            $this->query('DELETE FROM ' . $uni . '_New_Stock WHERE id = ' . $id);
-        }
+
+        $this->query('UPDATE ' . $uni . '_Maps SET `fg` = NULL , `fg_spotted` = UTC_TIMESTAMP(), `fg_updated` = UTC_TIMESTAMP() WHERE id = ' . $id);
+        $this->query('DELETE FROM ' . $uni . '_Buildings WHERE id = ' . $id);
+        $this->query('DELETE FROM ' . $uni . '_New_Stock WHERE id = ' . $id);
+
         if ($sb) {
             $this->query('DELETE FROM ' . $uni . '_Test_Missions WHERE source_id = ' . $id);
             $this->query('DELETE FROM ' . $uni . '_Squadrons WHERE id = ' . $id);
             //$this->query('DELETE FROM ' . $uni . '_Equipment WHERE id = ' . $id);
         }
+
+        return true;
     }
-    public function updateMapFG($uni, $image, $id)
+
+    public function updateMapFG(string $uni, string $image, ?int $id): bool
     {
-        if (empty($this->db)) {
-            $this->connect2();
+        if (is_null($id)) {
+            return false;
         }
-        if ($id) {
-            $this->query('UPDATE ' . $uni . '_Maps SET `fg` = \'' . $image . '\' , `fg_updated` = UTC_TIMESTAMP() WHERE id = ' . $id);
-        }
-    }
-    public function updateMapBG($uni, $image, $id)
-    {
-        if (empty($this->db)) {
-            $this->connect2();
-        }
-        if ($id) {
-            $this->query('UPDATE ' . $uni . '_Maps SET `bg` = \'' . $image . '\' WHERE id = ' . $id);
-        }
-    }
-    public function updateMapNPC($uni, $image, $id, $cloaked, $nid = null)
-    {
+
         if (empty($this->db)) {
             $this->connect2();
         }
 
-        if ($id) {
-            if ($cloaked) {
-                $stmt = $this->db->prepare("UPDATE {$uni}_Maps SET `npc_cloaked` = 1, `npc_updated` = UTC_TIMESTAMP() WHERE id = ?");
-                $stmt->bind_param('i', $id);
+        $this->query('UPDATE ' . $uni . '_Maps SET `fg` = \'' . $image . '\' , `fg_updated` = UTC_TIMESTAMP() WHERE id = ' . $id);
+        
+        return true;
+    }
+
+    public function updateMapBG(string $uni, string $image, ?int $id)
+    {
+        if (is_null($id)) {
+            return false;
+        }
+
+        if (empty($this->db)) {
+            $this->connect2();
+        }
+
+        $this->query('UPDATE ' . $uni . '_Maps SET `bg` = \'' . $image . '\' WHERE id = ' . $id);
+        
+        return true;
+    }
+
+    public function updateMapNPC(string $uni, string $image, ?int $id, int $cloaked, ?int $nid = null): bool
+    {
+        if (is_null($id)) {
+            return false;
+        }
+
+        if (empty($this->db)) {
+            $this->connect2();
+        }
+
+        if ($cloaked) {
+            $stmt = $this->db->prepare("UPDATE {$uni}_Maps SET `npc_cloaked` = 1, `npc_updated` = UTC_TIMESTAMP() WHERE id = ?");
+            $stmt->bind_param('i', $id);
+            $stmt->execute();
+            $stmt->close();
+
+            $stmt = $this->db->prepare("UPDATE {$uni}_Test_Npcs SET cloaked = 1, updated = UTC_TIMESTAMP() WHERE (deleted IS NULL OR deleted = 0) AND id = ?");
+            $stmt->bind_param('i', $id);
+            $stmt->execute();
+            $stmt->close();
+
+            if ($nid) {
+                $stmt = $this->db->prepare("UPDATE {$uni}_Test_Npcs SET `nid` = ? WHERE (deleted IS NULL OR deleted = 0) AND id = ?");
+                $stmt->bind_param('ii', $nid, $id);
                 $stmt->execute();
                 $stmt->close();
+            }
+        } else {
+            $stmt = $this->db->prepare("UPDATE {$uni}_Maps SET npc = ?, `npc_cloaked` = NULL, `npc_updated` = UTC_TIMESTAMP() WHERE id = ?");
+            $stmt->bind_param('si', $image, $id);
+            $stmt->execute();
+            $stmt->close();
 
-                $stmt = $this->db->prepare("UPDATE {$uni}_Test_Npcs SET cloaked = 1, updated = UTC_TIMESTAMP() WHERE (deleted IS NULL OR deleted = 0) AND id = ?");
-                $stmt->bind_param('i', $id);
+            $stmt = $this->db->prepare("UPDATE {$uni}_Test_Npcs SET cloaked = NULL, updated = UTC_TIMESTAMP() WHERE (deleted IS NULL OR deleted = 0) AND id = ?");
+            $stmt->bind_param('i', $id);
+            $stmt->execute();
+            $stmt->close();
+
+            if ($nid) {
+                $stmt = $this->db->prepare("UPDATE {$uni}_Test_Npcs SET `nid` = ? WHERE (deleted IS NULL OR deleted = 0) AND id = ?");
+                $stmt->bind_param('ii', $nid, $id);
                 $stmt->execute();
                 $stmt->close();
-
-                if ($nid) {
-                    $stmt = $this->db->prepare("UPDATE {$uni}_Test_Npcs SET `nid` = ? WHERE (deleted IS NULL OR deleted = 0) AND id = ?");
-                    $stmt->bind_param('ii', $nid, $id);
-                    $stmt->execute();
-                    $stmt->close();
-                }
-            } else {
-                $stmt = $this->db->prepare("UPDATE {$uni}_Maps SET npc = ?, `npc_cloaked` = NULL, `npc_updated` = UTC_TIMESTAMP() WHERE id = ?");
-                $stmt->bind_param('si', $image, $id);
-                $stmt->execute();
-                $stmt->close();
-
-                $stmt = $this->db->prepare("UPDATE {$uni}_Test_Npcs SET cloaked = NULL, updated = UTC_TIMESTAMP() WHERE (deleted IS NULL OR deleted = 0) AND id = ?");
-                $stmt->bind_param('i', $id);
-                $stmt->execute();
-                $stmt->close();
-
-                if ($nid) {
-                    $stmt = $this->db->prepare("UPDATE {$uni}_Test_Npcs SET `nid` = ? WHERE (deleted IS NULL OR deleted = 0) AND id = ?");
-                    $stmt->bind_param('ii', $nid, $id);
-                    $stmt->execute();
-                    $stmt->close();
-                }
             }
         }
+        
+        return true;
     }
 
-    public function removeMission($uni, $id)
+    public function removeMission(string $uni, int $id): bool
     {
+        if (is_null($id)) {
+            return false;
+        }
+
         if (empty($this->db)) {
             $this->connect2();
         }
@@ -465,7 +532,7 @@ class MySqlDB
             $this->query('DELETE FROM ' . $uni . '_Test_Missions WHERE source_id = ' . $id);
         }
     }
-    public function removeWH($uni, $id)
+    public function removeWH(string $uni, int $id)
     {
         if (empty($this->db)) {
             $this->connect2();
@@ -474,7 +541,7 @@ class MySqlDB
             $this->query('UPDATE ' . $uni . '_Maps SET `fg` = NULL , `wormhole` = NULL WHERE id = ' . $id);
         }
     }
-    public function pardusWHStatus($uni)
+    public function pardusWHStatus(string $uni)
     {
         if (empty($this->db)) {
             $this->connect2();
@@ -498,5 +565,53 @@ class MySqlDB
             $this->query('UPDATE ' . $uni . '_Maps SET `fg` = \'foregrounds/wormholeseal_open.png\' , `fg_updated` = UTC_TIMESTAMP() WHERE id != ' . $closedWH . ' and id != ' . $closedPWH . ' and id in (162194,160536,139222,163055,159205,159794,151630,156058)');
             $this->query('UPDATE ' . $uni . '_Maps SET `fg` = \'foregrounds/wormholeseal_closed.png\' , `fg_updated` = UTC_TIMESTAMP() WHERE (id = ' . $closedWH . ' or id = ' . $closedPWH . ') and id in (162194,160536,139222,163055,159205,159794,151630,156058)');
         }
+    }
+
+    public function addMap(string $uni, string $image, int $id, int $sb) {
+        if (empty($this->db)) { $this->connect(); }
+        if ($id) {
+            $this->query('INSERT INTO ' . $uni . '_Maps (`id`, `bg`, `security`) VALUES (' . $id . ',\'' . $image . '\' , 0)');
+            if ($sb) {
+                $this->query('SELECT * FROM ' . $uni . '_Buildings WHERE id = ' . $sb);
+                $b = $this->nextObject();
+                $this->query('UPDATE ' . $uni . '_Maps SET cluster = \'' . $b->cluster . '\' WHERE id = ' . $id);
+                $this->query('UPDATE ' . $uni . '_Maps SET sector = \'' . $b->sector . '\' WHERE id = ' . $id);
+                $x = $this->getX($id,$b->starbase,13);
+                $y = $this->getY($id,$b->starbase,13,$x);
+                $this->query('UPDATE ' . $uni . '_Maps SET x = ' . $x . ' WHERE id = ' . $id);
+                $this->query('UPDATE ' . $uni . '_Maps SET y = ' . $y . ' WHERE id = ' . $id);					
+            } else {
+                $s = $this->getSector($id,"");
+                $c = $this->getCluster($s->c_id,"");
+                $this->query('UPDATE ' . $uni . '_Maps SET cluster = \'' . $c->name . '\' WHERE id = ' . $id);
+                $this->query('UPDATE ' . $uni . '_Maps SET sector = \'' . $s->name . '\' WHERE id = ' . $id);
+                $x = $this->getX($id,$s->s_id,$s->rows);
+                $y = $this->getY($id,$s->s_id,$s->rows,$x);
+                $this->query('UPDATE ' . $uni . '_Maps SET x = ' . $x . ' WHERE id = ' . $id);
+                $this->query('UPDATE ' . $uni . '_Maps SET y = ' . $y . ' WHERE id = ' . $id);
+            }
+        }
+    }
+
+    public function execute(string $sql, array $params): object|false|null
+    {
+        if (!$this->db) {
+            $this->connect();
+        }
+        
+        $types = array_shift($params); // First element is the types string
+        $values = $params; // Remaining elements are the values
+
+        $stmt = $this->prepare($sql);
+        $stmt->bind_param($types, ...$values);
+        $stmt->execute();
+        
+        $result = $stmt->get_result();
+        $return = $result->fetch_object(); // Fetch object
+
+        $stmt->close();
+        $result->free();
+
+        return $return;
     }
 }

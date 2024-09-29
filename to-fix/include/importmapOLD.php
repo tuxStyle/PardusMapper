@@ -15,8 +15,6 @@ require_once("mysqldb.php");
 $db = new mysqldb();
 $debug = true;
 
-date_default_timezone_set("UTC");
-
 // Set Univers Variable and Session Name
 if (!isset($_REQUEST['uni'])) {
 	exit;

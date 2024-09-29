@@ -1,7 +1,13 @@
-<?php
+<?php 
+declare(strict_types=1);
+require_once('../app/settings.php');
 
-require_once('../include/mysqldb.php');
-$db = new mysqldb;
+use Pardusmapper\Core\Settings;
+use Pardusmapper\Core\MySqlDB;
+
+header('Access-Control-Allow-Origin: ' . Settings::$BASE_URL);
+
+$db = new MySqlDB();
 
 $uni = $db->protect($_POST['uni']);
 session_name($uni);
@@ -16,6 +22,7 @@ if (isset($_COOKIE['imagepack'])) {
 	if ($img_url[count($img_url) - 1] != '/')	{$img_url .= '/'; }
 }
 
+$sector = [];
 $db->query('SELECT * from Pardus_Sectors order by name');
 while ($s = $db->nextObject()) { $sector[] = $s; }
 
@@ -50,4 +57,3 @@ foreach ($sector as $key => $s) {
 }
 $return .= '</table>';
 echo $return;
-?>

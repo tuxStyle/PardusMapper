@@ -99,7 +99,6 @@ $db->query($query);
 while ($q = $db->nextObject()) { 
 	//Calculate Ticks Passed
 	$format = '%F %T';
-	date_default_timezone_set('UTC');
 	$ts = strtotime($q->stock_updated);
 	$date = new DateTime("@$ts");
 	$date->setTime(1,25,0);

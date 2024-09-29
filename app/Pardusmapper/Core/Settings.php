@@ -1,11 +1,17 @@
 <?php
-
 declare(strict_types=1);
 
 namespace Pardusmapper\Core;
 
 class Settings
 {
+    public const UNIVERSE = ['Orion', 'Artemis', 'Pegasus'];
+    public const CLUSTERS = [
+        'CORE', 
+        'EKC', 'EPR', 'ESC', 'EWS', 'FHC', 'FRC', 'FSH', 'GAP', 'LANE', 'NPR', 
+        'PEC', 'PFC', 'PUC', 'SPLIT', 'SPR', 'UKC', 'UNR', 'URC', 'WPR'
+    ];
+    
     public static ?int $TESTING = 0;
     public static ?int $DEBUG = 0;
     public static ?int $SHOW_EXCEPTIONS = 0;

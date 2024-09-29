@@ -213,8 +213,6 @@ if (isset($_REQUEST['bt'])) {
 	$cap = $fs;
 	$bt = explode('~', $db->real_escape_string($_REQUEST['bt']));
 
-	date_default_timezone_set('UTC');
-
 	//$date = getdate(strtotime($b->stock_updated));
 	//$tick = mktime(1,25,0,$date['mon'],$date['mday'],$date['year']);
 	$ts = strtotime($b->stock_updated);

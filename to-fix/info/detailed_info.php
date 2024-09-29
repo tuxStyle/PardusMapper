@@ -33,7 +33,6 @@ $db->query('SELECT *, UTC_TIMESTAMP() "today" FROM ' . $uni . '_Test_Npcs WHERE 
 $npc_loc = $db->nextObject();
 
 $return = '';
-date_default_timezone_set("UTC");
 
 if ($b_loc) {
 	$loc = $b_loc;
@@ -54,7 +53,6 @@ if ($b_loc) {
 
 	//Calculate Ticks Passed
 	$format = '%F %T';
-	date_default_timezone_set('UTC');
 	$ts = strtotime($loc->stock_updated);
 	$date = new DateTime("@$ts");
 	$date->setTime(1,25,0);

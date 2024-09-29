@@ -1,3 +1,6 @@
+<?php
+declare(strict_types=1);
+?>
 <table id="header_table" border="2" cellspacing="5" cellpadding="5">
 	<?php 
 		echo '<tr><td><a href="' . $base_url . '">Change Universe</a></td></tr>';

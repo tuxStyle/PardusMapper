@@ -41,8 +41,6 @@ $return = '';
 
 $sort_by = '';
 
-date_default_timezone_set("UTC");
-
 if (strlen($sort)) {
 	$sort_by = ' ORDER BY ';
 	for($i=0;$i<strlen($sort);$i++) {

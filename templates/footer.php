@@ -1,4 +1,4 @@
-
+<?php declare(strict_types=1); ?>
 <div id="6.9"><h3><a href="<?php echo $base_url . '/' . $uni; ?>/download/?dl=1">Download<br />User Script<br /> v 6.9</a></h3></div>
 <div id="paypal">
 <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top">

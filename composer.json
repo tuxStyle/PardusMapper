@@ -4,11 +4,12 @@
     },
     "autoload": {
         "psr-4": {
-            "\\Pardusmapper\\Core\\": "app/Core"
+            "\\Pardusmapper\\": "app/Pardusmapper"
         },
         "psr-0": {
         },
         "files": [
+            "app/helpers.php",
             "app/functions.php"
         ]
     },
