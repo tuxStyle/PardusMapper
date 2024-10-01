@@ -1,7 +1,11 @@
 {
-    "require-dev": {
-        "rector/rector": "^1.2"
-    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "config": {
+		"platform": {
+			"php": "8.3"
+		}
+	},
     "autoload": {
         "psr-4": {
             "\\Pardusmapper\\": "app/Pardusmapper"
@@ -15,5 +19,16 @@
     },
     "require": {
         "vlucas/phpdotenv": "^5.6"
-    }
+    },
+    "require-dev": {
+        "rector/rector": "^1.2"
+    },
+    "scripts": {
+		"post-install-cmd": [
+			"composer dump-autoload --optimize"
+		],
+		"post-update-cmd": [
+			"composer dump-autoload --optimize"
+		]
+	}
 }

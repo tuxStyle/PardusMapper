@@ -17,8 +17,8 @@ $shownpc = 0;
 $uni = Request::uni();
 $security = Request::security();
 $sector = Request::sector();
-$x2 = Request::x2();
-$y2 = Request::y2();
+$x2 = Request::x(key: 'x2');
+$y2 = Request::y(key: 'y2');
 
 // Universe and Sector name are required
 http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
@@ -31,10 +31,10 @@ session_start();
 // Load Cluster and Sector objects
 if (!is_null($sector)) {
     $s = DB::sector(sector: $sector); // Fetch the sector object
-    http_response(is_null($s), ApiResponse::NOTFOUND, sprintf('sector not found: %s', $sector)); // exit if not found in DB
+    http_response(is_null($s), ApiResponse::BADREQUEST, sprintf('sector not found: %s', $sector)); // exit if not found in DB
 
-    $cluster = DB::cluster($sector); // Fetch the cluster object
-    http_response(is_null($s), ApiResponse::NOTFOUND, sprintf('cluster not found for sector: %s', $sector)); // exit if not found in DB
+    $cluster = DB::cluster(sector: $sector); // Fetch the cluster object
+    http_response(is_null($cluster), ApiResponse::BADREQUEST, sprintf('cluster not found for sector: %s', $sector)); // exit if not found in DB
 
     $code = $cluster->code;
 }

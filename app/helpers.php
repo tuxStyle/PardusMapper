@@ -1,6 +1,13 @@
 <?php
 declare(strict_types=1);
 
+if (!function_exists('vnull')) {
+    function vnull(mixed $value): mixed
+    {
+        return $value === '' ? null : $value;
+    }
+}
+
 if (!function_exists('base_path')) {
     function base_path(string $path = ''): string
     {
@@ -128,9 +135,9 @@ if (!function_exists('xd')) {
             $what = $what[0];
         }
 
-        if (is_array($what)) {
-            $what = print_r($what, true);
-        }
+        // if (is_array($what)) {
+        //     $what = print_r($what, true);
+        // }
 
         echo "\n<xmp>\n";
         var_dump ($what);

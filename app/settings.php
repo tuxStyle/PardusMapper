@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+ob_start();
+
 define('ROOT', dirname(__DIR__));
 date_default_timezone_set("UTC");
 
@@ -8,12 +10,16 @@ require_once(dirname(__DIR__) . '/vendor/autoload.php');
 
 use Pardusmapper\Core\Environment;
 use Pardusmapper\Core\Settings;
+use Pardusmapper\Request;
 
 Environment::load();
 Settings::init();
 
 $testing = Settings::$TESTING;
 $debug = Settings::$DEBUG;
+
+// Load debug from REQUEST, if not valid, use $debug from settings
+$debug = Request::debug(default: Settings::$DEBUG);
 
 $base_url = Settings::$BASE_URL;
 $img_url = Settings::$IMG_DIR;

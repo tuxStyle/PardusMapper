@@ -3,8 +3,10 @@ declare(strict_types=1);
 
 namespace Pardusmapper\Core;
 
+use Pardusmapper\Coordinates;
 use \Pardusmapper\Core\Instance;
 use \Pardusmapper\Core\Settings;
+use Pardusmapper\DB;
 
 class MySqlDB
 {
@@ -206,48 +208,62 @@ class MySqlDB
         return @mysqli_data_seek($this->queryID, $seek);
     }
 
-    // Get Sector and Cluster Info
-    public function getSector(?int $id, ?string $sector): ?object
+    public function free(): bool
     {
         if (empty($this->db)) {
             $this->connect();
         }
-        if ($id) {
-            $this->query('SELECT * FROM Pardus_Sectors WHERE s_id <= ' . $id . ' ORDER BY s_id DESC LIMIT 1');
-        } else {
-            $this->query('SELECT * FROM Pardus_Sectors WHERE name = \'' . $sector . '\'');
-        }
-        return $this->nextObject();
+
+        if ($this->queryID instanceof \mysqli_result) {
+            $this->queryID->free();
+            return true;
+        } 
+
+        return false;
     }
 
-    public function getCluster(?int $id, ?string $code): ?object
-    {
-        if (empty($this->db)) {
-            $this->connect();
-        }
-        if ($id) {
-            $this->query('SELECT * FROM Pardus_Clusters WHERE c_id = ' . $id);
-        } else {
-            $this->query('SELECT * FROM Pardus_Clusters WHERE code = \'' . $code . '\'');
-        }
-        return $this->nextObject();
-    }
+    // // Get Sector and Cluster Info
+    // public function getSector(?int $id, ?string $sector): ?object
+    // {
+    //     if (empty($this->db)) {
+    //         $this->connect();
+    //     }
+    //     if ($id) {
+    //         $this->query('SELECT * FROM Pardus_Sectors WHERE s_id <= ' . $id . ' ORDER BY s_id DESC LIMIT 1');
+    //     } else {
+    //         $this->query('SELECT * FROM Pardus_Sectors WHERE name = \'' . $sector . '\'');
+    //     }
+    //     return $this->nextObject();
+    // }
 
-    // Coordinate Calculations
-    public function getX($id, $s_id, $rows)
-    {
-        return floor(($id - $s_id) / $rows);
-    }
+    // public function getCluster(?int $id, ?string $code): ?object
+    // {
+    //     if (empty($this->db)) {
+    //         $this->connect();
+    //     }
+    //     if ($id) {
+    //         $this->query('SELECT * FROM Pardus_Clusters WHERE c_id = ' . $id);
+    //     } else {
+    //         $this->query('SELECT * FROM Pardus_Clusters WHERE code = \'' . $code . '\'');
+    //     }
+    //     return $this->nextObject();
+    // }
 
-    public function getY($id, $s_id, $rows, $x)
-    {
-        return $id - ($s_id + ($x * $rows));
-    }
+    // // Coordinate Calculations
+    // public function getX($id, $s_id, $rows)
+    // {
+    //     return floor(($id - $s_id) / $rows);
+    // }
 
-    public function getID($s_id, $rows, $x, $y)
-    {
-        return $s_id + ($rows * $x) + $y;
-    }
+    // public function getY($id, $s_id, $rows, $x)
+    // {
+    //     return $id - ($s_id + ($x * $rows));
+    // }
+
+    // public function getID($s_id, $rows, $x, $y)
+    // {
+    //     return $s_id + ($rows * $x) + $y;
+    // }
 
     // NPC Management
     public function addNPC(string $uni, string $image, ?int $id, ?string $sector, int $x, int $y, ?int $nid = null)
@@ -257,15 +273,15 @@ class MySqlDB
         }
 
         if ($id) {
-            $s = $this->getSector($id, "");  // Here, $id is passed as expected
-            $c = $this->getCluster($s->c_id, "");  // Assuming this is correct
-            $x = $this->getX($id, $s->s_id, $s->rows);
-            $y = $this->getY($id, $s->s_id, $s->rows, $x);
+            $s = DB::sector(id: $id);  // Here, $id is passed as expected
+            $c = DB::cluster(id: $s->c_id);  // Assuming this is correct
+            $x = Coordinates::getX($id, $s->s_id, $s->rows);
+            $y = Coordinates::getY($id, $s->s_id, $s->rows, $x);
         } else {
             // Pass null as the first argument when you are using the sector name
-            $s = $this->getSector(null, $sector);  // $id is null here, so we fetch by sector
-            $c = $this->getCluster($s->c_id, "");  // Assuming this is correct
-            $id = $this->getID($s->s_id, $s->rows, $x, $y);
+            $s = DB::sector(sector: $sector);  // $id is null here, so we fetch by sector
+            $c = DB::cluster(id: $s->c_id);  // Assuming this is correct
+            $id = Coordinates::getID($s->s_id, $s->rows, $x, $y);
         }
 
         $this->query('SELECT * FROM Pardus_Npcs WHERE image = \'' . $image . '\'');
@@ -348,18 +364,18 @@ class MySqlDB
         if ($sb) {
             $this->query('SELECT * FROM ' . $uni . '_Buildings WHERE id = ' . $id);
             $b = $this->nextObject();
-            $x = $this->getX($id, $b->starbase, 13);
-            $y = $this->getY($id, $b->starbase, 13, $x);
+            $x = Coordinates::getX($id, $b->starbase, 13);
+            $y = Coordinates::getY($id, $b->starbase, 13, $x);
             $this->query('UPDATE ' . $uni . '_Buildings SET `cluster` = \'' . $b->cluster . '\' WHERE id = ' . $id);
             $this->query('UPDATE ' . $uni . '_Buildings SET `sector` = \'' . $b->sector . '\' WHERE id = ' . $id);
         } else {
             // Get Sector Info
-            $s = $this->getSector($id, "");
+            $s = DB::sector(id: $id);  // Here, $id is passed as expected
             // Get Cluster Info
-            $c = $this->getCluster($s->c_id, "");
+            $c = DB::cluster(id: $s->c_id);  // Assuming this is correct
             // Calculate X and Y of NPC
-            $x = $this->getX($id, $s->s_id, $s->rows);
-            $y = $this->getY($id, $s->s_id, $s->rows, $x);
+            $x = Coordinates::getX($id, $s->s_id, $s->rows);
+            $y = Coordinates::getY($id, $s->s_id, $s->rows, $x);
             $this->query('UPDATE ' . $uni . '_Buildings SET `cluster` = \'' . $c->name . '\' WHERE id = ' . $id);
             $this->query('UPDATE ' . $uni . '_Buildings SET `sector` = \'' . $s->name . '\' WHERE id = ' . $id);
             $this->addBuildingStock($uni, $image, $id);
@@ -576,42 +592,66 @@ class MySqlDB
                 $b = $this->nextObject();
                 $this->query('UPDATE ' . $uni . '_Maps SET cluster = \'' . $b->cluster . '\' WHERE id = ' . $id);
                 $this->query('UPDATE ' . $uni . '_Maps SET sector = \'' . $b->sector . '\' WHERE id = ' . $id);
-                $x = $this->getX($id,$b->starbase,13);
-                $y = $this->getY($id,$b->starbase,13,$x);
+                $x = Coordinates::getX($id,$b->starbase,13);
+                $y = Coordinates::getY($id,$b->starbase,13,$x);
                 $this->query('UPDATE ' . $uni . '_Maps SET x = ' . $x . ' WHERE id = ' . $id);
                 $this->query('UPDATE ' . $uni . '_Maps SET y = ' . $y . ' WHERE id = ' . $id);					
             } else {
-                $s = $this->getSector($id,"");
-                $c = $this->getCluster($s->c_id,"");
+                $s = DB::sector(id: $id);  // Here, $id is passed as expected
+                $c = DB::cluster(id: $s->c_id);  // Assuming this is correct
                 $this->query('UPDATE ' . $uni . '_Maps SET cluster = \'' . $c->name . '\' WHERE id = ' . $id);
                 $this->query('UPDATE ' . $uni . '_Maps SET sector = \'' . $s->name . '\' WHERE id = ' . $id);
-                $x = $this->getX($id,$s->s_id,$s->rows);
-                $y = $this->getY($id,$s->s_id,$s->rows,$x);
+                $x = Coordinates::getX($id,$s->s_id,$s->rows);
+                $y = Coordinates::getY($id,$s->s_id,$s->rows,$x);
                 $this->query('UPDATE ' . $uni . '_Maps SET x = ' . $x . ' WHERE id = ' . $id);
                 $this->query('UPDATE ' . $uni . '_Maps SET y = ' . $y . ' WHERE id = ' . $id);
             }
         }
     }
 
-    public function execute(string $sql, array $params): object|false|null
+    /**
+     * Execute prepared query and return data
+     *
+     * @param string $sql
+     * @param array|null $params
+     * @return object|false|null
+     */
+    public function execute(string $sql, ?array $params = null): object|false|null
     {
         if (!$this->db) {
             $this->connect();
         }
-        
-        $types = array_shift($params); // First element is the types string
-        $values = $params; // Remaining elements are the values
 
+        $this->free();
+        
+        // prepare query
         $stmt = $this->prepare($sql);
-        $stmt->bind_param($types, ...$values);
-        $stmt->execute();
         
+        // bind params 
+        if (is_array($params) && count($params) >= 2) {
+            $types = array_shift($params); // First element is the types string
+            $values = $params; // Remaining elements are the values
+            $stmt->bind_param($types, ...$values);    
+        }
+
+        // Execute the query
+        $stmt->execute();        
         $result = $stmt->get_result();
-        $return = $result->fetch_object(); // Fetch object
-
         $stmt->close();
-        $result->free();
 
-        return $return;
+        // Handle query errors
+        if ($result === false) {
+            error_log($this->db->errno . " : " . $this->db->error);
+            throw new \Exception("Database query error: " . $this->db->error);
+        }
+
+        // Assign only if the result is a mysqli_result, otherwise leave it null
+        if ($result instanceof \mysqli_result) {
+            $this->queryID = $result;
+        } else {
+            $this->queryID = null;
+        }
+
+        return $result;
     }
 }

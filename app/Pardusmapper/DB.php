@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Pardusmapper;
 
+use Pardusmapper\Core\ApiResponse;
 use Pardusmapper\Core\MySqlDB;
 
 class DB
@@ -10,22 +11,34 @@ class DB
     /**
      * Get cluster by sector
      *
-     * @param string $sector
-     * @return object|false|null
+     * @param integer|null $id
+     * @param string|null $code
+     * @param string|null $sector
+     * @return object|null
      */
-    public static function cluster(?string $sector): object|false|null
+    public static function cluster(?int $id = null, ?string $code = null, ?string $sector = null): object|null
     {
-        $db = MySqlDB::instance();
-
-        if (is_null($sector)) {
+        if (is_null($id) && is_null($code) && is_null($sector)) {
             return null;
         }
 
-        $result = $db->execute('SELECT * FROM Pardus_Clusters WHERE c_id = (SELECT c_id FROM Pardus_Sectors WHERE name = ?)', [
-            's', $sector
-        ]);
+        $db = MySqlDB::instance();
 
-        return $result;
+        if($sector) {
+            $db->execute('SELECT * FROM Pardus_Clusters WHERE c_id = (SELECT c_id FROM Pardus_Sectors WHERE name = ?)', [
+                's', $sector
+            ]);
+        } else if($code) {
+            $db->execute('SELECT * FROM Pardus_Clusters WHERE code = ?', [
+                's', $code
+            ]);
+        } else {
+            $db->execute('SELECT * FROM Pardus_Clusters WHERE c_id = ?', [
+                'i', $id
+            ]);
+        }
+
+        return $db->numRows() === 1 ? $db->fetchObject() : null;
     }
 
     /**
@@ -33,18 +46,18 @@ class DB
      *
      * @param integer|null $id
      * @param string|null $sector
-     * @return object|false|null
+     * @return object|null
      */
-    public static function sector(?int $id = null, ?string $sector = null): object|false|null
+    public static function sector(?int $id = null, ?string $sector = null): object|null
     {
-        $db = MySqlDB::instance();
-
         if (is_null($id) && is_null($sector)) {
             return null;
         }
 
+        $db = MySqlDB::instance();
+
         if($sector) {
-            $result = $db->execute('SELECT * FROM Pardus_Sectors WHERE name = ?', [
+            $db->execute('SELECT * FROM Pardus_Sectors WHERE name = ?', [
                 's', $sector
             ]);
         } else {
@@ -52,11 +65,63 @@ class DB
             // SELECT * FROM Pardus_Sectors WHERE s_id = ?
             // so mysql will not have to scan that many rows
 
-            $result = $db->execute('SELECT * FROM Pardus_Sectors WHERE s_id <= ? ORDER BY s_id DESC LIMIT 1', [
+            $db->execute('SELECT * FROM Pardus_Sectors WHERE s_id <= ? ORDER BY s_id DESC LIMIT 1', [
                 'i', $id
             ]);
         }
 
-        return $result;
+        return $db->numRows() === 1 ? $db->fetchObject() : null;
+    }
+
+    /**
+     * Get map by location id
+     *
+     * @param integer|null $id
+     * @param string|null $universe
+     * @return object|null
+     */
+    public static function map(?int $id, ?string $universe): object|null
+    {
+        http_response(is_null($universe), ApiResponse::BADREQUEST, 'universe is required to load map by location');
+
+        if (is_null($id)) {
+            return null;
+        }
+
+        $db = MySqlDB::instance();
+
+        $db->execute(sprintf('SELECT * FROM %_Maps WHERE id = ?', $universe), [
+            'i', $id
+        ]);
+
+        if ($db->numRows() != 1) {
+            return null;
+        }
+
+        return $db->numRows() === 1 ? $db->fetchObject() : null;
+    }
+
+    /**
+     * Get building by location id
+     *
+     * @param integer|null $id
+     * @param string|null $universe
+     * @return object|null
+     */
+    public static function building(?int $id, ?string $universe): object|null
+    {
+        http_response(is_null($universe), ApiResponse::BADREQUEST, 'universe is required to load map by location');
+
+        if (is_null($id)) {
+            return null;
+        }
+
+        $db = MySqlDB::instance();
+
+        $db->execute(sprintf('SELECT * FROM %_Buildings WHERE id = ?', $universe), [
+            'i', $id
+        ]);
+
+        return $db->numRows() === 1 ? $db->fetchObject() : null;
     }
 }
