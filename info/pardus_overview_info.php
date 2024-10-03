@@ -1,32 +1,42 @@
 <?php
-// if($_SERVER['HTTP_ORIGIN'] == "https://orion.pardus.at")  {  header('Access-Control-Allow-Origin: https://orion.pardus.at'); }
-// if($_SERVER['HTTP_ORIGIN'] == "https://artemis.pardus.at")  {  header('Access-Control-Allow-Origin: https://artemis.pardus.at'); }
-// if($_SERVER['HTTP_ORIGIN'] == "https://pegasus.pardus.at")  {  header('Access-Control-Allow-Origin: https://pegasus.pardus.at'); }
+declare(strict_types=1);
 
-header('Access-Control-Allow-Origin: https://*.pardus.at');
+use Pardusmapper\Core\MySqlDB;
+use Pardusmapper\Core\ApiResponse;
+use Pardusmapper\Request;
+use Pardusmapper\DB;
+use Pardusmapper\CORS;
 
-require_once('../include/mysqldb.php');
-$db = new mysqldb;
+require_once('../app/settings.php');
 
-$uni = $db->protect($_REQUEST['uni']);
-$id = $db->protect($_REQUEST['id']);
+CORS::pardus();
 
-$db->query('SELECT *, UTC_TIMESTAMP() "today" FROM ' . $uni . '_Buildings WHERE id = ' . $id);
-$b_loc = $db->nextObject();
+$db = MySqlDB::instance();
 
-$db->query('SELECT *, UTC_TIMESTAMP() "today"  FROM ' . $uni . '_Test_Npcs WHERE id = ' . $id);
-$npc_loc = $db->nextObject();
+// Set Univers Variable and Session Name
+$uni = Request::uni();
+http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
 
-$db->query('SELECT *, UTC_TIMESTAMP() "today" FROM ' . $uni . '_Maps WHERE id = ' . $id);
-$m = $db->nextObject();
+$id = Request::pint(key: 'id');
+http_response(is_null($id), ApiResponse::BADREQUEST, sprintf('id query parameter is required or invalid: %s', $id ?? 'null'));
+
+$b_loc = DB::building(id: $id, universe: $uni);
+$m = DB::map(id: $id, universe: $uni);
+// the original query here was not ignoring the deleted NPCs
+// 'SELECT *, UTC_TIMESTAMP() "today"  FROM ' . $uni . '_Test_Npcs WHERE id = ' . $id
+// TODO: check if we can ignore the deleted NPCs, we sprobably should as they are not on the pardus mao
+$npc_loc = DB::npc_loc(id: $id, universe: $uni, excludeDeleted: false);
 
 $return = '';
 
 if ($b_loc) {
 	$loc = $b_loc;
-	if ($debug) { print_r($loc);echo '<br>'; }
+	debug($loc);
+
+    $stock = [];
+
 	//Get Resource Data
-	$db->query('SELECT * FROM Pardus_Res_Data');
+	$db->execute('SELECT * FROM Pardus_Res_Data');
 	while ($q = $db->nextObject()) {
 		$res_img[$q->name] = $q->image;
 		$res_id[$q->name] = $q->r_id;
@@ -34,14 +44,18 @@ if ($b_loc) {
 
 	if (strpos($loc->image,"planet") || strpos($loc->image,"starbase") || strpos($loc->image,"outpost")) {
 		// Get Stocking Info for TOs/Planets/SBs
-		$db->query('SELECT * FROM ' . $uni . '_New_Stock WHERE id = ' . $id . ' AND (amount > 0 OR max > 0)');
+        $db->execute(sprintf('SELECT * FROM %s_New_Stock WHERE id = ? AND (amount > 0 OR max > 0)', $uni), [
+            'i', $id
+        ]);
 	} else {
 		// Get Stocking Information
-		$db->query('SELECT * FROM ' . $uni . '_New_Stock WHERE id = ' . $id);
+        $db->execute(sprintf('SELECT * FROM %s_New_Stock WHERE id = ?', $uni), [
+            'i', $id
+        ]);
 	}
 	while($q = $db->nextObject()) { $stock[$res_id[$q->name]] = $q; }
 	// Make sure the Stock is in the correct order
-	if ($stock) { ksort($stock,SORT_NUMERIC); }
+	if ($stock) { ksort($stock, SORT_NUMERIC); }
 
 
 	//Calculate Ticks Passed
@@ -102,20 +116,20 @@ if ($b_loc) {
 			$return .= '<td><font color="#009900"><strong>' . $s->name . '</strong></td>';
 			$amount = $s->amount - $s->min;
 			if ($amount < 0) $amount = 0;
-			$return .= '<td align="right">' . number_format($amount) .'</td>';
+			$return .= '<td align="right">' . number_format((int)$amount) .'</td>';
 			if (strpos($loc->image,"planet") || strpos($loc->image,"starbase")) {
 				$return .= '<td align="right">';
 				if($s->bal != 0) {
-					if ($rs->bal > 0) { $return .= '<font color="#009900"><strong>+' . number_format($s->bal) . '</strong></font>'; }
-					else { $return .= '<font color="#FFAA00"><strong>' . number_format($s->bal) . '</strong></font>'; }
-				} else { $return .= number_format($s->bal); }
+					if ($rs->bal > 0) { $return .= '<font color="#009900"><strong>+' . number_format((int)$s->bal) . '</strong></font>'; }
+					else { $return .= '<font color="#FFAA00"><strong>' . number_format((int)$s->bal) . '</strong></font>'; }
+				} else { $return .= number_format((int)$s->bal); }
 				$return .= '</td>';
 			}
 			$amount = $s->max - $s->amount;
 			if ($amount < 0) $amount = 0;
-			$return .= '<td align="right">' . number_format($amount) . '</td>';
-			$return .= '<td align="right">' . number_format($s->buy) . '</td>';
-			$return .= '<td align="right">' . number_format($s->sell) . '</td>';
+			$return .= '<td align="right">' . number_format((int)$amount) . '</td>';
+			$return .= '<td align="right">' . number_format((int)$s->buy) . '</td>';
+			$return .= '<td align="right">' . number_format((int)$s->sell) . '</td>';
 			//if (!(strpos($loc->image,"planet") || strpos($loc->image,"starbase"))) {
 			//	$return .= (($s->max - $s->amount) > 0) ? '<td align="right">' . number_format($s->max - $s->amount) . '</td>' : '<td align="right">0</td>';
 			//}	
@@ -125,11 +139,11 @@ if ($b_loc) {
 	$return .= '<tr><td colspan="' . $row . '"><hr></td></tr>';
 	$return .= '<tr style="background-color:#003040;">';
 	$return .= '<td colspan="' . floor($row/2) . '">Free Space:</td>';
-	$return .= '<td colspan="' .ceil($row/2) . '" align="right">' . number_format($loc->freespace) . 't</td>';
+	$return .= '<td colspan="' .ceil($row/2) . '" align="right">' . number_format((int)$loc->freespace) . 't</td>';
 	$return .= '</tr>';
 	$return .= '<tr style="background-color:#003040;">';
 	$return .= '<td colspan="' . floor($row/2) . '">Available Credits:</td>';
-	$return .= '<td colspan="' . ceil($row/2) . '" align="right">' . number_format($loc->credit) . '</td>';
+	$return .= '<td colspan="' . ceil($row/2) . '" align="right">' . number_format((int)$loc->credit) . '</td>';
 	$return .= '</tr>';
 	if (!strpos($loc->image,"outpost")) {
 		$return .= '<tr style="background-color:#003040;">';
@@ -147,8 +161,10 @@ if ($b_loc) {
 if ($npc_loc) {
 	$row = 3;
 	$loc = $npc_loc;
-	$db->query('SELECT * FROM Pardus_Npcs WHERE name = \'' . $loc->name . '\'');
-	$npc = $db->nextObject();
+    debug($loc);
+
+	$npc = DB::npc($loc->name);
+    debug($npc);
 	
 	$return .= '<table class="messagestyle" width="210">';
 	$return .= '<tr style="background-color:#003040;">';
@@ -178,7 +194,7 @@ if ($npc_loc) {
 	$return .= '<td align="center">' . $npc->shield . '</td>';
 	$return .= '</tr>';
 	
-		// Calculate Days/Hours/Mins Since last Visited
+    // Calculate Days/Hours/Mins Since last Visited
 	$diff['sec'] = strtotime($loc->today) - strtotime($loc->spotted);
 	$diff['days'] = $diff['sec']/60/60/24;
 	$diff['hours'] = ($diff['days'] - floor($diff['days'])) * 24;
@@ -190,7 +206,7 @@ if ($npc_loc) {
 	$return .= '<td colspan="' . ceil($row/2) . '" align="right">' . $diff['string'] . '</td>';
 	$return .= '</tr>';
 
-		// Calculate Days/Hours/Mins Since last Visited
+    // Calculate Days/Hours/Mins Since last Visited
 	$diff['sec'] = strtotime($loc->today) - strtotime($loc->updated);
 	$diff['days'] = $diff['sec']/60/60/24;
 	$diff['hours'] = ($diff['days'] - floor($diff['days'])) * 24;
@@ -223,5 +239,3 @@ if (!($b_loc || $npc_loc)) {
 $db->close();
 
 echo $return;
-
-?>

@@ -1,0 +1,8 @@
+new MySqlDB() to MySqlDB::instance()
+refactor debug
+refactor session, request, post calls
+move methods from MySqlDB to DB
+finish prepared statements
+move loading from static tables from php files to DB
+re-run rector
+check files for TODO

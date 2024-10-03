@@ -20,6 +20,8 @@ http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query paramet
 $sector = Post::sector();
 $cluster = Post::cluster();
 
+// TODO: sesion start needed?
+
 $npc_list = [];
 $return = '';
 

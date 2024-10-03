@@ -20,10 +20,10 @@ return static function (RectorConfig $rectorConfig): void {
 
     $rectorConfig->paths([
         __DIR__ . '/app',
-        __DIR__ . '/clusters',
         __DIR__ . '/Download',
         __DIR__ . '/include',
         __DIR__ . '/info',
+        __DIR__ . '/templates',
         __DIR__ . '/unused',
     ]);
 

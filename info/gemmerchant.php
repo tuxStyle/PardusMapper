@@ -1,25 +1,39 @@
 <?php
+declare(strict_types=1);
 
-require_once('../include/mysqldb.php');
-$db = new mysqldb;
+use Pardusmapper\Core\MySqlDB;
+use Pardusmapper\Core\ApiResponse;
+use Pardusmapper\Request;
+use Pardusmapper\DB;
+use Pardusmapper\CORS;
+use Pardusmapper\Session;
 
-$uni = $db->protect($_POST['uni']);
+require_once('../app/settings.php');
+
+CORS::mapper();
+
+$db = MySqlDB::instance();
+
+// Set Univers Variable and Session Name
+$uni = Request::uni();
+http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
+
 session_name($uni);
-
 session_start();
 
-$security = 0;
-if (isset($_SESSION['security'])) { $security = $db->protect($_SESSION['security']); }
+$security = Session::security();
 
-if (isset($_COOKIE['imagepack'])) {
-	$img_url = $_COOKIE['imagepack'];
-	if ($img_url[count($img_url) - 1] != '/')	{$img_url .= '/'; }
-}
 
-$db->query('SELECT *,  UTC_TIMESTAMP() "today" FROM `' . $uni . '_Maps` WHERE fg LIKE \'%gem_merchant%\' and fg_spotted > (UTC_TIMESTAMP() - INTERVAL 30 DAY)');
+$building = [];
+$sector = [];
+$gem = [];
+
+$db->execute(sprintf('SELECT *,  UTC_TIMESTAMP() "today" FROM %s_Maps WHERE fg LIKE ? and fg_spotted > (UTC_TIMESTAMP() - INTERVAL 30 DAY)', $uni), [
+    's', '%gem_merchant%'
+]);
 while ($b = $db->nextObject()) { $building[] = $b; }
 
-$db->query('SELECT * from Pardus_Sectors');
+$db->execute('SELECT * from Pardus_Sectors');
 while ($s = $db->nextObject()) { $sector[] = $s; }
 	
 foreach ($building as $b) {
@@ -27,10 +41,11 @@ foreach ($building as $b) {
 		$start = $s->s_id;
 		$end = $start + ($s->rows * $s->cols);
 		if ($start <= $b->id && $b->id <= $end) {
-			$db->query('SELECT * FROM Pardus_Clusters where c_id = ' . $s->c_id);
-			$gem[$b->id][0] = $b;
+            $c = DB::cluster(id: $s->c_id);
+			
+            $gem[$b->id][0] = $b;
 			$gem[$b->id][1] = $s;
-			$gem[$b->id][2] = $db->nextObject();
+			$gem[$b->id][2] = $c;
 		}
 	}
 }
@@ -81,4 +96,3 @@ foreach ($gem as $key => $g) {
 }
 $return .= '</table>';
 echo $return;
-?>

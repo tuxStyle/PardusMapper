@@ -147,9 +147,10 @@ class DB
      *
      * @param int|null $id
      * @param string|null $universe
+     * @param bool|null $excludeDeleted
      * @return object|null
      */
-    public static function npc_loc(?int $id,  ?string $universe): object|null
+    public static function npc_loc(?int $id,  ?string $universe, ?bool $excludeDeleted = true): object|null
     {
         http_response(is_null($universe), ApiResponse::BADREQUEST, 'universe is required to load npc by location');
 
@@ -159,9 +160,15 @@ class DB
 
         $db = MySqlDB::instance();
 
-        $db->execute(sprintf('SELECT *, UTC_TIMESTAMP() AS today FROM %s_Test_Npcs WHERE (deleted is null or deleted = 0) and id = ?', $universe), [
-            'i', $id
-        ]);
+        if ($excludeDeleted) {
+            $db->execute(sprintf('SELECT *, UTC_TIMESTAMP() AS today FROM %s_Test_Npcs WHERE (deleted is null or deleted = 0) and id = ?', $universe), [
+                'i', $id
+            ]);
+        } else {
+            $db->execute(sprintf('SELECT *, UTC_TIMESTAMP() AS today FROM %s_Test_Npcs WHERE id = ?', $universe), [
+                'i', $id
+            ]);
+        }
 
         return $db->numRows() === 1 ? $db->fetchObject() : null;
     }
