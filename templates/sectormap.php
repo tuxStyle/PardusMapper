@@ -89,7 +89,12 @@
 		<div id="details" name="game"><div id="close_detail"><a href="#" onClick="closeDetail();return false;">Close Detail</a></div><div id="d_con"></div></div>
 		<div id="overview" name="game"></div>
 		<div id="body">
-			<div id="clusterMapDiv" onmouseover="this.style.zIndex=20" onmouseout="this.style.zIndex=0"><?php require_once(clusters(strtolower($cluster)));?></div>
+			<div id="clusterMapDiv" onmouseover="this.style.zIndex=20" onmouseout="this.style.zIndex=0">
+                <?php 
+                    $url = rtrim($base_url) . '/' . $uni . '/';
+                    require_once(clusters(strtolower($cluster)));
+                ?>
+            </div>
 			<div id="mapSelection">
 				<form id="rf" action="">
 					<input type="radio" onclick="updateMap()" name="mode" value="all" checked />All

@@ -8,9 +8,9 @@ use Pardusmapper\DB;
 use Pardusmapper\Coordinates;
 use Pardusmapper\CORS;
 
-CORS::pardus();
-
 require_once('../app/settings.php');
+
+CORS::pardus();
 
 $db = MySqlDB::instance();
 
@@ -158,10 +158,8 @@ for ($i = 1; $i < count($mission); $i++) {
         // Get Building Name,X, and Y
         $x = Coordinates::getX($source_id, $s->s_id, $s->rows);
         $y = Coordinates::getY($source_id, $s->s_id, $s->rows, $x);
-        $db->execute(sprintf('SELECT * FROM %s_Buildings WHERE id = ?', $uni), [
-            'i', $source_id
-        ]);
-        http_response(1 !== $db->numRows(), ApiResponse::BADREQUEST, sprintf('building not found for loc: %s', $source_id)); // exit if not found in DB
+        $b = DB::building($source_id, $uni);
+        http_response(is_null($b), ApiResponse::BADREQUEST, sprintf('building not found for loc: %s', $source_id)); // exit if not found in DB
 
         // mission tupe
         $m_type = null;
@@ -246,12 +244,14 @@ for ($i = 1; $i < count($mission); $i++) {
         ";
         $params = [
             'iisssiiiisssissssiisis',
-            $m[0], $source_id, $s->name, $c->code, $b->name, $x, $y, $comp, $rank, $m_faction, $m_type, $m_type_img, $m_amount, $m_hack,
+            $m[0], $source_id, $s->name, 
+            $c->code, $b->name, 
+            $x, $y, $comp, $rank, $m_faction, $m_type, $m_type_img, $m_amount, $m_hack,
             $m_loc, $m_sector, $m_cluster, $m_x, $m_y, $m_time, $m_credits, $m_war
         ];
 
         if ($debug) {
-            xp($sql, $params);
+            xp(sprintf($sql, $uni), $params);
         }
 
         $db->execute(sprintf($sql, $uni), $params);

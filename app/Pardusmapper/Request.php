@@ -4,81 +4,40 @@ declare(strict_types=1);
 
 namespace Pardusmapper;
 
-use Pardusmapper\Core\MySqlDB;
 use Pardusmapper\Core\Settings;
 
 class Request
 {
     /**
-     * validate required value as integer
+     * Returns protected string from $_REQUEST
      *
-     * @param string|null $value
-     * @param integer|null $default
-     * @return integer|null
-     */
-    protected static function _int(?string $value, ?int $default = null): ?int
-    {
-        $value = vnull($value);
-
-        if (is_null($value) || !preg_match('/^\d+$/', $value)) {
-            return $default;
-        }
-
-        return (int)$value;
-    }
-
-    /**
-     * validate required value as string
-     *
-     * @param string|null $value
+     * @param string $key
      * @param string|null $default
      * @return string|null
      */
-    protected static function _string(?string $value, ?string $default = null): ?string
+    public static function pstring(string $key, ?string $default = null): ?string
     {
-        $value = vnull($value);
+        $value = vstring(($_REQUEST[$key] ?? null), $default);
 
-        if (is_null($value)) {
-            return $default;
-        }
+        debug(sprintf('%s: %s', $key, $value));
 
-        return MySqlDB::instance()->protect($value);
+        return $value;
     }
 
     /**
-     * validate required value as boolean
+     * Returns protected int from $_REQUEST
      *
-     * @param string|null $value
-     * @param bool|null $default
-     * @return bool|null
+     * @param string $key
+     * @param int|null $default
+     * @return int|null
      */
-    protected static function _bool(?string $value, ?bool $default = false): bool
+    public static function pint(string $key, ?int $default = null): ?int
     {
-        $value = vnull($value);
+        $value = vint(($_REQUEST[$key] ?? null), $default);
 
-        if (is_null($value) || !preg_match('/^(true|false)$/i', $value)) {
-            return $default;
-        }
+        debug(sprintf('%s: %s', $key, $value));
 
-        return 'true' === strtolower($value) ? true : false;
-    }
-
-    /**
-     * validate required value as float
-     *
-     * @param string|null $value
-     * @param float|null $default
-     * @return float|null
-     */
-    protected static function _float(?string $value, float $default = 0): float
-    {
-        $value = vnull($value);
-
-        if (is_null($value) || !preg_match('/^\d+(\.\d+)?$/', $value)) {
-            return $default;
-        }
-
-        return (float)$value;
+        return $value;
     }
 
     /**
@@ -90,15 +49,14 @@ class Request
      */
     public static function uni(string $key = 'uni', ?string $default = null): ?string
     {
-        $value = self::_string(($_REQUEST[$key] ?? null), $default);
+        $value = vstring(($_REQUEST[$key] ?? null), $default);
 
         if (is_null($value) || !in_array($value, Settings::UNIVERSE)) {
+            debug('Universe = ' . $default);
             return $default;
         }
         
-        if (Settings::$DEBUG) {
-            echo 'Universe = ' . $value . '<br>';
-        }
+        debug('Universe = ' . $value);
 
         return $value;
     }
@@ -112,11 +70,13 @@ class Request
      */
     public static function cluster(string $key = 'cluster', ?string $default = null): ?string
     {
-        $value = self::_string(($_REQUEST[$key] ?? null), $default);
+        $value = vstring(($_REQUEST[$key] ?? null), $default);
 
         if (is_null($value) || !in_array(strtoupper($value), Settings::CLUSTERS)) {
             return $default;
         }
+
+        debug('Cluster = ' . $value);
 
         return $value;
     }
@@ -130,7 +90,7 @@ class Request
      */
     public static function sector(string $key = 'sector', ?string $default = null): ?string
     {
-        return self::_string(($_REQUEST[$key] ?? null), $default);
+        return self::pstring(key: $key, default: $default);
     }
 
     /**
@@ -142,20 +102,20 @@ class Request
      */
     public static function gems(string $key = 'gems', ?string $default = null): ?string
     {
-        return self::_string(($_REQUEST[$key] ?? null), $default);
+        return self::pstring(key: $key, default: $default);
     }
 
-    /**
-     * Returns protected security from $_REQUEST
-     *
-     * @param string $key
-     * @param integer $default
-     * @return integer
-     */
-    public static function security(string $key = 'security', int $default = 0): int
-    {
-        return self::_int(($_REQUEST[$key] ?? null), $default);
-    }
+    // /**
+    //  * Returns protected security from $_REQUEST
+    //  *
+    //  * @param string $key
+    //  * @param integer $default
+    //  * @return integer
+    //  */
+    // public static function security(string $key = 'security', int $default = 0): int
+    // {
+    //     return vint(($_REQUEST[$key] ?? null), $default);
+    // }
 
     /**
      * Returns protected dl from $_REQUEST
@@ -166,7 +126,7 @@ class Request
      */
     public static function dl(string $key = 'dl', ?int $default = null): ?int
     {
-        return self::_int(($_REQUEST[$key] ?? null), $default);
+        return self::pint(key: $key, default: $default);
     }
 
     /**
@@ -178,10 +138,12 @@ class Request
      */
     public static function debug(string $key = 'debug', ?int $default = 0): int
     {
-        $debug = self::_int(($_REQUEST[$key] ?? null), $default);
+        $debug = vint(($_REQUEST[$key] ?? null), $default);
 
         // override Settings if the debug is forced to a new value
         Settings::$DEBUG = $debug;
+
+        debug(sprintf('%s: %s', $key, $debug ? 'true' : 'false'));
 
         return $debug;
     }
@@ -195,9 +157,9 @@ class Request
      */
     public static function version(string $key = 'version', float $default = 0): float
     {
-        $version = self::_float(($_REQUEST[$key] ?? null), $default);
+        $version = vfloat(($_REQUEST[$key] ?? null), $default);
 
-        if (Settings::$DEBUG) echo 'Version = ' . $version . '<br>';
+        debug(sprintf('%s: %s', $key, $version));
 
         return $version;
     }
@@ -211,13 +173,7 @@ class Request
      */
     public static function loc(string $key = 'loc', ?int $default = null): ?int
     {
-        $loc = self::_int(($_REQUEST[$key] ?? null), $default);
-
-        if (Settings::$DEBUG) {
-            echo 'Location = ' . $loc . '<br>';
-        }
-
-        return $loc;
+        return self::pint(key: $key, default: $default);
     }
 
     /**
@@ -229,7 +185,7 @@ class Request
      */
     public static function name(string $key = 'name', ?string $default = null): ?string
     {
-        return self::_string(($_REQUEST[$key] ?? null), $default);
+        return self::pstring(key: $key, default: $default);
     }
 
     /**
@@ -241,7 +197,7 @@ class Request
      */
     public static function img(string $key = 'img', ?string $default = null): ?string
     {
-        return self::_string(($_REQUEST[$key] ?? null), $default);
+        return self::pstring(key: $key, default: $default);
     }
 
     /**
@@ -253,7 +209,7 @@ class Request
      */
     public static function faction(string $key = 'faction', ?string $default = null): ?string
     {
-        return self::_string(($_REQUEST[$key] ?? null), $default);
+        return self::pstring(key: $key, default: $default);
     }
 
     /**
@@ -265,7 +221,7 @@ class Request
      */
     public static function syndicate(string $key = 'syndicate', ?string $default = null): ?string
     {
-        return self::_string(($_REQUEST[$key] ?? null), $default);
+        return self::pstring(key: $key, default: $default);
     }
 
     /**
@@ -277,7 +233,7 @@ class Request
      */
     public static function owner(string $key = 'owner', ?string $default = null): ?string
     {
-        return self::_string(($_REQUEST[$key] ?? null), $default);
+        return self::pstring(key: $key, default: $default);
     }
 
     /**
@@ -289,7 +245,7 @@ class Request
      */
     public static function alliance(string $key = 'alliance', ?string $default = null): ?string
     {
-        return self::_string(($_REQUEST[$key] ?? null), $default);
+        return self::pstring(key: $key, default: $default);
     }
 
     /**
@@ -301,7 +257,7 @@ class Request
      */
     public static function pop(string $key = 'pop', ?int $default = null): ?int
     {
-        return self::_int(($_REQUEST[$key] ?? null), $default);
+        return self::pint(key: $key, default: $default);
     }
 
     /**
@@ -313,7 +269,7 @@ class Request
      */
     public static function crime(string $key = 'crime', ?string $default = null): ?string
     {
-        return self::_string(($_REQUEST[$key] ?? null), $default);
+        return self::pstring(key: $key, default: $default);
     }
 
     /**
@@ -325,7 +281,7 @@ class Request
      */
     public static function credit(string $key = 'credit', ?int $default = null): ?int
     {
-        return self::_int(($_REQUEST[$key] ?? null), $default);
+        return self::pint(key: $key, default: $default);
     }
 
     /**
@@ -337,7 +293,7 @@ class Request
      */
     public static function condition(string $key = 'condition', ?int $default = null): ?int
     {
-        return self::_int(($_REQUEST[$key] ?? null), $default);
+        return self::pint(key: $key, default: $default);
     }
 
     /**
@@ -349,7 +305,7 @@ class Request
      */
     public static function x(string $key = 'x', ?int $default = null): ?int
     {
-        return self::_int(($_REQUEST[$key] ?? null), $default);
+        return self::pint(key: $key, default: $default);
     }
 
     /**
@@ -361,7 +317,7 @@ class Request
      */
     public static function y(string $key = 'y', ?int $default = null): ?int
     {
-        return self::_int(($_REQUEST[$key] ?? null), $default);
+        return self::pint(key: $key, default: $default);
     }
 
     /**
@@ -373,7 +329,7 @@ class Request
      */
     public static function sb(string $key = 'sb', ?bool $default = false): bool
     {
-        return self::_bool(($_REQUEST[$key] ?? null), $default);
+        return vbool(($_REQUEST[$key] ?? null), $default);
     }
 
     /**
@@ -385,18 +341,16 @@ class Request
      */
     public static function sbt(string $key = 'sbt', ?array $default = []): ?array
     {
-        $trade = self::_string(($_REQUEST[$key] ?? null));
+        $trade = vstring(($_REQUEST[$key] ?? null));
 
         if (is_null($trade)) {
+            debug($default);
             return $default;
         }
 
         $sbt = explode('~', (string) $trade);
 
-        if (Settings::$DEBUG) {
-            print_r($sbt);
-            echo '<br>';
-        }
+        debug($sbt);
 
         return $sbt;
     }
@@ -410,7 +364,7 @@ class Request
      */
     public static function fs(string $key = 'fs', ?int $default = null): ?int
     {
-        return self::_int(($_REQUEST[$key] ?? null), $default);
+        return self::pint(key: $key, default: $default);
     }
 
     /**
@@ -422,22 +376,15 @@ class Request
      */
     public static function squads(string $key = 'squads', ?array $default = []): ?array
     {
-        $squads = self::_string(($_REQUEST[$key] ?? null));
+        $squads = vstring(($_REQUEST[$key] ?? null));
 
         if (is_null($squads)) {
             return $default;
         }
 
-        if (Settings::$DEBUG) {
-            echo 'Visited Squadrons<br>';
-        }
-
         $ssq = explode('~', (string) $squads);
 
-        if (Settings::$DEBUG) {
-            print_r($ssq);
-            echo '<br>';
-        }
+        debug($ssq);
 
         return $ssq;
     }
@@ -451,7 +398,7 @@ class Request
      */
     public static function sbb(string $key = 'sbb', ?bool $default = false): bool
     {
-        return self::_bool(($_REQUEST[$key] ?? null), $default);
+        return vbool(($_REQUEST[$key] ?? null), $default);
     }
 
     /**
@@ -463,7 +410,7 @@ class Request
      */
     public static function mid(string $key = 'mid', ?int $default = null): ?int
     {
-        return self::_int(($_REQUEST[$key] ?? null), $default);
+        return self::pint(key: $key, default: $default);
     }
 
     /**
@@ -475,7 +422,7 @@ class Request
      */
     public static function rank(string $key = 'rank', ?int $default = null): ?int
     {
-        return self::_int(($_REQUEST[$key] ?? null), $default);
+        return self::pint(key: $key, default: $default);
     }
 
     /**
@@ -487,7 +434,7 @@ class Request
      */
     public static function comp(string $key = 'comp', ?int $default = null): ?int
     {
-        return self::_int(($_REQUEST[$key] ?? null), $default);
+        return self::pint(key: $key, default: $default);
     }
 
     /**
@@ -499,7 +446,7 @@ class Request
      */
     public static function mission(string $key = 'mission', ?array $default = []): ?array
     {
-        $mission = self::_string(($_REQUEST[$key] ?? null));
+        $mission = vstring(($_REQUEST[$key] ?? null));
 
         if (is_null($mission)) {
             return $default;
@@ -507,10 +454,7 @@ class Request
 
         $missionList = explode('~', (string) $mission);
 
-        if (Settings::$DEBUG) {
-            xp($missionList);
-            echo '<br>';
-        }
+        debug($missionList);
 
         return $missionList;
     }
@@ -524,7 +468,7 @@ class Request
      */
     public static function mapdata(string $key = 'mapdata', ?string $default = null): ?string
     {
-        return self::_string(($_REQUEST[$key] ?? null), $default);
+        return self::pstring(key: $key, default: $default);
     }
 
     /**
@@ -536,7 +480,7 @@ class Request
      */
     public static function uid(string $key = 'uid', ?int $default = null): ?int
     {
-        return self::_int(($_REQUEST[$key] ?? null), $default);
+        return self::pint(key: $key, default: $default);
     }
 
     /**
@@ -548,7 +492,18 @@ class Request
      */
     public static function user(string $key = 'user', ?string $default = null): ?string
     {
-        return self::_string(($_REQUEST[$key] ?? null), $default);
+        return self::pstring(key: $key, default: $default);
     }
 
+    /**
+     * Returns protected url from $_REQUEST
+     *
+     * @param string $key
+     * @param string|null $default
+     * @return string|null
+     */
+    public static function url(string $key = 'url', ?string $default = null): ?string
+    {
+        return self::pstring(key: $key, default: $default);
+    }
 }

@@ -8,10 +8,10 @@ use Pardusmapper\CORS;
 use Pardusmapper\Request;
 use Pardusmapper\DB;
 
+require_once('../app/settings.php');
+
 // Enable CORS for any subdomain of pardus.at
 CORS::pardus_extended();
-
-require_once('../app/settings.php');
 
 if ($debug) {
     xp($_REQUEST);
@@ -180,7 +180,7 @@ if ($sb) {
     }
 
     // moved this at the end to have the correct timestamp
-    $db->execute(sprintf('UPDATE %s_Buildings SET `name` = ?, `image` = ?, `population` = ?, `crime` = ?, updated`= UTC_TIMESTAMP()  WHERE id = ?', $uni), [
+    $db->execute(sprintf('UPDATE %s_Buildings SET `name` = ?, `image` = ?, `population` = ?, `crime` = ?, updated = UTC_TIMESTAMP()  WHERE id = ?', $uni), [
         'ssisi', $name, $image, $pop, $crime, $loc
     ]);
 }
@@ -238,18 +238,18 @@ if (count($sbt) > 0) {
             echo 'Stocking for ' . $temp[0] . ' = ' . $stock . '<br>';
         }
 
-        $db->execute(sprintf('SELECT * FROM %s_New_Stock` WHERE name = ? AND id = ?', $uni), [
+        $db->execute(sprintf('SELECT * FROM %s_New_Stock WHERE name = ? AND id = ?', $uni), [
             'ss', $temp[0], $loc
         ]);
         
         if ($db->numRows() < 1) {            
-            $db->execute(sprintf('INSERT INTO `%s_New_Stock (name, id) VALUES (?, ?)', $uni), [
+            $db->execute(sprintf('INSERT INTO %s_New_Stock (name, id) VALUES (?, ?)', $uni), [
                 'si', $temp[0], $loc
             ]);
         }
 
         $u = $db->execute(
-            sprintf('UPDATE `%s_New_Stock 
+            sprintf('UPDATE %s_New_Stock 
                         SET
                             `amount` = ?, 
                             `bal` = ?, 

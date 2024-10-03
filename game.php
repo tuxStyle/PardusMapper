@@ -8,6 +8,7 @@ header("Expires: ".gmdate('r', time()+604800));
 use Pardusmapper\Core\ApiResponse;
 use Pardusmapper\Request;
 use Pardusmapper\DB;
+use Pardusmapper\Session;
 
 $cluster = null;
 $code = null; // Handle case where no cluster was found
@@ -15,7 +16,7 @@ $id = null;
 $shownpc = 0;
 
 $uni = Request::uni();
-$security = Request::security();
+$security = Session::security();
 $sector = Request::sector();
 $x2 = Request::x(key: 'x2');
 $y2 = Request::y(key: 'y2');

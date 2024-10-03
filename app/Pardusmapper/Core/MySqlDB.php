@@ -200,6 +200,14 @@ class MySqlDB
         return @mysqli_num_rows($this->queryID);
     }
 
+    public function affectedRow(): ?int
+    {
+        if (empty($this->db)) {
+            $this->connect();
+        }
+        return $this->db->affected_rows;
+    }
+
     public function seek(int $seek): bool
     {
         if (empty($this->db)) {
@@ -216,6 +224,7 @@ class MySqlDB
 
         if ($this->queryID instanceof \mysqli_result) {
             $this->queryID->free();
+            $this->queryID = null;
             return true;
         } 
 
@@ -268,6 +277,7 @@ class MySqlDB
     // NPC Management
     public function addNPC(string $uni, string $image, ?int $id, ?string $sector, int $x, int $y, ?int $nid = null)
     {
+        if (Settings::$DEBUG) xp(__METHOD__, __LINE__, func_get_args());
         if (empty($this->db)) {
             $this->connect();
         }
@@ -286,9 +296,13 @@ class MySqlDB
 
         $this->query('SELECT * FROM Pardus_Npcs WHERE image = \'' . $image . '\'');
         $npc = $this->nextObject();
+        if (Settings::$DEBUG) xp(__METHOD__, __LINE__, $npc);
 
         $this->query('SELECT * FROM ' . $uni . '_Test_Npcs WHERE (deleted is null or deleted = 0) and id = ' . $id);
-        if (!$n = $this->nextObject()) {
+        $n = $this->nextObject();
+        if (Settings::$DEBUG) xp(__METHOD__, __LINE__, $n);
+
+        if (!$n) {
             $this->query('INSERT INTO ' . $uni . '_Test_Npcs (`id`) VALUES (' . $id . ')');
             if ($nid) {
                 $this->query('UPDATE ' . $uni . '_Test_Npcs SET `nid` = \'' . $nid . '\' WHERE (deleted is null or deleted = 0) and id = ' . $id);
@@ -299,7 +313,11 @@ class MySqlDB
 
             $this->query('UPDATE ' . $uni . '_Maps SET npc = \'' . $image . '\' , `npc_cloaked` = null, `npc_spotted` = UTC_TIMESTAMP() WHERE id = ' . $id);
         } else {
+            if (Settings::$DEBUG) xp(__METHOD__, __LINE__, $n->image, $image);
+
             if ($n->image != $image) {
+                if (Settings::$DEBUG) xp(__METHOD__, __LINE__, 'remove and add');
+
                 $this->removeNPC($uni, $id);
                 $this->addNPC($uni, $image, $id, $sector, $x, $y, $nid); // Adding $nid
                 return;
@@ -465,7 +483,7 @@ class MySqlDB
         }
 
         $this->query('UPDATE ' . $uni . '_Maps SET `fg` = \'' . $image . '\' , `fg_updated` = UTC_TIMESTAMP() WHERE id = ' . $id);
-        
+        if (Settings::$DEBUG) xp(__METHOD__, 'UPDATE ' . $uni . '_Maps SET `fg` = \'' . $image . '\' , `fg_updated` = UTC_TIMESTAMP() WHERE id = ' . $id);
         return true;
     }
 
@@ -479,6 +497,7 @@ class MySqlDB
             $this->connect2();
         }
 
+        if (Settings::$DEBUG) xp('UPDATE ' . $uni . '_Maps SET `bg` = \'' . $image . '\' WHERE id = ' . $id);
         $this->query('UPDATE ' . $uni . '_Maps SET `bg` = \'' . $image . '\' WHERE id = ' . $id);
         
         return true;
@@ -547,6 +566,8 @@ class MySqlDB
         } else {
             $this->query('DELETE FROM ' . $uni . '_Test_Missions WHERE source_id = ' . $id);
         }
+
+        return true;
     }
     public function removeWH(string $uni, int $id)
     {
@@ -585,9 +606,21 @@ class MySqlDB
 
     public function addMap(string $uni, string $image, int $id, int $sb) {
         if (empty($this->db)) { $this->connect(); }
+
+        // if (preg_match('/^\d+$/', $image)) {
+        //     if (Settings::$DEBUG) xp(__FILE__, $image);
+        //     $this->execute('SELECT image FROM background WHERE id = ?', [
+        //         'i', $image
+        //     ]);
+        //     $dbImg = $this->fetchObject();
+        //     $image = $dbImg->image;
+        // }
         if ($id) {
             $this->query('INSERT INTO ' . $uni . '_Maps (`id`, `bg`, `security`) VALUES (' . $id . ',\'' . $image . '\' , 0)');
+            if (Settings::$DEBUG) xp(__METHOD__, __LINE__, 'INSERT INTO ' . $uni . '_Maps (`id`, `bg`, `security`) VALUES (' . $id . ',\'' . $image . '\' , 0)');
+
             if ($sb) {
+                if (Settings::$DEBUG) xp(__METHOD__, __LINE__, 'we have building');
                 $this->query('SELECT * FROM ' . $uni . '_Buildings WHERE id = ' . $sb);
                 $b = $this->nextObject();
                 $this->query('UPDATE ' . $uni . '_Maps SET cluster = \'' . $b->cluster . '\' WHERE id = ' . $id);
@@ -597,6 +630,7 @@ class MySqlDB
                 $this->query('UPDATE ' . $uni . '_Maps SET x = ' . $x . ' WHERE id = ' . $id);
                 $this->query('UPDATE ' . $uni . '_Maps SET y = ' . $y . ' WHERE id = ' . $id);					
             } else {
+                if (Settings::$DEBUG) xp(__METHOD__, __LINE__, 'no building');
                 $s = DB::sector(id: $id);  // Here, $id is passed as expected
                 $c = DB::cluster(id: $s->c_id);  // Assuming this is correct
                 $this->query('UPDATE ' . $uni . '_Maps SET cluster = \'' . $c->name . '\' WHERE id = ' . $id);
@@ -635,23 +669,29 @@ class MySqlDB
         }
 
         // Execute the query
-        $stmt->execute();        
+        if (!$stmt->execute()) {
+            // Handle query errors
+            error_log($this->db->errno . " : " . $this->db->error);
+            return false;
+        }
+
+        // Get the result if it's a SELECT query
         $result = $stmt->get_result();
+
+        // Close the statement after execution
         $stmt->close();
 
-        // Handle query errors
-        if ($result === false) {
-            error_log($this->db->errno . " : " . $this->db->error);
-            throw new \Exception("Database query error: " . $this->db->error);
-        }
-
-        // Assign only if the result is a mysqli_result, otherwise leave it null
+        // Check if the result is a mysqli_result for SELECT queries
         if ($result instanceof \mysqli_result) {
             $this->queryID = $result;
+
+            // For SELECT queries, return the result object
+            return $result; // Return the mysqli_result object
         } else {
             $this->queryID = null;
-        }
 
-        return $result;
+            // For INSERT, UPDATE, DELETE queries
+            return ($this->db->affected_rows > 0); // Return true if rows were affected, false otherwise
+        }
     }
 }

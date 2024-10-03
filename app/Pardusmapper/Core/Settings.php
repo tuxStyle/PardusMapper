@@ -11,6 +11,12 @@ class Settings
         'EKC', 'EPR', 'ESC', 'EWS', 'FHC', 'FRC', 'FSH', 'GAP', 'LANE', 'NPR', 
         'PEC', 'PFC', 'PUC', 'SPLIT', 'SPR', 'UKC', 'UNR', 'URC', 'WPR'
     ];
+    public const MISSIONS_LIST = [
+        "All",
+        "Assassination","Transport Packages","VIP Action Trip","Transport VIP","Transport Explosives",
+        "Clean Wormhole Exit","Plant Explosives","Spying","Deception","Smuggle Body Parts",
+        "Transport Military Explosives","Scout","Espionage"
+    ];
     
     public static ?int $TESTING = 0;
     public static ?int $DEBUG = 0;

@@ -1,10 +1,93 @@
 <?php
 declare(strict_types=1);
 
+use Pardusmapper\Core\MySqlDB;
+use Pardusmapper\Core\Settings;
+
 if (!function_exists('vnull')) {
     function vnull(mixed $value): mixed
     {
-        return $value === '' ? null : $value;
+        return $value === null || $value === '' || strtolower($value) === 'null' ? null : $value;
+    }
+}
+
+if (!function_exists('vint')) {
+    /**
+     * validate required value as integer
+     *
+     * @param string|null $value
+     * @param integer|null $default
+     * @return integer|null
+     */
+    function vint(?string $value, ?int $default = null): ?int
+    {
+        $value = vnull($value);
+
+        if (is_null($value) || !preg_match('/^\d+$/', $value)) {
+            return $default;
+        }
+
+        return (int)$value;
+    }
+}
+
+if (!function_exists('vstring')) {
+    /**
+     * validate and protect required value as string
+     *
+     * @param string|null $value
+     * @param string|null $default
+     * @return string|null
+     */
+    function vstring(?string $value, ?string $default = null): ?string
+    {
+        $value = vnull($value);
+
+        if (is_null($value)) {
+            return $default;
+        }
+
+        return MySqlDB::instance()->protect($value);
+    }
+}
+
+if (!function_exists('vbool')) {
+    /**
+     * validate required value as boolean
+     *
+     * @param string|null $value
+     * @param bool|null $default
+     * @return bool|null
+     */
+    function vbool(?string $value, ?bool $default = false): bool
+    {
+        $value = vnull($value);
+
+        if (is_null($value) || !preg_match('/^(0|1|true|false)$/i', $value)) {
+            return $default;
+        }
+
+        return 'true' === strtolower($value) || '1' === $value ? true : false;
+    }
+}
+
+if (!function_exists('vfloat')) {
+    /**
+     * validate required value as float
+     *
+     * @param string|null $value
+     * @param float|null $default
+     * @return float|null
+     */
+    function vfloat(?string $value, float $default = 0): float
+    {
+        $value = vnull($value);
+
+        if (is_null($value) || !preg_match('/^\d+(\.\d+)?$/', $value)) {
+            return $default;
+        }
+
+        return (float)$value;
     }
 }
 
@@ -81,6 +164,9 @@ if (!function_exists('pp')) {
             $what = $what[0];
         }
 
+        if (is_object($what)) {
+            $what = [$what];
+        }
         if (is_array($what)) {
             $what = print_r($what, true);
         }
@@ -99,6 +185,9 @@ if (!function_exists('xp')) {
             $what = $what[0];
         }
 
+        if (is_object($what)) {
+            $what = [$what];
+        }
         if (is_array($what)) {
             $what = print_r($what, true);
         }
@@ -117,9 +206,12 @@ if (!function_exists('pd')) {
             $what = $what[0];
         }
 
-        if (is_array($what)) {
-            $what = print_r($what, true);
+        if (is_object($what)) {
+            $what = [$what];
         }
+        // if (is_array($what)) {
+        //     $what = print_r($what, true);
+        // }
 
         echo "\n<pre>\n";
         var_dump ($what);
@@ -135,6 +227,9 @@ if (!function_exists('xd')) {
             $what = $what[0];
         }
 
+        if (is_object($what)) {
+            $what = [$what];
+        }
         // if (is_array($what)) {
         //     $what = print_r($what, true);
         // }
@@ -167,6 +262,38 @@ function mapper_exception_handler($exception) {
 
     // Log the exception message (optional)
     error_log($exception->getMessage());
+}
+
+if (!function_exists('debug')) {
+    function debug(): void
+    {
+        if (!Settings::$DEBUG) {
+            return;
+        }
+
+        $dump = false;
+        $args = func_get_args();
+
+        // one element only, use it
+        $what = 1 === count($args) ? array_shift($args) : $args;
+
+        // if object, convert to array 
+        if (is_object($what)) {$what = [$what]; $dump = true;}
+        
+        // // if array convert to string
+        // $what = is_array($what) ? print_r($what, true) : $what;
+
+        echo "\n<pre>\n";
+
+        if ($dump) {
+            var_dump($what);
+        } else {
+            echo print_r($what, true);
+        }
+
+        echo "\n</pre>\n";
+        echo "<br />\n";
+    }
 }
 
 function templates(string $file): string

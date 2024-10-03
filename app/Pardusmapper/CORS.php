@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pardusmapper;
 
 use Pardusmapper\Core\ApiResponse;
+use Pardusmapper\Core\Settings;
 
 class CORS
 {
@@ -43,6 +44,6 @@ class CORS
 
     public static function mapper(): void
     {
-
+        header('Access-Control-Allow-Origin: ' . Settings::$BASE_URL);
     }
 }

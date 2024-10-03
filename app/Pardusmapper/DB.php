@@ -90,7 +90,7 @@ class DB
 
         $db = MySqlDB::instance();
 
-        $db->execute(sprintf('SELECT * FROM %_Maps WHERE id = ?', $universe), [
+        $db->execute(sprintf('SELECT *, UTC_TIMESTAMP() AS today FROM %s_Maps WHERE id = ?', $universe), [
             'i', $id
         ]);
 
@@ -118,10 +118,104 @@ class DB
 
         $db = MySqlDB::instance();
 
-        $db->execute(sprintf('SELECT * FROM %_Buildings WHERE id = ?', $universe), [
+        $db->execute(sprintf('SELECT *, UTC_TIMESTAMP() AS today FROM %s_Buildings WHERE id = ?', $universe), [
             'i', $id
         ]);
 
         return $db->numRows() === 1 ? $db->fetchObject() : null;
+    }
+
+    /**
+     * Get NPC by name
+     *
+     * @param string $name
+     * @return object|null
+     */
+    public static function npc(string $name): object|null
+    {
+        $db = MySqlDB::instance();
+
+        $db->execute('SELECT * FROM Pardus_Npcs WHERE name = ?', [
+            's', $name
+        ]);
+
+        return $db->numRows() === 1 ? $db->fetchObject() : null;
+    }
+
+    /**
+     * Get NPC by location
+     *
+     * @param int|null $id
+     * @param string|null $universe
+     * @return object|null
+     */
+    public static function npc_loc(?int $id,  ?string $universe): object|null
+    {
+        http_response(is_null($universe), ApiResponse::BADREQUEST, 'universe is required to load npc by location');
+
+        if (is_null($id)) {
+            return null;
+        }
+
+        $db = MySqlDB::instance();
+
+        $db->execute(sprintf('SELECT *, UTC_TIMESTAMP() AS today FROM %s_Test_Npcs WHERE (deleted is null or deleted = 0) and id = ?', $universe), [
+            'i', $id
+        ]);
+
+        return $db->numRows() === 1 ? $db->fetchObject() : null;
+    }
+
+    /**
+     * Get user
+     *
+     * @param int|null $id
+     * @param string $username
+     * @param string|null $universe
+     * @return object|null
+     */
+    public static function user(?int $id = null, ?string $username = null, ?string $universe = null): object|null
+    {
+        http_response(is_null($universe), ApiResponse::BADREQUEST, 'universe is required to load user');
+
+        if (is_null($id) && is_null($username)) {
+            return null;
+        }
+
+        $db = MySqlDB::instance();
+
+        if ($username) {
+            $db->execute(sprintf('SELECT *, UTC_TIMESTAMP() AS today FROM %s_Users WHERE LOWER(username) = ?', $universe), [
+                's', $username
+            ]);
+        } else {
+            $db->execute(sprintf('SELECT *, UTC_TIMESTAMP() AS today FROM %s_Users WHERE id = ?', $universe), [
+                'i', $id
+            ]);
+        }
+
+
+        return $db->numRows() === 1 ? $db->fetchObject() : null;
+    }
+
+    public static function static_locations(): array
+    {
+        $db = MySqlDB::instance();
+
+        // Perform the SELECT query
+        $db->execute("SELECT * FROM Pardus_Static_Locations");
+
+        // Check if the query was successful
+        http_response($db->numRows() < 1, ApiResponse::BADREQUEST, 'Missing static locations');
+
+        // Initialize an array to hold the results
+        $static = [];
+
+        // Fetch each row as an object
+        while ($c = $db->fetchObject()) {
+            $static[] = $c->id;
+        }
+
+        return $static;
     }
 }

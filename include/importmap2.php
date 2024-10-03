@@ -5,12 +5,19 @@ use Pardusmapper\Core\Settings;
 use Pardusmapper\Core\ApiResponse;
 use Pardusmapper\Core\MySqlDB;
 use Pardusmapper\CORS;
+use Pardusmapper\DB;
 use Pardusmapper\Request;
+use Pardusmapper\NPC;
 
 require_once('../app/settings.php');
-require_once('../app/npc.php');
 
 CORS::pardus();
+
+$cloaked = NPC::cloaked();
+$single = NPC::single();
+$hack = NPC::hack();
+$nonblocking = NPC::nonblocking();
+$mobile = NPC::mobile();
 
 $mapdata = Request::mapdata();
 http_response(is_null($mapdata), ApiResponse::BADREQUEST, sprintf('mapdata query parameter is required or invalid: %s', $mapdata ?? 'null'));
@@ -98,24 +105,27 @@ if ($debug) { xp($maparray); echo '<br>';}
 //if (!($last == $dataString)) {
 //if ($debug) echo 111;
 
-// Perform the SELECT query
-$db->execute("SELECT * FROM Pardus_Static_Locations");
-// Counting SQL iterations per connection
+$static = DB::static_locations();
 ++$sqlcount;
 
-// Check if the query was successful
-http_response($db->numRows() < 1, ApiResponse::BADREQUEST, 'Missing static locations');
+// // Perform the SELECT query
+// $db->execute("SELECT * FROM Pardus_Static_Locations");
+// // Counting SQL iterations per connection
+// ++$sqlcount;
 
-// Initialize an array to hold the results
-$static = [];
+// // Check if the query was successful
+// http_response($db->numRows() < 1, ApiResponse::BADREQUEST, 'Missing static locations');
 
-// Fetch each row as an object
-while ($c = $db->fetchObject()) {
-    $static[] = $c->id;
-}
+// // Initialize an array to hold the results
+// $static = [];
 
-// Free the result set
-$db->free();
+// // Fetch each row as an object
+// while ($c = $db->fetchObject()) {
+//     $static[] = $c->id;
+// }
+
+// // Free the result set
+// $db->free();
 
 for ($i = 1; $i < count($maparray); $i++) { //This loop addresses only the current tile
 
@@ -154,6 +164,7 @@ for ($i = 1; $i < count($maparray); $i++) { //This loop addresses only the curre
 for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on ideally...
     global $sqlcount;
     $temp = explode(',', $maparray[$i]);
+    if ($debug) xd($temp);
     $id = 'NaN' === $temp[0] ? null : (int)$temp[0];
     //if ($debug) echo $id;
     //$db->query("INSERT INTO connection_log (`universe`,`username`,`user_id`,`querycount`,`duration`, `date`) VALUES ('Test','$i','5','5','1.1',UTC_TIMESTAMP())");
@@ -206,12 +217,15 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
         // Do Nothing if there is current info
         // This should not be the case with a complete map as every ID should be in the system, consider removing? REMOVED 4.2.20
         // Perform the initial query
+        if ($debug) xp(sprintf('SELECT *, UTC_TIMESTAMP() AS today FROM %s_Maps WHERE id = ?', $uni), [
+            'i', $id
+        ]);
         $result = $db->execute(sprintf('SELECT *, UTC_TIMESTAMP() AS today FROM %s_Maps WHERE id = ?', $uni), [
             'i', $id
         ]);
 
         // Check for query errors
-        http_response(!$result, ApiResponse::BADREQUEST, sprintf('Query failed: %s', $db->getDb()->error));
+        http_response(!$result, ApiResponse::BADREQUEST, sprintf('(1) Query failed: %s', $db->getDb()->error));
 
         // Counting SQL iterations per connection
         ++$sqlcount;
@@ -238,7 +252,7 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
             ]);
     
             // Check for query errors
-            http_response(!$result, ApiResponse::BADREQUEST, sprintf('Query failed: %s', $db->getDb()->error));
+            http_response(!$result, ApiResponse::BADREQUEST, sprintf('(2) Query failed: %s', $db->getDb()->error));
 
             // Counting SQL iterations per connection
             ++$sqlcount;
@@ -251,7 +265,7 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
         $db->free();
 
 
-        if ($debug) {xd($r); echo '<br>';}
+        if ($debug) {xd(__FILE__, __LINE__, $r); echo '<br>';}
 
         // // Why would we not have sector and cluster?  This should be disabled?
         //if (is_null($r->cluster) || is_null($r->sector)) {
@@ -314,7 +328,7 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
                         ]);
 
                         // Check for query errors
-                        http_response(!$result, ApiResponse::BADREQUEST, sprintf('Query failed: %s', $db->getDb()->error));
+                        http_response(!$result, ApiResponse::BADREQUEST, sprintf('(3) Query failed: %s', $db->getDb()->error));
 
 
                         // Counting SQL iterations per connection
@@ -381,6 +395,7 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
                 continue;
             }
             if ($debug) echo $id . ' Not Static NPC<br>';
+            if ($debug) xp($temp[$r_npc], $r->npc, $temp[$r_npc] == $r->npc, $r->fg);
             if (is_null($r->npc)) {
                 if ($debug) echo $id . ' No NPC Data in DB<br>';
                 if (is_null($r->fg) || $temp[2]) { //Add check that we say the FG is not a building but the DB might have something?
@@ -415,24 +430,24 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
                             }
                         }
                     }
-                    $nid = (int)$temp[2] ?? null;
+                    $nid = isset($temp[2]) ? (int)$temp[2] : null;
                     if ($debug) echo 'Adding NPC with nid' . ($uni . $temp[$r_npc] . $id . $nid) . '<br>';
                     $db->addNPC($uni, $temp[$r_npc], $id, " ", 0, 0, $nid); // Adding nid
                     ++$sqlcount; // Counting SQL iterations per connection
                 }
             } elseif ($temp[$r_npc] == $r->npc) { // it's the same NPC the map shows
-                $nid = (int)$temp[2] ?? null;
+                $nid = isset($temp[2]) ? (int)$temp[2] : null;
                 if ($debug) echo $id . ' with nid = ' . $nid . ' and Uncloaked<br>';
                 if (is_null($nid)) {
                     $db->updateMapNPC($uni, $temp[$r_npc], $id, 0, $nid);
                 } else {
                     // Handle the case where $temp[2] is not set
                     $db->updateMapNPC($uni, $temp[$r_npc], $id, 0); // Adding nid if known as well
-                    echo "Error: \$temp[2] is not set.";
+                    if ($debug) echo "Error: \$temp[2] is not set.";
                 }
                 ++$sqlcount; // Counting SQL iterations per connection
             } else {
-                $nid = (int)$temp[2] ?? null;
+                $nid = isset($temp[2]) ? (int)$temp[2] : null;
                 if ($debug) echo $id . ' with nid = ' . $nid . ' and Uncloaked<br>';
 
                 if ($debug) echo $id . ' Has a Different NPC so Blow Away 2<br>';
@@ -462,7 +477,7 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
             if (!(is_null($r->npc))) { // Check if NPC exists
                 if ($debug) {
                     if (($id == $_REQUEST['id']) && (isset($temp[2]) && $temp[2] !== false) && (str_contains($temp[1], "ships")) && !(in_array($r->npc, $nonblocking))) {
-                        echo '--result of test for Blow Away 3';
+                        if ($debug) echo '--result of test for Blow Away 3';
                     }
                 }
 
@@ -475,8 +490,9 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
                 } else {
                     if ((in_array($r->npc, $cloaked)) && !(in_array($r->npc, $mobile))) {
                         if ($debug) echo 'NPC has cloaked<br>';
+                        $nid = isset($temp[2]) ? (int)$temp[2] : null;
                         if (is_null($r->npc_cloaked)) {
-                            $db->updateMapNPC($uni, $temp[$r_npc], $id, 1, (int)$temp[2] ?? null);
+                            $db->updateMapNPC($uni, $temp[$r_npc], $id, 1, $nid);
                             ++$sqlcount; // Counting SQL iterations per connection
                         } else {
                             $show = strtotime($r->today) - strtotime($r->npc_updated);
@@ -505,7 +521,7 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
 $time_post = microtime(true);
 $exec_time = $time_post - $time_pre;
 $db->execute("INSERT INTO connection_log (`universe`,`username`,`user_id`,`querycount`,`duration`, `date`, `payload`) VALUES (?, ?, ?, ?, ?, UTC_TIMESTAMP(), ?)", [
-    'ssiiis', $uni, $user, $uid, $sqlcount, $exec_time, $dataString
+    'ssiidb', $uni, $user, $uid, $sqlcount, $exec_time, $dataString
 ]);
 $db->close();
 $db = null;
