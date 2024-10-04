@@ -5,9 +5,9 @@ namespace Pardusmapper;
 
 class Coordinates
 {
-    public static function getX($id, $s_id, $rows)
+    public static function getX($id, $s_id, $rows): int
     {
-        return floor(($id - $s_id) / $rows);
+        return (int)floor(($id - $s_id) / $rows);
     }
 
     public static function getY($id, $s_id, $rows, $x)

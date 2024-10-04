@@ -66,21 +66,16 @@ if (false === $m && $debug) {
 // Stop of map not ofund
 http_response(is_null($m), ApiResponse::BADREQUEST, sprintf('map not found for location: %s', $loc));
 
-if ($debug) {
-    xp([$m]);
-    echo '<br>Got Map Data<br>';
-}
+debug('Got Map Data');
+debug($m);
 
 // Verify Building is already in DB Tables Add if Not
 // Perform the query to fetch building information
 $b = DB::building(id: $loc, universe: $uni);
 if ($b) {
     // Building in DB, Verify Stock is in DB
-    $db->execute(sprintf('SELECT * FROM %s_New_Stock WHERE id = ?', $uni), [
-        's', $loc
-    ]);
-
-    if ($db->numRows() < 1) {
+    $stocks = DB::stocks(id: $loc, universe: $uni);
+    if (0 === count($stocks)) {
         $db->addBuildingStock($uni, $m->fg, $loc);
     }
 } else {
@@ -238,17 +233,14 @@ if (count($sbt) > 0) {
             echo 'Stocking for ' . $temp[0] . ' = ' . $stock . '<br>';
         }
 
-        $db->execute(sprintf('SELECT * FROM %s_New_Stock WHERE name = ? AND id = ?', $uni), [
-            'ss', $temp[0], $loc
-        ]);
-        
-        if ($db->numRows() < 1) {            
+        $stocks = DB::stocks(id: $loc, name: $temp[0], universe: $uni);
+        if (0 === count($stocks)) {
             $db->execute(sprintf('INSERT INTO %s_New_Stock (name, id) VALUES (?, ?)', $uni), [
                 'si', $temp[0], $loc
             ]);
         }
 
-        $u = $db->execute(
+        $db->execute(
             sprintf('UPDATE %s_New_Stock 
                         SET
                             `amount` = ?, 
@@ -261,7 +253,7 @@ if (count($sbt) > 0) {
                         WHERE name = ? AND id = ?', $uni), [
                             'iiiiiiisi', $temp[1], $temp[2], $temp[3], $temp[4], $temp[5], $temp[6], $stock, $temp[0], $loc
             ]);
-        }
+    }
 
     $db->execute(sprintf('UPDATE %s_Buildings SET `capacity` = ?, `credit` = ?  WHERE id = ?', $uni), [
         'iii', $cap, $credit, $loc

@@ -126,12 +126,41 @@ class DB
     }
 
     /**
+     * Get static building data
+     *
+     * @param string $name
+     * @return object|array|null
+     */
+    public static function building_static(string $name, bool $limit = true): object|array|null
+    {
+        $db = MySqlDB::instance();
+
+        $query = 'SELECT * FROM Pardus_Buildings_Data WHERE name = ?';
+        if ($limit) {
+            $query .= ' ORDER BY image LIMIT 1';
+        }
+        $db->execute($query, [
+            's', $name
+        ]);
+
+        if ($db->numRows() === 1) {
+            return $db->fetchObject();
+        }
+
+        $return = [];
+        while($q = $db->nextObject()) { $return[] = $q; }
+
+        return $return;
+    }
+
+
+    /**
      * Get NPC by name
      *
      * @param string $name
      * @return object|null
      */
-    public static function npc(string $name): object|null
+    public static function npc_static(string $name): object|null
     {
         $db = MySqlDB::instance();
 
@@ -150,7 +179,7 @@ class DB
      * @param bool|null $excludeDeleted
      * @return object|null
      */
-    public static function npc_loc(?int $id,  ?string $universe, ?bool $excludeDeleted = true): object|null
+    public static function npc(?int $id,  ?string $universe, ?bool $excludeDeleted = true): object|null
     {
         http_response(is_null($universe), ApiResponse::BADREQUEST, 'universe is required to load npc by location');
 
@@ -177,7 +206,7 @@ class DB
      * Get user
      *
      * @param int|null $id
-     * @param string $username
+     * @param string|null $username
      * @param string|null $universe
      * @return object|null
      */
@@ -205,6 +234,11 @@ class DB
         return $db->numRows() === 1 ? $db->fetchObject() : null;
     }
 
+    /**
+     * Get static locations
+     *
+     * @return array
+     */
     public static function static_locations(): array
     {
         $db = MySqlDB::instance();
@@ -224,5 +258,227 @@ class DB
         }
 
         return $static;
+    }
+
+    /**
+     * Get stocks
+     *
+     * @param int|null $id
+     * @param string|null $name
+     * @param string|null $universe
+     * @param bool|null $warStatus
+     * @return array
+     */
+    public static function stocks(?int $id = null, ?string $name = null, ?string $universe = null, ?bool $warStatus = false, ?bool $nonZero = false): array
+    {
+        http_response(is_null($universe), ApiResponse::BADREQUEST, 'universe is required to load user');
+
+        if (is_null($id)) {
+            return null;
+        }
+
+        $bindType = [];
+        $bindValues = [];
+
+        $query = sprintf('SELECT * FROM %s_New_Stock WHERE id = ?', $universe);
+        $bindType[] = 'i';
+        $bindValues[] = $id;
+
+        if ($name) {
+            $query .= ' AND name = ?';
+            $bindType[] = 's';
+            $bindValues[] = $name;
+        }
+
+        if ($nonZero) {
+            $query .= ' AND (amount > 0 OR max > 0)';
+        }
+
+        if ($warStatus) {
+            $query .= ' AND (SELECT WarStatus FROM War_Status where Universe = ?) = 0';
+            $bindType[] = 's';
+            $bindValues[] = $universe;
+        }
+
+        $params = [];
+        $params[] = implode('', $bindType);
+        $params = array_merge($params, $bindValues);
+
+        $db = MySqlDB::instance();
+        $db->execute($query, $params);
+
+        $stocks = [];
+        while($q = $db->nextObject()) { $stocks[] = $q; }
+
+        return $stocks;
+    }
+
+    /**
+     * Get stock by location id
+     *
+     * @param integer|null $id
+     * @param string|null $name
+     * @param string|null $universe
+     * @return object|array|null
+     */
+    public static function building_stock(?int $id = null, ?string $name = null, ?string $universe = null): object|array|null
+    {
+        http_response(is_null($universe), ApiResponse::BADREQUEST, 'universe is required to load map by location');
+
+        if (is_null($id)) {
+            return null;
+        }
+
+        $db = MySqlDB::instance();
+
+        if ($id && $name) {
+            $db->execute(sprintf('SELECT *, UTC_TIMESTAMP() AS today FROM %s_New_Stock WHERE name = ? AND id = ?', $universe), [
+                'si', $name, $id
+            ]);
+
+            return $db->numRows() === 1 ? $db->fetchObject() : null;
+        } elseif ($id) {
+            $db->execute(sprintf('SELECT *, UTC_TIMESTAMP() AS today FROM %s_New_Stock WHERE id = ?', $universe), [
+                'i', $id
+            ]);
+
+            $stocks = [];
+            while($q = $db->nextObject()) { $stocks[] = $q; }
+    
+            return $stocks;
+        }
+    }
+
+    /**
+     * Update building field
+     *
+     * @param integer $id
+     * @param array $params
+     * @param string|null $universe
+     * @return boolean
+     */
+    public static function building_update(int $id, ?array $params, ?string $universe): bool
+    {
+        http_response(is_null($universe), ApiResponse::BADREQUEST, 'universe is required to load map by location');
+
+        debug('Updating building fields');
+        debug($id, $params);
+
+        $bindType = [];
+        $bindValues = [];
+        $fields = [];
+        foreach($params as $key => $value) {
+            $fields[] = sprintf('`%s` = ?', $key);
+            $bindValues[] = $value;
+            if (is_int($value)) {
+                $bindType[] = 'i';
+            } elseif (is_float($value)) {
+                $bindType[] = 'd';
+            } else {
+                $bindType[] = 's';
+            }
+        }
+
+        $bindValues[] = $id;
+        $bindType[] = 'i';
+
+        $binds = [];
+        $binds[] = implode('', $bindType);
+        $binds = array_merge($binds, $bindValues);
+
+        $db = MySqlDB::instance();
+
+        $db->execute(sprintf('UPDATE %s_Buildings SET updated = UTC_TIMESTAMP(), %s WHERE id = ?', $universe, implode(', ', $fields)), $binds);
+
+        return true;
+    }
+
+
+    /**
+     * Update building cluster
+     *
+     * @param integer|null $id
+     * @param string|null $cluster
+     * @param string|null $universe
+     * @return boolean
+     */
+    public static function building_update_cluster(?int $id, ?string $cluster, ?string $universe): bool
+    {
+        http_response(is_null($universe), ApiResponse::BADREQUEST, 'universe is required to load map by location');
+
+        debug('Updating building cluster');
+
+        $db = MySqlDB::instance();
+
+        $db->execute(sprintf('UPDATE %s_Buildings SET cluster = ? WHERE id = ?', $universe), [
+            'si', $cluster, $id
+        ]);
+
+        return true;
+    }
+
+
+    /**
+     * Update building sector
+     *
+     * @param integer|null $id
+     * @param string|null $sector
+     * @param string|null $universe
+     * @return boolean
+     */
+    public static function building_update_sector(?int $id, ?string $sector, ?string $universe): bool
+    {
+        http_response(is_null($universe), ApiResponse::BADREQUEST, 'universe is required to load map by location');
+
+        debug('Updating building sector');
+
+        $db = MySqlDB::instance();
+
+        $db->execute(sprintf('UPDATE %s_Buildings SET sector = ? WHERE id = ?', $universe), [
+            'si', $sector, $id
+        ]);
+
+        return true;
+    }
+
+    /**
+     * Update building X, Y
+     *
+     * @param integer|null $id
+     * @param integer|null $x
+     * @param integer|null $y
+     * @param string|null $universe
+     * @return boolean
+     */
+    public static function building_update_xy(?int $id, ?int $x, ?int $y, ?string $universe): bool
+    {
+        http_response(is_null($universe), ApiResponse::BADREQUEST, 'universe is required to load map by location');
+
+        debug('Updating building x,y');
+
+        $db = MySqlDB::instance();
+
+        $db->execute(sprintf('UPDATE %s_Buildings SET x = ?, y = ? WHERE id = ?', $universe), [
+            'iii', $x, $y, $id
+        ]);
+
+        return true;
+    }
+
+    /**
+     * Get resource data
+     *
+     * @param string $image
+     * @return object|null
+     */
+    public static function res_data(string $image): object|null
+    {
+        $db = MySqlDB::instance();
+
+        $db->execute('SELECT * FROM Pardus_Res_Data WHERE image = ?', [
+            's', $image
+        ]);
+
+        return $db->numRows() === 1 ? $db->fetchObject() : null;
     }
 }

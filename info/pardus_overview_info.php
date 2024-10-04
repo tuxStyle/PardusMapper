@@ -25,7 +25,7 @@ $m = DB::map(id: $id, universe: $uni);
 // the original query here was not ignoring the deleted NPCs
 // 'SELECT *, UTC_TIMESTAMP() "today"  FROM ' . $uni . '_Test_Npcs WHERE id = ' . $id
 // TODO: check if we can ignore the deleted NPCs, we sprobably should as they are not on the pardus mao
-$npc_loc = DB::npc_loc(id: $id, universe: $uni, excludeDeleted: false);
+$npc_loc = DB::npc(id: $id, universe: $uni, excludeDeleted: false);
 
 $return = '';
 
@@ -44,15 +44,12 @@ if ($b_loc) {
 
 	if (strpos($loc->image,"planet") || strpos($loc->image,"starbase") || strpos($loc->image,"outpost")) {
 		// Get Stocking Info for TOs/Planets/SBs
-        $db->execute(sprintf('SELECT * FROM %s_New_Stock WHERE id = ? AND (amount > 0 OR max > 0)', $uni), [
-            'i', $id
-        ]);
+        $stocks = DB::stocks(id: $id, universe: $uni, nonZero: true);
 	} else {
 		// Get Stocking Information
-        $db->execute(sprintf('SELECT * FROM %s_New_Stock WHERE id = ?', $uni), [
-            'i', $id
-        ]);
+        $stocks = DB::stocks(id: $id, universe: $uni);
 	}
+    
 	while($q = $db->nextObject()) { $stock[$res_id[$q->name]] = $q; }
 	// Make sure the Stock is in the correct order
 	if ($stock) { ksort($stock, SORT_NUMERIC); }
@@ -163,7 +160,7 @@ if ($npc_loc) {
 	$loc = $npc_loc;
     debug($loc);
 
-	$npc = DB::npc($loc->name);
+	$npc = DB::npc_static($loc->name);
     debug($npc);
 	
 	$return .= '<table class="messagestyle" width="210">';
