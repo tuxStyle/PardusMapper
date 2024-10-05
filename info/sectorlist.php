@@ -10,7 +10,7 @@ use Pardusmapper\Session;
 
 CORS::mapper();
 
-$db = new MySqlDB();
+$db = MySqlDB::instance();
 
 $uni = Post::uni();
 http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));

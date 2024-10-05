@@ -12,7 +12,7 @@ use Pardusmapper\NPC;
 
 CORS::mapper();
 
-$dbClass = new MySqlDB();  // Create an instance of the Database class
+$dbClass = MySqlDB::instance();  // Create an instance of the Database class
 
 // Set Univers Variable and Session Name
 $uni = Post::uni();

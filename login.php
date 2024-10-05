@@ -8,8 +8,7 @@ use Pardusmapper\Post;
 use Pardusmapper\Session;
 use Pardusmapper\DB;
 
-$dbClass = new MySqlDB(); // Create an instance of the Database class
-$db = $dbClass->getDb();  // Get the mysqli connection object
+$dbClass = MySqlDB::instance(); // Create an instance of the Database class
 
 // Set Univers Variable and Session Name
 $uni = Request::uni();

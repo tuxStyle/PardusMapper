@@ -1,4 +1,3 @@
-new MySqlDB() to MySqlDB::instance()
 refactor DB double check function signatures and remove any http_response, change to required not null values where needed
 refactor DB stocks and building_stock and merge them
 refactor DB building_update and building_update_sector|cluster|x|y and merge them

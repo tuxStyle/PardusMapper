@@ -7,7 +7,7 @@ use Pardusmapper\Post;
 use Pardusmapper\Request;
 use Pardusmapper\DB;
 
-$db = new MySqlDB();
+$db = MySqlDB::getInstance();
 
 // Set Univers Variable and Session Name
 $uni = Request::uni();
