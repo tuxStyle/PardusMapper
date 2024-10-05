@@ -13,11 +13,7 @@ require_once('../app/settings.php');
 
 CORS::pardus();
 
-$cloaked = NPC::cloaked();
-$single = NPC::single();
-$hack = NPC::hack();
-$nonblocking = NPC::nonblocking();
-$mobile = NPC::mobile();
+debug($_REQUEST);
 
 $mapdata = Request::mapdata();
 http_response(is_null($mapdata), ApiResponse::BADREQUEST, sprintf('mapdata query parameter is required or invalid: %s', $mapdata ?? 'null'));
@@ -29,17 +25,9 @@ if (str_contains((string) $mapdata, "sb_")) {
     exit();
 }
 
-if ($debug) {xp($_REQUEST);}
-
-$time_pre = microtime(true);
-$sqlcount = 0;
-
-$db = MySqlDB::instance();  // Create an instance of the Database class
-
 // Set Univers Variable and Session Name
 $uni = Request::uni();
 http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
-
 
 // Get Version
 $minVersion = 6.5;
@@ -49,21 +37,30 @@ http_response($version < $minVersion, ApiResponse::BADREQUEST, sprintf('version 
 $loc = Request::loc(key: 'id');
 http_response(is_null($loc), ApiResponse::BADREQUEST, sprintf('location(loc) query parameter is required or invalid: %s', $loc ?? 'null'));
 
-$sector = Request::sector();
+
+$cloaked = NPC::cloaked();
+$single = NPC::single();
+$hack = NPC::hack();
+$nonblocking = NPC::nonblocking();
+$mobile = NPC::mobile();
+
+$time_pre = microtime(true);
+$sqlcount = 0;
+
+$db = MySqlDB::instance();  // Create an instance of the Database class
+
+
+$sector = Request::pstring(key: 'sector');
 if (is_null($sector)) {
     $sector = Request::sector(key: 's');
 }
-if ($debug) echo 'Sector = ' . $sector . '<br>';
 http_response(is_null($sector), ApiResponse::BADREQUEST, 'sector/s query parameter is required');
 
 // Set Pilot Info
 $ip = $_SERVER['REMOTE_ADDR'];
 
 $uid = Request::uid(default: 0);
-if ($debug) echo 'User ID = ' . $uid .  '<br>';
-
 $user = Request::user(default: "Unknown");
-if ($debug) echo 'User Name = ' . $user .  '<br>';
 
 /****************************************************************************************************
  * 
@@ -78,14 +75,14 @@ if ($debug) echo 'User Name = ' . $user .  '<br>';
 // if (isset($_REQUEST['x'])) {
 //     $px = $db->real_escape_string($_REQUEST['x']);
 // }
-// if ($debug) echo 'pilot x location = ' . $px .  '<br>';
+// debug('pilot x location = ' . $px);
 
 // if (isset($_REQUEST['y'])) {
 //     $py = $db->real_escape_string($_REQUEST['y']);$
 // }
-// if ($debug) echo 'pilot y location = ' . $py .  '<br>';
+// debug('pilot y location = ' . $py);
 
-// if ($debug) echo 'pilot s location = ' . $ps .  '<br>';
+// debug('pilot s location = ' . $ps);
 
 //$db->query("INSERT INTO ${uni}_Hack (`username`,`user_id`,`location`,`ip`,`date`) VALUES ('$user','$uid','" . $ps . "[" . $px . "," . $py . "]','$ip',UTC_TIMESTAMP())");
 // End Pilot Data
@@ -97,13 +94,13 @@ if ($debug) echo 'User Name = ' . $user .  '<br>';
 
 $maparray = explode('~', (string) $mapdata);
 $dataString = implode(",", $maparray);
-if ($debug) { xp($maparray); echo '<br>';}
+debug($maparray);
 
 //$last = $db->query("SELECT payload FROM connection_log where username = '$user' order by id desc limit 1");
 //$last1 = implode('-',$last);
-//if ($debug) echo 'last payload' . $last1 . 'wtf<br>';
+//debug('last payload' . $last1 . 'wtf');
 //if (!($last == $dataString)) {
-//if ($debug) echo 111;
+//debug(111);
 
 $static = DB::static_locations();
 ++$sqlcount;
@@ -130,29 +127,29 @@ $static = DB::static_locations();
 for ($i = 1; $i < count($maparray); $i++) { //This loop addresses only the current tile
 
     $temp = explode(',', $maparray[$i]);
-    if ($debug) echo xp($temp);
+    debug($temp);
 
     $id = 'NaN' === $temp[0] ? null : (int)$temp[0];
     if ($id == $loc) { 
         // this scenario will never happen as the foreground in map view can't be an opponent, it's always your ship.
         // Should look to "other ships" screen NOTED
-        if ($debug) echo strpos($temp[1], "ponents") != false . ' Evaluation Check';
-        http_response(str_contains($temp[1], "ponents") && !(in_array($temp[1], $nonblocking)), ApiResponse::BADREQUEST, '(0) Fatal Error');
+        debug((strpos($temp[1], "ponents") != false ? 'true' : 'false'). ' Evaluation Check');
+        http_response(str_contains($temp[1], "ponents") && !(in_array($temp[1], $nonblocking)), ApiResponse::OK, '(0) Fatal Error');
 
-        if ($debug) echo (strpos($temp[1], "ponents") . ' vs !strpos($temp[1],"ponents") ');
-        if ($debug) echo ((!strpos($temp[1], "ponents") != false) . ' !strpos($temp[1],"ponents") != false');
-        if ($debug) echo ((!strpos($temp[1], "ponents") != false) . ' !strpos($temp[1],"ponents") !== false');
-        if ($debug) echo ((!strpos($temp[1], "ponents") != false) . ' strpos($temp[1],"ponents") != false');
-        if ($debug) echo ((!strpos($temp[1], "ponents") != false) . ' strpos($temp[1],"ponents") == false');
-        if ($debug) echo ('WTRF! If 1=' . (!strpos($temp[1], "ponents") != false) . ' then we should be removing any NPCs<br>');
+        debug(strpos($temp[1], "ponents") . ' vs !strpos($temp[1],"ponents") ');
+        debug((!strpos($temp[1], "ponents") != false) . ' !strpos($temp[1],"ponents") != false');
+        debug((!strpos($temp[1], "ponents") != false) . ' !strpos($temp[1],"ponents") !== false');
+        debug((!strpos($temp[1], "ponents") != false) . ' strpos($temp[1],"ponents") != false');
+        debug((!strpos($temp[1], "ponents") != false) . ' strpos($temp[1],"ponents") == false');
+        debug('WTRF! If 1=' . (!strpos($temp[1], "ponents") != false) . ' then we should be removing any NPCs');
 
         if (!strpos($temp[1], "ponents") != false) {
             // No NPC or Ships on current tile????
-            //if ($debug) echo 'WTF!';
-            //if ($debug) echo strpos($temp[1],"ships");
-            if ($debug) echo $temp[1];
-            if ($debug) echo '??NPC has been killed<br>';
-            if ($debug) echo 'Blow Away 6<br>';
+            //debug('WTF!');
+            //debug(strpos($temp[1],"ships"));
+            debug($temp[1]);
+            debug('??NPC has been killed');
+            debug('Blow Away 6');
             $db->removeNPC($uni, $id); //removed to debug 9.16.24
             ++$sqlcount; // Counting SQL iterations per connection
             //die("0,Fatal Error");
@@ -160,36 +157,36 @@ for ($i = 1; $i < count($maparray); $i++) { //This loop addresses only the curre
     }
 }
 
-//if ($debug) echo count($maparray);
+//debug(count($maparray));
 for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on ideally...
     global $sqlcount;
     $temp = explode(',', $maparray[$i]);
-    if ($debug) xd($temp);
+    debug($temp);
     $id = 'NaN' === $temp[0] ? null : (int)$temp[0];
-    //if ($debug) echo $id;
+    //debug($id);
     //$db->query("INSERT INTO connection_log (`universe`,`username`,`user_id`,`querycount`,`duration`, `date`) VALUES ('Test','$i','5','5','1.1',UTC_TIMESTAMP())");
     if (in_array($id, $static)) {
         continue;
     }
     // Check to see if we got good data
     if (!strpos($temp[1], "nodata.png") && !is_null($id)) {
-        if ($debug) echo $id . ' Does Not Contain "nodata.png"<br>';
+        debug($id . ' Does Not Contain "nodata.png"');
         // Check to see if we got Building Info
         $r_bg = 0;
         if (str_contains($temp[1], "foregrounds")) {
-            if ($debug) echo $id . ' Contains "Foreground" Info<br>';
+            debug($id . ' Contains "Foreground" Info');
             $r_fg = 1;
             $r_npc = 0;
             if ((str_contains($temp[1], "wormhole")) || (str_contains($temp[1], "xhole")) || (str_contains($temp[1], "yhole"))) {
                 if (sizeof($temp) != 3) {
-                    if ($debug) echo $id, ' Contains "Critter" Info not "Foreground" Info<br>';
+                    debug($id, ' Contains "Critter" Info not "Foreground" Info');
                     $r_fg = 0;
                     $r_npc = 1;
                 }
             }
             // Check to see if we got Critter info
         } elseif (str_contains($temp[1], "ponents")) {
-            if ($debug) echo $id . ' Contains "Critter" Info<br>';
+            debug($id . ' Contains "Critter" Info');
             $r_fg = 0;
             $r_npc = 1;
             if (isset($temp[2]) && $temp[2] !== false) {
@@ -199,11 +196,11 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
             }
             // Must be a Ship or something I don't want
         } elseif (str_contains($temp[1], "xmas-star")) {
-            if ($debug) echo $id . ' Contains Xmas Info<br>';
+            debug($id . ' Contains Xmas Info');
             $r_fg = 1;
             $r_npc = 0;
         } else {
-            if ($debug) echo $id . ' Contains "Background" Info<br>';
+            debug($id . ' Contains "Background" Info');
             $r_fg = 0;
             $r_npc = 0;
             $r_bg = 1;
@@ -217,7 +214,7 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
         // Do Nothing if there is current info
         // This should not be the case with a complete map as every ID should be in the system, consider removing? REMOVED 4.2.20
         // Perform the initial query
-        if ($debug) xp(sprintf('SELECT *, UTC_TIMESTAMP() AS today FROM %s_Maps WHERE id = ?', $uni), [
+        debug(sprintf('SELECT *, UTC_TIMESTAMP() AS today FROM %s_Maps WHERE id = ?', $uni), [
             'i', $id
         ]);
         $result = $db->execute(sprintf('SELECT *, UTC_TIMESTAMP() AS today FROM %s_Maps WHERE id = ?', $uni), [
@@ -236,9 +233,7 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
         // Check if any row was returned
         if (!$r) {
             // There is no existing information for the current tile
-            if ($debug) {
-                echo $id . ' New Information Inserting into DB<br>';
-            }
+            debug($id . ' New Information Inserting into DB');
 
             // Call method to add new map
             $db->addMap($uni, $temp[$r_bg], $id, 0);
@@ -265,18 +260,18 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
         $db->free();
 
 
-        if ($debug) {xd(__FILE__, __LINE__, $r); echo '<br>';}
+        debug(__FILE__, __LINE__, $r);
 
         // // Why would we not have sector and cluster?  This should be disabled?
         //if (is_null($r->cluster) || is_null($r->sector)) {
-        //	if ($debug) echo $id . ' Sector and/or Cluster is Null<br>';
+        //	debug($id . ' Sector and/or Cluster is Null');
         //	$s = $db->getSector($id,"");
         //	$db->query('UPDATE ' . $uni . '_Maps SET sector = \'' . $s->name . '\' WHERE id = ' . $id);
         //	$c = $db->getCluster($s->c_id,"");
         //	$db->query('UPDATE ' . $uni . '_Maps SET cluster = \'' . $c->name . '\' WHERE id = ' . $id);
         //} // We also have all the X/Y coords...again we should remove this?
         //if ($r->x == 0 || $r->y == 0) {
-        //	if ($debug) echo $id . ' X and/or Y is Null<br>';
+        //	debug($id . ' X and/or Y is Null');
         //	if (!$s) { $s = $db->getSector($id,""); }
         //	$x = $db->getX($id,$s->s_id,$s->rows);
         //	$db->query('UPDATE ' . $uni . '_Maps SET x = ' . $x . ' WHERE id = ' . $id);
@@ -288,9 +283,9 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
 
         //Removing WH addition logic...just doesn't make sense while the Universes are stable - 3.17.2021 JT
         /*
-			if ($debug) echo $id . ' Size = ' . sizeof($temp) . '<br>';
+			debug($id . ' Size = ' . sizeof($temp) . '');
 			if (sizeof($temp) == 3 && !(strpos($temp[1],"ponents") !== false )) {  // this is where wormholes are updated as long as they aren't an opponent (no adding)...keeping for now NOTED
-				if ($debug) echo $temp[1].'---'.!(strpos($temp[1],"ponents") !== false) . 'We think this is a Wormhole';
+				debug($temp[1].'---'.!(strpos($temp[1],"ponents") !== false) . 'We think this is a Wormhole');
 				if ($temp[2] != 'unknown') {
 					$db->query('UPDATE ' . $uni . '_Maps SET `wormhole` = \'' . $temp[2] . '\' WHERE id = ' . $id);
 					++$sqlcount; // Counting SQL iterations per connection
@@ -307,19 +302,19 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
         if ($r_fg != 0) {
             // Check to see if we have Foreground information for the current tile
             // If we do not then we need to double check for existing info and remove it.
-            if ($debug) echo $id . ' Building information exists for current location<br>';
+            debug($id . ' Building information exists for current location');
             // Check to See if the DB is NULL
             if (is_null($r->fg)) {
                 // DB is NULL Just Add new Info
-                if ($debug) echo 'Adding Building<br>';
+                debug('Adding Building');
                 $db->addBuilding($uni, $temp[$r_fg], $id, 0);
                 ++$sqlcount; // Counting SQL iterations per connection
             } else if (sizeof($temp) != 3) { // this isn't an NPC record from the non-blocking window
                 //Test to See if Map and DB match
-                if ($debug) echo 'Testing New FG - ' . str_replace("_tradeoff", "", $temp[$r_fg]) . '<br>';
-                if ($debug) echo 'Testing DB FG - ' . str_replace("_tradeoff", "", $r->fg) . '<br>';
+                debug('Testing New FG - ' . str_replace("_tradeoff", "", $temp[$r_fg]));
+                debug('Testing DB FG - ' . str_replace("_tradeoff", "", $r->fg));
                 if (str_replace("_tradeoff", "", $temp[$r_fg]) != str_replace("_tradeoff", "", $r->fg)) {
-                    if ($debug) echo $id . ' Foreground info Does Not Matches DB<br>';
+                    debug($id . ' Foreground info Does Not Matches DB');
                     // See if we have a Gem merchant
                     if (str_contains($temp[$r_fg], "gem_merchant")) {
                         // Perform the query
@@ -352,53 +347,51 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
                             ++$sqlcount;
                         }
                     }
-                    if ($debug) {
-                        echo $id . ' Deleting Old Building<br>';
-                    }
+                    debug($id . ' Deleting Old Building');
+
                     $db->removeBuilding($uni, $id, 0);
                     ++$sqlcount; // Counting SQL iterations per connection
-                    if ($debug) {
-                        echo $id . ' Inserting New Building<br>';
-                    }
+                    debug($id . ' Inserting New Building');
+
                     $db->addBuilding($uni, $temp[$r_fg], $id, 0);
                     ++$sqlcount; // Counting SQL iterations per connection
                 } else {
-                    if ($debug) echo $id . ' Foreground info Matches DB<br>';
+                    debug($id . ' Foreground info Matches DB');
                     $db->updateMapFG($uni, $temp[$r_fg], $id);
                     ++$sqlcount; // Counting SQL iterations per connection
                     if ($temp[$r_fg] != $r->fg) {
-                        if ($debug) echo $id . ' Foreground Image Changed<br>';
+                        debug($id . ' Foreground Image Changed');
                         DB::building_update(id: $id, params: ['image' => $temp[$r_fg]], universe: $uni);
                         ++$sqlcount; // Counting SQL iterations per connection
                     }
                 }
             }
         } else {
-            if ($debug) echo $id . ' No Foreground info to worry about<br>';
+            debug($id . ' No Foreground info to worry about');
         }
-        if ($debug) echo 'this is result ' . $r_npc . 'Temp 2 check<br>';
+        debug('this is result ' . $r_npc . 'Temp 2 check');
         if ($r_npc != 0) { //we have an NPC on the map but no NPC ID to record (non blocking NPC with newer mapper script)
             if (!is_null($r->fg) && (isset($temp[2]) && $temp[2] !== false)) { // we have an NPC on the map but not an NID, thus can't have a building or SB or we wouldn't see the NPC
                 if (strpos($r->fg, "starbase")) {
                     $db->removeBuilding($uni, $id, 1);
                     ++$sqlcount; // Counting SQL iterations per connection
                 } else {
-                    if ($debug) echo 'Blowing Away a building';
+                    debug('Blowing Away a building');
                     $db->removeBuilding($uni, $id, 0);
                     ++$sqlcount; // Counting SQL iterations per connection
                 }
             }
-            if ($debug) echo $id . ' Checking NPC data<br>';
+            debug($id . ' Checking NPC data');
             if (in_array($id, $static)) {
                 continue;
             }
-            if ($debug) echo $id . ' Not Static NPC<br>';
-            if ($debug) xp($temp[$r_npc], $r->npc, $temp[$r_npc] == $r->npc, $r->fg);
+            debug($id . ' Not Static NPC');
+            debug($temp[$r_npc], $r->npc, $temp[$r_npc] == $r->npc, $r->fg);
             if (is_null($r->npc)) {
-                if ($debug) echo $id . ' No NPC Data in DB<br>';
+                debug($id . ' No NPC Data in DB');
                 if (is_null($r->fg) || $temp[2]) { //Add check that we say the FG is not a building but the DB might have something?
                     //if (is_null($r->fg)||$r_fg == 0) { //Added check that we say the FG is not a building but the DB might have something
-                    if ($debug) echo $id . ' setting $npc = ' . $temp[$r_npc] . ' and then' . ' Adding New NPC<br>';
+                    debug($id . ' setting $npc = ' . $temp[$r_npc] . ' and then' . ' Adding New NPC');
                     $npc = $temp[$r_npc];
                     // if (in_array($npc, $hack)) {
                     //     $ip = $_SERVER['REMOTE_ADDR'];
@@ -422,47 +415,47 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
                         if ($to_delete) {
                             for ($t = 0; $t < count($to_delete); $t++) {
                                 // Delete NPC from Data Table
-                                if ($debug) echo 'Blow Away 1';
+                                debug('Blow Away 1');
                                 $db->removeNPC($uni, $to_delete[$t]);
                                 ++$sqlcount; // Counting SQL iterations per connection
                             }
                         }
                     }
                     $nid = isset($temp[2]) ? (int)$temp[2] : null;
-                    if ($debug) echo 'Adding NPC with nid' . ($uni . $temp[$r_npc] . $id . $nid) . '<br>';
+                    debug('Adding NPC with nid' . ($uni . $temp[$r_npc] . $id . $nid));
                     $db->addNPC($uni, $temp[$r_npc], $id, " ", 0, 0, $nid); // Adding nid
                     ++$sqlcount; // Counting SQL iterations per connection
                 }
             } elseif ($temp[$r_npc] == $r->npc) { // it's the same NPC the map shows
                 $nid = isset($temp[2]) ? (int)$temp[2] : null;
-                if ($debug) echo $id . ' with nid = ' . $nid . ' and Uncloaked<br>';
+                debug($id . ' with nid = ' . $nid . ' and Uncloaked');
                 if (is_null($nid)) {
                     $db->updateMapNPC($uni, $temp[$r_npc], $id, 0, $nid);
                 } else {
                     // Handle the case where $temp[2] is not set
                     $db->updateMapNPC($uni, $temp[$r_npc], $id, 0); // Adding nid if known as well
-                    if ($debug) echo "Error: \$temp[2] is not set.";
+                    debug("Error: {$temp[2]} is not set.");
                 }
                 ++$sqlcount; // Counting SQL iterations per connection
             } else {
                 $nid = isset($temp[2]) ? (int)$temp[2] : null;
-                if ($debug) echo $id . ' with nid = ' . $nid . ' and Uncloaked<br>';
+                debug($id . ' with nid = ' . $nid . ' and Uncloaked');
 
-                if ($debug) echo $id . ' Has a Different NPC so Blow Away 2<br>';
+                debug($id . ' Has a Different NPC so Blow Away 2');
                 $db->removeNPC($uni, $id);
                 ++$sqlcount; // Counting SQL iterations per connection
                 $db->addNPC($uni, $temp[$r_npc], $id, "", 1, $nid); // Adding nid
                 ++$sqlcount; // Counting SQL iterations per connection
             }
         } else {
-            if ($debug) echo $id . ', - ' . $temp[$r_npc] . ', - ' . $r->npc . ' No NPC info to worry about<br>';
+            debug($id . ', - ' . $temp[$r_npc] . ', - ' . $r->npc . ' No NPC info to worry about');
         }
         if ($r_bg != 0) {
             //Check to see if we have Building information for the current tile
             if (!(is_null($r->fg))) {
                 // We do have Building Information  //Need to check for Starbase functionality NOTED
                 //if ($id == $_REQUEST['id']) { //Not sure what this check is doing as id is our current location which means we can only remove a building we are standing on? NOTED
-                if ($debug) echo $id . ' Deleting Foreground info from DB<br>';
+                debug($id . ' Deleting Foreground info from DB');
                 if (strpos($r->fg, "starbase")) {
                     $db->removeBuilding($uni, $id, 1);
                     ++$sqlcount; // Counting SQL iterations per connection
@@ -473,21 +466,19 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
                 //}
             }
             if (!(is_null($r->npc))) { // Check if NPC exists
-                if ($debug) {
-                    if (($id == $_REQUEST['id']) && (isset($temp[2]) && $temp[2] !== false) && (str_contains($temp[1], "ships")) && !(in_array($r->npc, $nonblocking))) {
-                        if ($debug) echo '--result of test for Blow Away 3';
-                    }
+                if (($id == $_REQUEST['id']) && (isset($temp[2]) && $temp[2] !== false) && (str_contains($temp[1], "ships")) && !(in_array($r->npc, $nonblocking))) {
+                    debug('--result of test for Blow Away 3');
                 }
 
                 if (($id == $_REQUEST['id']) && (isset($temp[2]) && $temp[2] !== false) && (str_contains($temp[1], "ships")) && !(in_array($r->npc, $nonblocking))) {
-                    if ($debug) echo 'is this working or what<br>';
-                    if ($debug) echo '??NPC has been killed<br>';
-                    if ($debug) echo 'Blow Away 3<br>';
+                    debug('is this working or what');
+                    debug('??NPC has been killed');
+                    debug('Blow Away 3');
                     $db->removeNPC($uni, $id);
                     ++$sqlcount; // Counting SQL iterations per connection
                 } else {
                     if ((in_array($r->npc, $cloaked)) && !(in_array($r->npc, $mobile))) {
-                        if ($debug) echo 'NPC has cloaked<br>';
+                        debug('NPC has cloaked');
                         $nid = isset($temp[2]) ? (int)$temp[2] : null;
                         if (is_null($r->npc_cloaked)) {
                             $db->updateMapNPC($uni, $temp[$r_npc], $id, 1, $nid);
@@ -495,16 +486,16 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
                         } else {
                             $show = strtotime($r->today) - strtotime($r->npc_updated);
                             if ($show > 432000) {
-                                if ($debug) echo 'Blow Away 4<br>';
+                                debug('Blow Away 4');
                                 $db->removeNPC($uni, $id);
                                 ++$sqlcount; // Counting SQL iterations per connection
                             }
                         }
                     } else {
-                        if ($debug) echo '???NPC has been killed<br>';
-                        if ($debug) echo $id . '-' . $_REQUEST['id'];
-                        if ($debug) echo '???Now Trying to remove the record<br>';
-                        if ($debug) echo 'Blow Away 5<br>';
+                        debug('???NPC has been killed');
+                        debug($id . '-' . $_REQUEST['id']);
+                        debug('???Now Trying to remove the record');
+                        debug('Blow Away 5');
                         $db->removeNPC($uni, $id);
                         ++$sqlcount; // Counting SQL iterations per connection
                     }

@@ -104,17 +104,42 @@ class DB
     /**
      * Get building by location id
      *
-     * @param integer $id
+     * @param integer|null $id
+     * @param string|null $name
      * @param string $universe
      * @return object|null
      */
-    public static function building(int $id, string $universe): object|null
+    public static function building(string $universe, ?int $id = null, ?string $name = null,): object|null
     {
-        $db = MySqlDB::instance();
+        if (empty($id) && empty($name)) {
+            return null;
+        }
 
-        $db->execute(sprintf('SELECT *, UTC_TIMESTAMP() AS today FROM %s_Buildings WHERE id = ?', $universe), [
-            'i', $id
-        ]);
+        $query = sprintf('SELECT *, UTC_TIMESTAMP() AS today FROM %s_Buildings WHERE 1 = 1', $universe);
+        $conditions = [];
+        $bindType = [];
+        $bindValues = [];
+
+        if (!empty($name)) {
+            $conditions[] = 'name = ?';
+            $bindType[] = 's';
+            $bindValues[] = $name;
+        }
+
+        if (!empty($id)) {
+            $conditions[] = 'id = ?';
+            $bindType[] = 'i';
+            $bindValues[] = $id;
+        }
+
+        $query .= ' AND ' . implode(' AND ', $conditions);
+
+        $params = [];
+        $params[] = implode('', $bindType);
+        $params = array_merge($params, $bindValues);
+
+        $db = MySqlDB::instance();
+        $db->execute($query, $params);
 
         return $db->numRows() === 1 ? $db->fetchObject() : null;
     }
