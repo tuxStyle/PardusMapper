@@ -11,7 +11,7 @@ use Pardusmapper\DB;
 
 CORS::mapper();
 
-if ($debug) xd($_POST);
+debug($_POST);
 
 $db = MySqlDB::instance();  // Create an instance of the Database class
 
@@ -116,7 +116,7 @@ $params = array_merge($params, $bindValues);
 $db->execute($query, $params);
 
 while ($q = $db->nextObject()) {
-    if ($debug) xd($q);
+    debug($q);
     if (empty($q->sector)) {$delete[] = $q->id; continue;}
 	// Calculate Days/Hours/Mins Since last seen
 	$diff['sec'] = isset($q->updated) ? strtotime($q->today) - strtotime($q->updated) : 99999999;

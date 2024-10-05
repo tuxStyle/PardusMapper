@@ -10,7 +10,7 @@ use Pardusmapper\DB;
 
 CORS::mapper();
 
-if ($debug) xd($_POST);
+debug($_POST);
 
 $db = MySqlDB::getInstance();  // Create an instance of the Database class
 

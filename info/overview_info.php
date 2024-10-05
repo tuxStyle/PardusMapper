@@ -27,7 +27,7 @@ $security = Session::security();
 
 //$war_status = $db->query('SELECT WarStatus FROM War_Status WHERE Universe = \'' . $uni.'\'');
 
-$b_loc = DB::building($id, $uni);
+$b_loc = DB::building(id: $id, universe: $uni);
 $npc_loc = DB::npc($id, $uni);
 $m = DB::map($id, $uni);
 
@@ -36,7 +36,7 @@ $return = '';
 
 if ($b_loc) {
 	$loc = $b_loc;
-	if ($debug) { xd($loc);echo '<br>'; }
+	debug($loc);
 	//Get Resource Data
 	$db->execute('SELECT * FROM Pardus_Res_Data');
 	while ($q = $db->fetchObject()) { // Use fetch_object() to get each row as an object

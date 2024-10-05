@@ -20,7 +20,8 @@ http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query paramet
 session_name($uni);
 session_start();
 
-if($debug) xp(__FILE__, $_SESSION);
+debug($_REQUEST);
+debug($_SESSION);
 
 $security = Session::security();
 $rank = Session::rank();

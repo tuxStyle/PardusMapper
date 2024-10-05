@@ -26,18 +26,18 @@ if (isset($_REQUEST['login'])) {
         $name = Post::username();
         $pwd = Post::password();
 
-        if ($debug) { echo $name . '<br>'; }
-        if ($debug) { echo sha1($pwd) . '<br>'; }
+        debug($name, sha1($pwd));
 
         if (!isset($name) || !isset($pwd)) {
             session_destroy();
         } else {
             $u = DB::user(username: $name, universe: $uni);
-            if ($debug) { xp($u); echo '<br>'; }
+            debug($u);
+
             if (is_null($u) || strcmp($u->password, sha1($pwd)) != 0) {
                 session_destroy();
             } else {
-                if ($debug) { echo 'Creating Session Variables<br>'; }
+                debug('Creating Session Variables');
                 session_regenerate_id(true);
                 $_SESSION['user'] = $u->username;
                 if ($u->user_id) { $_SESSION['id'] = $u->user_id; }
@@ -56,8 +56,8 @@ if (isset($_REQUEST['login'])) {
         }
     }
     session_write_close();
-    if ($debug) { xp($_SESSION); }
-    if ($debug) { echo $url . '<br>'; }
+    debug($_SESSION);
+    debug($url);
     if (strpos($url, $base_url) === false) { $url = $base_url . '/' . $uni . '/index.php'; }
     if (!$debug) { header("Location: $url"); }
 } else {

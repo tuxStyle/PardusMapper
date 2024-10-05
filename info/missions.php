@@ -11,7 +11,7 @@ use Pardusmapper\DB;
 
 CORS::mapper();
 
-if ($debug) xd($_POST);
+debug($_POST);
 
 $db = MySqlDB::instance();  // Create an instance of the Database class
 
@@ -271,13 +271,13 @@ $params = array_merge($params, $bindValues);
 
 if (strlen($sort_by)) { $query .= $sort_by; }
 
-if ($debug) xp($query, $params);
+debug($query, $params);
 $db->execute($query, $params);
 
 $delete = [];
 $mission = [];
 while ($q = $db->nextObject()) {
-    // if ($debug) xp($q);
+    // debug($q);
 	// Calculate Days/Hours/Mins Since last Visited
 	$diff['sec'] = isset($q->updated) ? strtotime($q->today) - strtotime($q->updated) : 99999999;
 	$diff['days'] = $diff['sec']/60/60/24;

@@ -13,10 +13,7 @@ require_once('../app/settings.php');
 // Enable CORS for any subdomain of pardus.at
 CORS::pardus_extended();
 
-if ($debug) {
-    xp($_REQUEST);
-    echo '<br>';
-}
+debug($_REQUEST);
 
 $db = MySqlDB::instance();
 
@@ -107,9 +104,8 @@ if (is_null($b->cluster) || is_null($b->sector)) {
 
 if ($sb) {
     //Visited Starbase
-    if ($debug) {
-        echo 'Visited Starbase<br>';
-    }
+    debug('Visited Starbase');
+
     // Collect Info
 
     // Update DB with common SB info
