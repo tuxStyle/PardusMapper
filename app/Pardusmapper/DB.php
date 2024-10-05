@@ -104,18 +104,12 @@ class DB
     /**
      * Get building by location id
      *
-     * @param integer|null $id
-     * @param string|null $universe
+     * @param integer $id
+     * @param string $universe
      * @return object|null
      */
-    public static function building(?int $id, ?string $universe): object|null
+    public static function building(int $id, string $universe): object|null
     {
-        http_response(is_null($universe), ApiResponse::BADREQUEST, 'universe is required to load map by location');
-
-        if (is_null($id)) {
-            return null;
-        }
-
         $db = MySqlDB::instance();
 
         $db->execute(sprintf('SELECT *, UTC_TIMESTAMP() AS today FROM %s_Buildings WHERE id = ?', $universe), [
@@ -128,20 +122,46 @@ class DB
     /**
      * Get static building data
      *
-     * @param string $name
+     * @param string|null $name
+     * @param string|null $image
      * @return object|array|null
      */
-    public static function building_static(string $name, bool $limit = true): object|array|null
+    public static function building_static(?string $name = null, ?string $image = null, bool $limit = true): object|array|null
     {
         $db = MySqlDB::instance();
 
-        $query = 'SELECT * FROM Pardus_Buildings_Data WHERE name = ?';
+        if (is_null($name) && is_null($image)) {
+            return null;
+        }
+        
+        $query = 'SELECT * FROM Pardus_Buildings_Data WHERE 1 = 1';
+        $conditions = [];
+        $bindType = [];
+        $bindValues = [];
+
+        if (!empty($name)) {
+            $conditions[] = 'name = ?';
+            $bindType[] = 's';
+            $bindValues[] = $name;
+        }
+
+        if (!empty($image)) {
+            $conditions[] = 'image = ?';
+            $bindType[] = 's';
+            $bindValues[] = $image;
+        }
+
+        $query .= ' AND ' . implode(' AND ', $conditions);
+
         if ($limit) {
             $query .= ' ORDER BY image LIMIT 1';
         }
-        $db->execute($query, [
-            's', $name
-        ]);
+
+        $params = [];
+        $params[] = implode('', $bindType);
+        $params = array_merge($params, $bindValues);
+
+        $db->execute($query, $params);
 
         if ($db->numRows() === 1) {
             return $db->fetchObject();
@@ -153,6 +173,62 @@ class DB
         return $return;
     }
 
+    /**
+     * Get static upkeep data
+     *
+     * @param string|null $name
+     * @param string|null $res
+     * @param int|null $upkeep
+     * @return object|array|null
+     */
+    public static function upkeep_static(?string $name = null, ?string $res = null, ?int $upkeep = null): object|array|null
+    {
+        $db = MySqlDB::instance();
+
+        if (is_null($name) && is_null($res) && is_null($upkeep)) {
+            return null;
+        }
+        
+        $query = 'SELECT * FROM Pardus_Upkeep_Data WHERE 1 = 1';
+        $conditions = [];
+        $bindType = [];
+        $bindValues = [];
+
+        if (!empty($name)) {
+            $conditions[] = 'name = ?';
+            $bindType[] = 's';
+            $bindValues[] = $name;
+        }
+
+        if (!empty($res)) {
+            $conditions[] = 'res = ?';
+            $bindType[] = 's';
+            $bindValues[] = $res;
+        }
+
+        if (!is_null($upkeep)) {
+            $conditions[] = 'upkeep = ?';
+            $bindType[] = 'i';
+            $bindValues[] = $upkeep;
+        }
+
+        $query .= ' AND ' . implode(' AND ', $conditions);
+
+        $params = [];
+        $params[] = implode('', $bindType);
+        $params = array_merge($params, $bindValues);
+
+        $db->execute($query, $params);
+
+        if ($db->numRows() === 1) {
+            return $db->fetchObject();
+        }
+
+        $return = [];
+        while($q = $db->nextObject()) { $return[] = $q; }
+
+        return $return;
+    }
 
     /**
      * Get NPC by name
@@ -263,16 +339,15 @@ class DB
     /**
      * Get stocks
      *
-     * @param int|null $id
+     * @param int $id
      * @param string|null $name
-     * @param string|null $universe
-     * @param bool|null $warStatus
+     * @param string $universe
+     * @param bool $warStatus
+     * @param bool $nonZero
      * @return array
      */
-    public static function stocks(?int $id = null, ?string $name = null, ?string $universe = null, ?bool $warStatus = false, ?bool $nonZero = false): array
+    public static function stocks(int $id, string $universe, ?string $name = null, bool $warStatus = false, bool $nonZero = false): array
     {
-        http_response(is_null($universe), ApiResponse::BADREQUEST, 'universe is required to load user');
-
         if (is_null($id)) {
             return null;
         }
@@ -314,6 +389,74 @@ class DB
     }
 
     /**
+     * Create stocks row
+     *
+     * @param integer $id
+     * @param string $name
+     * @param string $universe
+     * @return boolean
+     */
+    public static function stock_create(int $id, string $name, string $universe): bool
+    {
+        debug('Create stock', func_get_args());
+        $db = MySqlDB::instance();
+
+        $query = sprintf('INSERT INTO %s_New_Stock (id, name) VALUES (?, ?)', $universe);
+        $params = ['is', $id, $name];
+
+        debug($query, $params);
+        $db->execute($query, $params);
+
+        return true;
+    }
+
+    /**
+     * Update stock fields
+     *
+     * @param integer $id
+     * @param string $name
+     * @param array $params
+     * @param string $universe
+     * @return boolean
+     */
+    public static function stock_update(int $id, string $name, array $params, string $universe): bool
+    {
+        debug('Updating stock fields', func_get_args());
+
+        $bindType = [];
+        $bindValues = [];
+        $fields = [];
+        foreach($params as $key => $value) {
+            $fields[] = sprintf('`%s` = ?', $key);
+            $bindValues[] = $value;
+            if (is_int($value)) {
+                $bindType[] = 'i';
+            } elseif (is_float($value)) {
+                $bindType[] = 'd';
+            } else {
+                $bindType[] = 's';
+            }
+        }
+
+        $bindValues[] = $id;
+        $bindType[] = 'i';
+        $bindValues[] = $name;
+        $bindType[] = 's';
+
+        $binds = [];
+        $binds[] = implode('', $bindType);
+        $binds = array_merge($binds, $bindValues);
+        $query = sprintf('UPDATE %s_New_Stock SET %s WHERE id = ? AND name = ?', $universe, implode(', ', $fields));
+
+        $db = MySqlDB::instance();
+
+        debug($query, $binds);
+        $db->execute($query, $binds);
+
+        return true;
+    }
+
+    /**
      * Get stock by location id
      *
      * @param integer|null $id
@@ -350,19 +493,20 @@ class DB
     }
 
     /**
-     * Update building field
+     * Update building fields
      *
      * @param integer $id
      * @param array $params
-     * @param string|null $universe
+     * @param string $universe
      * @return boolean
      */
-    public static function building_update(int $id, ?array $params, ?string $universe): bool
+    public static function building_update(int $id, array $params, string $universe): bool
     {
-        http_response(is_null($universe), ApiResponse::BADREQUEST, 'universe is required to load map by location');
+        if (0 === count($params)) {
+            return false;
+        }
 
-        debug('Updating building fields');
-        debug($id, $params);
+        debug('Updating building fields', $id, $params);
 
         $bindType = [];
         $bindValues = [];
@@ -393,77 +537,126 @@ class DB
         return true;
     }
 
-
     /**
-     * Update building cluster
+     * Update building stock fields
      *
-     * @param integer|null $id
-     * @param string|null $cluster
-     * @param string|null $universe
+     * @param integer $id
+     * @param array $params
+     * @param string $universe
      * @return boolean
      */
-    public static function building_update_cluster(?int $id, ?string $cluster, ?string $universe): bool
+    public static function building_stock_update(int $id, array $params, string $universe): bool
     {
-        http_response(is_null($universe), ApiResponse::BADREQUEST, 'universe is required to load map by location');
+        if (0 === count($params)) {
+            return false;
+        }
 
-        debug('Updating building cluster');
+        debug('Updating building stock fields', $id, $params);
 
+        $bindType = [];
+        $bindValues = [];
+        $fields = [];
+        $date = null;
+
+        if (in_array('date', array_keys($params))) {
+            $date = $params['date'];
+            unset($params['date']);
+            $bindType[] = 's';
+            $bindValues[] = $date;
+        }
+
+        foreach($params as $key => $value) {
+            $fields[] = sprintf('`%s` = ?', $key);
+            $bindValues[] = $value;
+            if (is_int($value)) {
+                $bindType[] = 'i';
+            } elseif (is_float($value)) {
+                $bindType[] = 'd';
+            } else {
+                $bindType[] = 's';
+            }
+        }
+
+        $bindValues[] = $id;
+        $bindType[] = 'i';
+
+        $binds = [];
+        $binds[] = implode('', $bindType);
+        $binds = array_merge($binds, $bindValues);
+        $query = sprintf(
+            'UPDATE %s_Buildings SET stock_updated = %s %s WHERE id = ?'
+            , $universe
+            , (is_null($date) ? 'UTC_TIMESTAMP()' : 'STR_TO_DATE(?, \'%a %b %e %T GMT %Y\')')
+            , (count($fields) === 0 ? '' : ', ' . implode(', ', $fields))
+        );
+
+        debug($query, $binds);
         $db = MySqlDB::instance();
-
-        $db->execute(sprintf('UPDATE %s_Buildings SET cluster = ? WHERE id = ?', $universe), [
-            'si', $cluster, $id
-        ]);
+        $db->execute($query, $binds);
 
         return true;
     }
 
-
     /**
-     * Update building sector
+     * Update building equipment fields
      *
-     * @param integer|null $id
-     * @param string|null $sector
-     * @param string|null $universe
+     * @param integer $id
+     * @param array $params
+     * @param string $universe
      * @return boolean
      */
-    public static function building_update_sector(?int $id, ?string $sector, ?string $universe): bool
+    public static function building_equipment_update(int $id, array $params, string $universe): bool
     {
-        http_response(is_null($universe), ApiResponse::BADREQUEST, 'universe is required to load map by location');
+        if (0 === count($params)) {
+            return false;
+        }
 
-        debug('Updating building sector');
+        debug('Updating building equipment fields');
+        debug($id, $params);
+
+        $bindType = [];
+        $bindValues = [];
+        $fields = [];
+        $date = null;
+
+        if (in_array('date', array_keys($params))) {
+            $date = $params['date'];
+            unset($params['date']);
+            $bindType[] = 's';
+            $bindValues[] = $date;
+        }
+
+        foreach($params as $key => $value) {
+            $fields[] = sprintf('`%s` = ?', $key);
+            $bindValues[] = $value;
+            if (is_int($value)) {
+                $bindType[] = 'i';
+            } elseif (is_float($value)) {
+                $bindType[] = 'd';
+            } else {
+                $bindType[] = 's';
+            }
+        }
+
+        $bindValues[] = $id;
+        $bindType[] = 'i';
+
+        $binds = [];
+        $binds[] = implode('', $bindType);
+        $binds = array_merge($binds, $bindValues);
 
         $db = MySqlDB::instance();
 
-        $db->execute(sprintf('UPDATE %s_Buildings SET sector = ? WHERE id = ?', $universe), [
-            'si', $sector, $id
-        ]);
+        $db->execute(sprintf(
+            'UPDATE %s_Buildings SET eq_updated = %s %s WHERE id = ?'
+            , (is_null($date) ? 'UTC_TIMESTAMP()' : 'STR_TO_DATE(?, \'%a %b %e %T GMT %Y\')')
+            , $universe
+            , (count($fields) === 0 ? '' : ', ' . implode(', ', $fields))
+        ), $binds);
 
         return true;
     }
 
-    /**
-     * Update building X, Y
-     *
-     * @param integer|null $id
-     * @param integer|null $x
-     * @param integer|null $y
-     * @param string|null $universe
-     * @return boolean
-     */
-    public static function building_update_xy(?int $id, ?int $x, ?int $y, ?string $universe): bool
-    {
-        http_response(is_null($universe), ApiResponse::BADREQUEST, 'universe is required to load map by location');
-
-        debug('Updating building x,y');
-
-        $db = MySqlDB::instance();
-
-        $db->execute(sprintf('UPDATE %s_Buildings SET x = ?, y = ? WHERE id = ?', $universe), [
-            'iii', $x, $y, $id
-        ]);
-
-        return true;
-    }
 
     /**
      * Get resource data
@@ -481,4 +674,163 @@ class DB
 
         return $db->numRows() === 1 ? $db->fetchObject() : null;
     }
+
+    /**
+     * Update crew fields
+     *
+     * @param string $name
+     * @param array $params
+     * @param string $universe
+     * @return boolean
+     */
+    public static function crew_update(string $name, array $params, string $universe): bool
+    {
+        debug('Updating crew fields');
+        debug($name, $params);
+
+        $bindType = [];
+        $bindValues = [];
+        $fields = [];
+        foreach($params as $key => $value) {
+            $fields[] = sprintf('`%s` = ?', $key);
+            $bindValues[] = $value;
+            if (is_int($value)) {
+                $bindType[] = 'i';
+            } elseif (is_float($value)) {
+                $bindType[] = 'd';
+            } else {
+                $bindType[] = 's';
+            }
+        }
+
+        $bindValues[] = $name;
+        $bindType[] = 's';
+
+        $binds = [];
+        $binds[] = implode('', $bindType);
+        $binds = array_merge($binds, $bindValues);
+
+        $db = MySqlDB::instance();
+
+        debug(sprintf('UPDATE %s_Crew SET updated = UTC_TIMESTAMP(), %s WHERE name = ?', $universe, implode(', ', $fields)), $binds);
+        $db->execute(sprintf('UPDATE %s_Crew SET updated = UTC_TIMESTAMP(), %s WHERE name = ?', $universe, implode(', ', $fields)), $binds);
+
+        return true;
+    }
+
+    /**
+     * Create crew row
+     *
+     * @param string $name
+     * @param integer $location
+     * @param string $universe
+     * @return boolean
+     */
+    public static function crew_create(string $name, int $location, string $universe): bool
+    {
+        debug('Create crew');
+        debug(func_get_args());
+
+        $db = MySqlDB::instance();
+
+        $query = sprintf('INSERT INTO %s_Crew (name,loc) VALUES (?, ?)', $universe);
+        $params = ['si', $name, $location];
+        debug($query, $params);
+        $db->execute($query, $params);
+
+        return true;
+    }
+
+    /**
+     * Get equipment
+     *
+     * @param string $name
+     * @param integer $location
+     * @param string $universe
+     * @return object|null
+     */
+    public static function equipment(string $name, int $location, string $universe): object|null
+    {
+        if (empty($name)) {
+            return null;
+        }
+
+        $db = MySqlDB::instance();
+
+        $query = sprintf('SELECT *, UTC_TIMESTAMP() AS today FROM %s_Equipment WHERE loc = ? AND name = ?', $universe);
+        $db->execute($query, [
+            'is', $location, $name
+        ]);
+
+        return $db->numRows() === 1 ? $db->fetchObject() : null;
+    }
+
+    /**
+     * Create equipment row
+     *
+     * @param string $name
+     * @param integer $location
+     * @param string $universe
+     * @return boolean
+     */
+    public static function equipment_create(string $name, int $location, string $universe): bool
+    {
+        debug('Create equpment', func_get_args());
+        $db = MySqlDB::instance();
+
+        $query = sprintf('INSERT INTO %s_Equipment (name,loc) VALUES (?, ?)', $universe);
+        $params = ['si', $name, $location];
+
+        debug($query, $params);
+        $db->execute($query, $params);
+
+        return true;
+    }
+
+    /**
+     * Update equipment fields
+     *
+     * @param string $name
+     * @param integer $location
+     * @param array $params
+     * @param string $universe
+     * @return boolean
+     */
+    public static function equipment_update(string $name, int $location, array $params, string $universe): bool
+    {
+        debug('Updating equipment fields', func_get_args());
+
+        $bindType = [];
+        $bindValues = [];
+        $fields = [];
+        foreach($params as $key => $value) {
+            $fields[] = sprintf('`%s` = ?', $key);
+            $bindValues[] = $value;
+            if (is_int($value)) {
+                $bindType[] = 'i';
+            } elseif (is_float($value)) {
+                $bindType[] = 'd';
+            } else {
+                $bindType[] = 's';
+            }
+        }
+
+        $bindValues[] = $location;
+        $bindType[] = 'i';
+        $bindValues[] = $name;
+        $bindType[] = 's';
+
+        $binds = [];
+        $binds[] = implode('', $bindType);
+        $binds = array_merge($binds, $bindValues);
+        $query = sprintf('UPDATE %s_Equipment SET %s WHERE loc = ? AND name = ?', $universe, implode(', ', $fields));
+
+        $db = MySqlDB::instance();
+
+        debug($query, $binds);
+        $db->execute($query, $binds);
+
+        return true;
+    }
+
 }

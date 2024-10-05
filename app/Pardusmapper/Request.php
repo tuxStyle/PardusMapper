@@ -41,6 +41,23 @@ class Request
     }
 
     /**
+     * Returns protected bool from $_REQUEST
+     *
+     * @param string $key
+     * @param bool $default
+     * @return bool
+     */
+    public static function pbool(string $key, bool $default = false): bool
+    {
+        $value = vbool(($_REQUEST[$key] ?? null), $default);
+
+        debug(sprintf('%s: %s', $key, $value ? 'true' : 'false'));
+
+        return $value;
+    }
+
+
+    /**
      * Returns protected universe from $_REQUEST
      *
      * @param string $key

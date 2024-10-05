@@ -21,7 +21,7 @@ http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query paramet
 $sector = Post::sector();
 http_response(is_null($sector), ApiResponse::BADREQUEST, 'sector/s query parameter is required');
 
-$cluster = Post::cluster(); // this seems to be unused
+$cluster = Post::cluster();
 $img_url = Post::img_url(); // this will override the settings/cookies value
 $mode = Post::mode();
 $shownpc = Post::shownpc(); // below we override it from $mode based on options

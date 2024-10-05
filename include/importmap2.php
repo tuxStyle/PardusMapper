@@ -368,9 +368,7 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
                     ++$sqlcount; // Counting SQL iterations per connection
                     if ($temp[$r_fg] != $r->fg) {
                         if ($debug) echo $id . ' Foreground Image Changed<br>';
-                        $db->execute(sprintf('UPDATE %s_Buildings set image = ? WHERE id = ?', $uni), [
-                            'si', $temp[$r_fg], $id
-                        ]);
+                        DB::building_update(id: $id, params: ['image' => $temp[$r_fg]], universe: $uni);
                         ++$sqlcount; // Counting SQL iterations per connection
                     }
                 }

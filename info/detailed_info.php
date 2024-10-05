@@ -47,10 +47,8 @@ if ($b_loc) {
     $stocks = DB::stocks(id: $id, universe: $uni, warStatus: false);
     foreach($stocks as $q) { $stock[$res_id[$q->name]] = $q; }
 
-	$db->execute('SELECT * FROM Pardus_Upkeep_Data WHERE name = ?', [
-        's', $loc->name
-    ]);
-	while ($q = $db->nextObject()) { $upkeep[$q->res] = $q; }
+    $u = DB::upkeep_static(name: $loc->name);
+    foreach($u as $q) {$upkeep[$q->res] = $q;}
 
 	// Make sure the Stock is in the correct order
 	if ($stock) { ksort($stock,SORT_NUMERIC); }

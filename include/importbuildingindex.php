@@ -74,30 +74,34 @@ if ($b) {
 // Verify Index Info is newer than DB
 debug('Index Date ' . (new DateTime($date))->format('Y-m-d H:i:s') . ' - ' . strtotime($date));
 debug('Building Date ' . $b->stock_updated . ' - ' . strtotime($b->stock_updated));
-http_response(strtotime($date) < strtotime($b->stock_updated), ApiResponse::BADREQUEST, sprintf('Index Date: %s Older the Stocking Date: %s', strtotime($date), strtotime($b->stock_updated)));
+// http_response(strtotime($date) < strtotime($b->stock_updated), ApiResponse::BADREQUEST, sprintf('Index Date: %s Older the Stocking Date: %s', strtotime($date), strtotime($b->stock_updated)));
 
 http_response(!isset($_REQUEST['bi']), ApiResponse::OK, sprintf('bi query parameter is required: %s', $_REQUEST['bi'] ?? 'null'));
 
 // Get Cluster Information from Location
 $c = DB::cluster(id: $s->c_id);
 
+$updateBuilding = [];
+$updateBuildingStock = [];
+
 // Double Check that Cluster and Sector have been Set for the Building
 if (is_null($b->cluster)) {
-    DB::building_update_cluster(id: $loc, cluster: $c->name, universe: $uni);
+    $updateBuilding['cluster'] = $c->name;
 }
 if (is_null($b->sector)) {
-    DB::building_update_sector(id: $loc, sector: $s->name, universe: $uni);
+    $updateBuilding['sector'] = $s->name;
 }
 
 debug('Visited Building Index for the Sector');
 
 if (is_null($b->x) && is_null($b->y)) {
-    DB::building_update_xy(id: $loc, x: $x, y: $y, universe: $uni);
+    $updateBuilding['x'] = $x;
+    $updateBuilding['y'] = $y;
 }
 
-$db->execute(sprintf('UPDATE %s_Buildings SET `image`= ?, `name`= ?, `owner`= ? WHERE id = ?', $uni), [
-    'sssi', $image, $name, $owner, $loc
-]);
+$updateBuilding['image'] = $image;
+$updateBuilding['name'] = $name;
+$updateBuilding['owner'] = $owner;
 
 if (isset($bis)) {
     debug('Selling Resources');
@@ -112,16 +116,13 @@ if (isset($bis)) {
 
         $q = DB::building_stock(id: $loc, name: $r->name, universe: $uni);
         if (is_null($q)) {
-            $db->execute(sprintf('INSERT INTO %s_New_Stock (name, id) VALUES (?, ?)', $uni), [
-                'si', $r->name, $loc
-            ]);
+            DB::stock_create(id: $loc, name: $r->name, universe: $uni);
         }
-        $db->execute(sprintf('UPDATE %s_New_Stock SET amount = ? WHERE name = ? AND id = ?', $uni), [
-            'isi', $s[1], $r->name, $loc
-        ]);
-        $db->execute(sprintf('UPDATE %s_New_Stock SET buy = ? WHERE name = ? AND id = ?', $uni), [
-            'isi', $s[2], $r->name, $loc
-        ]);
+
+        $updateStock = [];
+        $updateStock['amount'] = (int)$s[1];
+        $updateStock['buy'] = (int)$s[2];
+        DB::stock_update(id: $loc, name: $r->name, params: $updateStock, universe: $uni);
     }
 }
 
@@ -137,35 +138,29 @@ if (isset($bib)) {
         $r = DB::res_data(image: $b[0]);
 
         $q = DB::building_stock(id: $loc, name: $r->name, universe: $uni);
-
         if (is_null($q)) {
-            $db->execute(sprintf('INSERT INTO %s_New_Stock (name, id) VALUES (?, ?)', $uni), [
-                'si', $r->name, $loc
-            ]);
+            DB::stock_create(id: $loc, name: $r->name, universe: $uni);
         }
 
+        $updateStock = [];
         $q = DB::building_stock(id: $loc, name: $r->name, universe: $uni);
         if ($q->max > 0) {
             $amount = $q->max - $b[1];
             debug('Amount : ' . $amount);
-            $db->execute(sprintf('UPDATE %s_New_Stock SET amount = ? WHERE name = ? AND id = ?', $uni), [
-                'isi', $amount, $r->name, $loc
-            ]);
+            $updateStock['amount'] = (int)$amount;
         }
-        $db->execute(sprintf('UPDATE %s_New_Stock SET sell = ? WHERE name = ? AND id = ?', $uni), [
-            'isi', $b[2], $r->name, $loc
-        ]);
+        $updateStock['buy'] = (int)$b[2];
+        DB::stock_update(id: $loc, name: $r->name, params: $updateStock, universe: $uni);
     }
 }
 
 if (isset($fs)) {
-    $db->execute(sprintf('UPDATE %s_Buildings SET `freespace` = ? WHERE id = ?', $uni), [
-        'ii', $fs, $loc
-    ]);
+    $updateBuildingStock['freespace'] = $fs;
+    $updateBuildingStock['date'] = $date;
 }
-$db->execute(sprintf('UPDATE %s_Buildings', $uni) . ' SET  `stock_updated`= STR_TO_DATE(?, \'%a %b %e %T GMT %Y\') WHERE id = ?', [
-    'si', $date, $loc
-]);
+
+DB::building_update(id: $loc, params: $updateBuilding, universe: $uni);
+DB::building_stock_update(id: $loc, params: $updateBuildingStock, universe: $uni);
 
 debug('Finished updating stocks');
 

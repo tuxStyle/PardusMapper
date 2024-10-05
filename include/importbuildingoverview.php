@@ -61,29 +61,29 @@ for ($i = 1; $i < $bo; $i++) {
     $s = DB::sector(sector: $sector);
     $c = DB::cluster(id: $s->c_id);
 
-    $params = [];
+    $updateBuilding = [];
 
     debug('Updating Cluster and Sector Info');
-    $params['cluster'] = $c->name;
-    $params['sector'] = $sector;
+    $updateBuilding['cluster'] = $c->name;
+    $updateBuilding['sector'] = $sector;
 
     debug('Updating X and Y');
-    $params['x'] = $x;
-    $params['y'] = $y;
+    $updateBuilding['x'] = $x;
+    $updateBuilding['y'] = $y;
 
     debug('Updating Name and Image');
-    $params['name'] = $name;
-    $params['image'] = $image;
+    $updateBuilding['name'] = $name;
+    $updateBuilding['image'] = $image;
 
     debug('Updating Owner and Faction');
-    $params['owner'] = $owner;
-    $params['faction'] = !is_null($faction) ? $faction : null;
+    $updateBuilding['owner'] = $owner;
+    $updateBuilding['faction'] = !is_null($faction) ? $faction : null;
 
     debug('Updating Condition and Level');
-    $params['condition'] = $condition;
-    $params['level'] = $level;
+    $updateBuilding['condition'] = $condition;
+    $updateBuilding['level'] = $level;
 
-    DB::building_update(id: $loc, params: $params, universe: $uni);
+    DB::building_update(id: $loc, params: $updateBuilding, universe: $uni);
 
     $ru = Request::pstring(key: 'u' . $i);
     $u = explode("~", $ru);
@@ -95,25 +95,22 @@ for ($i = 1; $i < $bo; $i++) {
 
         $r = DB::building_stock(id: $loc, name: $temp[0], universe: $uni);
         if (is_null($r)) {
-            $db->execute(sprintf('INSERT INTO %s_New_Stock (name, id) VALUES (?, ?)', $uni), [
-                'si', $temp[0], $loc
-            ]);
+            DB::stock_create(id: $loc, name: $temp[0], universe: $uni);
             $r = DB::building_stock(id: $loc, name: $temp[0], universe: $uni);
         }
 
-        $db->execute(sprintf('UPDATE %s_New_Stock SET amount = ? WHERE name = ? AND id = ?', $uni), [
-            'isi', $temp[1], $temp[0], $loc
-        ]);
+        $updateStock = [];
+        $updateStock['amount'] = (int)$temp[1];
         if ($r->max > 0) {
             $stock = round(($temp[1] / $r->max) * 100, 0);
             if ($stock > 100) {
                 $stock = 100;
             }
 
-            $db->execute(sprintf('UPDATE %s_New_Stock SET stock = ? WHERE name = ? AND id = ?', $uni), [
-                'isi', $stock, $temp[0], $loc
-            ]);
+            $updateStock['stock'] = (int)$stock;
         }
+
+        DB::stock_update(id: $loc, name: $temp[0], params: $updateStock, universe: $uni);
     }
 
     $rp = Request::pstring(key: 'p' . $i);
@@ -125,16 +122,14 @@ for ($i = 1; $i < $bo; $i++) {
             $temp = explode(",", $p[$x]);
             debug($temp);
 
-            $db->execute(sprintf('UPDATE %s_New_Stock SET amount = ? WHERE name = ? AND id = ?', $uni), [
-                'isi', $temp[1], $temp[0], $loc
-            ]);
+            $updateStock = [];
+            $updateStock['amount'] = (int)$temp[1];
+            DB::stock_update(id: $loc, name: $temp[0], params: $updateStock, universe: $uni);
         }
     }
 
     debug('Finished Updating Stock Info');
-    $db->execute(sprintf('UPDATE %s_Buildings SET stock_updated = UTC_TIMESTAMP() WHERE id = ?', $uni), [
-        'i', $loc
-    ]);
+    DB::building_stock_update(id: $loc, params: [], universe: $uni); //just set stock updated timestamp
 }
 
 $db->close();

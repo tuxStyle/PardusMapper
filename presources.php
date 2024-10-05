@@ -45,9 +45,7 @@ if (isset($id) && $id > 0) {
 	while ($r_single = $db->nextObject()) { $r_list[] = $r_single->name; }
 	$r_list = array_unique($r_list);
 	foreach ($r_list as $r_single) {
-        $db->execute('SELECT * FROM Pardus_Upkeep_Data WHERE name = ? AND upkeep = 1', [
-            's', $r_single
-        ]);
+        $u = DB::upkeep_static(name: $r_single, upkeep: 1);
         while ($u = $db->nextObject()) { $res_list[] = $u->res; }
 	}
 	if ($res_list) { 

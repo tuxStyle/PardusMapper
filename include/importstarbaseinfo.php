@@ -86,31 +86,23 @@ if ($b) {
     $b = DB::building(id: $loc, universe: $uni);
 }
 
-if ($debug) {
-    print_r($b);
-}
+debug('Got Building Info', $b);
 
-if ($debug) {
-    echo '<br>Got Building Info<br>';
-}
+
 // Get Sector and Cluster Information from Location
 $s = DB::sector(id: $loc);
 http_response(is_null($s), ApiResponse::BADREQUEST, sprintf('sector not found for location: %s', $loc));
-if ($debug) {
-    echo 'Got Sector Info<br>';
-}
 
 $c = DB::cluster(id: $s->c_id);
 http_response(is_null($s->c_id), ApiResponse::BADREQUEST, sprintf('cluster not found from sector location: %s', $s->c_id));
-if ($debug) {
-    echo 'Got Cluster Info<br>';
-}
+
+$updateBuilding = [];
+
 
 // Double Check that Cluster and Sector have been Set for the Building
 if (is_null($b->cluster) || is_null($b->sector)) {
-    $db->execute(sprintf('UPDATE %s_Buildings SET `cluster` = ?, `sector` = ? WHERE id = ?', $uni), [
-        'ssi', $c->name, $s->name, $loc
-    ]);
+    $updateBuilding['cluster'] = $c->name;
+    $updateBuilding['sector'] = $s->name;
 }
 
 if ($sb) {
@@ -125,73 +117,48 @@ if ($sb) {
         $x = Coordinates::getX($loc, $s->s_id, $s->rows);
         $y = Coordinates::getY($loc, $s->s_id, $s->rows, $x);
 
-        $db->execute(sprintf('UPDATE %s_Buildings SET `x` = ?, `y` = ? WHERE id = ?', $uni), [
-            'iii', $x, $y, $loc
-        ]);
+        $updateBuilding['x'] = $x;
+        $updateBuilding['y'] = $y;
     }
 
-    if (isset($faction)) {
-        if ($debug) {
-            echo 'Updating Faction<br>';
-        }
+    $updateBuilding['faction'] = $faction;
+    $updateBuilding['alliance'] = $alliance;
 
-        $db->execute(sprintf('UPDATE %s_Buildings SET `faction` = ? WHERE id = ?', $uni), [
-            'si', $faction, $loc
-        ]);
-    } else {
-        if ($debug) {
-            echo 'Nulling Faction<br>';
-        }
-
-        $db->execute(sprintf('UPDATE %s_Buildings SET `faction` = null WHERE id = ?', $uni), [
-            'i', $loc
-        ]);
-    }
     if (isset($owner)) {
-        if ($debug) {
-            echo 'Updating Owner<br>';
-        }
-
-        $db->execute(sprintf('UPDATE %s_Buildings SET `owner` = ? WHERE id = ?', $uni), [
-            'si', $owner, $loc
-        ]);
+        debug('Updating owner');
+        $updateBuilding['owner'] = $owner;
     }
-    if (isset($alliance)) {
-        if ($debug) {
-            echo 'Updating Alliance<br>';
-        }
 
-        $db->execute(sprintf('UPDATE %s_Buildings SET `alliance` = ? WHERE id = ?', $uni), [
-            'si', $alliance, $loc
-        ]);
-    } else {
-        if ($debug) {
-            echo 'Nulling Alliance<br>';
-        }
+	if (isset($alliance)) {
+        debug('Updating alliance');
+	} else {
+        debug('Nulling alliance');
+	}
+	if (isset($faction)) {
+        debug('Updating faction');
+	} else {
+        debug('Nulling faction');
+	}
 
-        $db->execute(sprintf('UPDATE %s_Buildings SET `alliance` = null WHERE id = ?', $uni), [
-            'i', $loc
-        ]);
-    }
+    $updateBuilding['name'] = $name;
+    $updateBuilding['image'] = $image;
+    $updateBuilding['population'] = (int)$pop;
+    $updateBuilding['crime'] = $crime;
 
     // moved this at the end to have the correct timestamp
-    $db->execute(sprintf('UPDATE %s_Buildings SET `name` = ?, `image` = ?, `population` = ?, `crime` = ?, updated = UTC_TIMESTAMP()  WHERE id = ?', $uni), [
-        'ssisi', $name, $image, $pop, $crime, $loc
-    ]);
+    DB::building_update(id: $loc, params: $updateBuilding, universe: $uni);
 }
 
 if (count($sbt) > 0) {
     //Visited a Starbase
-    if ($debug) {
-        echo 'Visited a Starbase Trade<br>';
-    }
+    debug('Visited a Starbase Trade');
+
+    $updateBuildingStock = [];
+
     //Collect Info
     if ($fs > 0) {
         $cap = $fs;
-
-        $db->execute(sprintf('UPDATE %s_Buildings SET `freespace` = ? WHERE id = ?', $uni), [
-            'ii', $fs, $loc
-        ]);
+        $updateBuildingStock['freespace'] = $fs;
     } else {
         $cap = 0;
     }
@@ -199,19 +166,15 @@ if (count($sbt) > 0) {
     // Loop through all sbt data
     for ($i = 1; $i < count($sbt); $i++) {
         $temp = explode(',', $sbt[$i]);
-        if ($debug) {
-            print_r($temp);
-            echo '<br>';
-        }
+        debug($temp);
+
         $temp[1] = str_replace(',', '', $temp[1]); // Remove commas from the second element
         $cap += $temp[1];
         $name = 'starbase';
         $res = $temp[0];
         
         // Execute the query
-        $u = $db->execute('SELECT * FROM Pardus_Upkeep_Data WHERE name = ? AND res = ?', [
-            'ss', $name, $res
-        ]);
+        $u = DB::upkeep_static(name: $name, res: $res);
 
         $building_stock_level = 0;
         $building_stock_max = 0;
@@ -229,35 +192,26 @@ if (count($sbt) > 0) {
             }
         }
 
-        if ($debug) {
-            echo 'Stocking for ' . $temp[0] . ' = ' . $stock . '<br>';
-        }
+        debug('Stocking for ' . $temp[0] . ' = ' . $stock);
 
         $stocks = DB::stocks(id: $loc, name: $temp[0], universe: $uni);
         if (0 === count($stocks)) {
-            $db->execute(sprintf('INSERT INTO %s_New_Stock (name, id) VALUES (?, ?)', $uni), [
-                'si', $temp[0], $loc
-            ]);
+            DB::stock_create(id: $loc, name: $temp[0], universe: $uni);
         }
 
-        $db->execute(
-            sprintf('UPDATE %s_New_Stock 
-                        SET
-                            `amount` = ?, 
-                            `bal` = ?, 
-                            `min` = ?, 
-                            `max` = ?, 
-                            `buy` = ?, 
-                            `sell` = ?, 
-                            `stock` = ?
-                        WHERE name = ? AND id = ?', $uni), [
-                            'iiiiiiisi', $temp[1], $temp[2], $temp[3], $temp[4], $temp[5], $temp[6], $stock, $temp[0], $loc
-            ]);
+        $updateStock = [];
+        $updateStock['amount'] = (int)$temp[1];
+        $updateStock['bal'] = (int)$temp[2];
+        $updateStock['min'] = (int)$temp[3];
+        $updateStock['max'] = (int)$temp[4];
+        $updateStock['buy'] = (int)$temp[5];
+        $updateStock['sell'] = (int)$temp[6];
+        $updateStock['stock'] = (int)$stock;
+        DB::stock_update(id: $loc, name: $temp[0], params: $updateStock, universe: $uni);
     }
 
-    $db->execute(sprintf('UPDATE %s_Buildings SET `capacity` = ?, `credit` = ?  WHERE id = ?', $uni), [
-        'iii', $cap, $credit, $loc
-    ]);
+    $updateBuildingStock['capacity'] = (int)$cap;
+    $updateBuildingStock['credit'] = (int)$credit;
 
     // Set Building Stock level
     if ($building_stock_max) {
@@ -267,13 +221,10 @@ if (count($sbt) > 0) {
         }
     }
 
-    if ($debug) {
-        echo 'Building Stock Level ' . $building_stock_level . '<br>';
-    }
+    debug('Building Stock Level ' . $building_stock_level);
+    $updateBuildingStock['stock'] = (int)$building_stock_level;
 
-    $db->execute(sprintf('UPDATE %s_Buildings SET `stock` = ?, stock_updated = UTC_TIMESTAMP()  WHERE id = ?', $uni), [
-        'ii', $building_stock_level, $loc
-    ]);
+    DB::building_stock_update(id: $loc, params: $updateBuildingStock, universe: $uni);
 }
 
 if (count($squads) > 0) {
@@ -299,55 +250,31 @@ if (count($squads) > 0) {
 
 if ($sbb) {
     //Visited SB Building
-    if ($debug) {
-        echo 'Visited SB Building<br>';
-    }
+    debug('Visited SB Building');
+
     //Collect Info
+    $updateBuilding['name'] = $name;
+    $updateBuilding['image'] = $image;
+    $updateBuilding['condition'] = (int)$condition;
 
-    $db->execute(sprintf('UPDATE %s_Buildings SET `image` = ?, `name` = ?, `condition` = ? WHERE id = ?', $uni), [
-        'ssii', $image, $name, $condition, $loc
-    ]);
+    $updateBuilding['faction'] = $faction;
+    $updateBuilding['alliance'] = $alliance;
 
-    if (isset($faction)) {
-        if ($debug) {
-            echo 'Updating Faction<br>';
-        }
-        $db->execute(sprintf('UPDATE %s_Buildings SET `faction` = ? WHERE id = ?', $uni), [
-            'si', $faction, $loc
-        ]);
-    } else {
-        if ($debug) {
-            echo 'Nulling Faction<br>';
-        }
-        $db->execute(sprintf('UPDATE %s_Buildings SET `faction` = null WHERE id = ?', $uni), [
-            'i', $loc
-        ]);
-    }
     if (isset($owner)) {
-        if ($debug) {
-            echo 'Updating Owner<br>';
-        }
-        $db->execute(sprintf('UPDATE %s_Buildings SET `owner` = ? WHERE id = ?', $uni), [
-            'si', $owner, $loc
-        ]);
+        debug('Updating owner');
+        $updateBuilding['owner'] = $owner;
     }
-    if (isset($alliance)) {
-        if ($debug) {
-            echo 'Updating Alliance<br>';
-        }
-        $db->execute(sprintf('UPDATE %s_Buildings SET `alliance` = ? WHERE id = ?', $uni), [
-            'si', $alliance, $loc
-        ]);
-    } else {
-        if ($debug) {
-            echo 'Nulling Alliance<br>';
-        }
-        $db->execute(sprintf('UPDATE %s_Buildings SET `alliance` = null WHERE id = ?', $uni), [
-            'i', $loc
-        ]);
-    }
-    //echo ('UPDATE `' . $uni . '_Buildings` SET `updated` = UTC_TIMESTAMP() WHERE id = ' . $loc);
-    $db->execute(sprintf('UPDATE %s_Buildings SET `updated` = UTC_TIMESTAMP() WHERE id = ?', $uni), [
-        'i', $loc
-    ]);
+
+	if (isset($alliance)) {
+        debug('Updating alliance');
+	} else {
+        debug('Nulling alliance');
+	}
+	if (isset($faction)) {
+        debug('Updating faction');
+	} else {
+        debug('Nulling faction');
+	}
+
+    DB::building_update(id: $loc, params: $updateBuilding, universe: $uni);
 }

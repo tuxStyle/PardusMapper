@@ -80,43 +80,6 @@ if ($debug) {
 	echo '<br>';
 }
 
-
-$cloaked[] = 'opponents/blood_amoeba.png';
-$cloaked[] = 'opponents/ceylacennia.png';
-$cloaked[] = 'opponents/cyborg_manta.png';
-$cloaked[] = 'opponents/manifestation_developed.png';
-$cloaked[] = 'opponents/dreadscorps.png';
-$cloaked[] = 'opponents/drosera.png';
-$cloaked[] = 'opponents/energy_minnow.png';
-$cloaked[] = 'opponents/energy_sparkers.png';
-$cloaked[] = 'opponents/smuggler_escorted.png';
-$cloaked[] = 'opponents/pirate_experienced.png';
-$cloaked[] = 'opponents/pirate_famous.png';
-$cloaked[] = 'opponents/frost_crystal.png';
-$cloaked[] = 'opponents/gorefanglings.png';
-$cloaked[] = 'opponents/gorefangling.png';
-$cloaked[] = 'opponents/gorefang.png';
-$cloaked[] = 'opponents/hidden_drug_stash.png';
-$cloaked[] = 'opponents/pirate_inexperienced.png';
-$cloaked[] = 'opponents/infected_creature.png';
-$cloaked[] = 'opponents/smuggler_lone.png';
-$cloaked[] = 'opponents/lucidi_squad.png';
-$cloaked[] = 'opponents/nebula_mole.png';
-$cloaked[] = 'opponents/nebula_serpent.png';
-$cloaked[] = 'opponents/oblivion_vortex.png';
-$cloaked[] = 'opponents/manifestation_ripe';
-$cloaked[] = 'opponents/sarracenia.png';
-$cloaked[] = 'opponents/slave_trader.png';
-$cloaked[] = 'opponents/manifestation_verdant.png';
-$cloaked[] = 'opponents/locust_hive.png';
-$cloaked[] = 'opponents/vyrex_hatcher.png';
-$cloaked[] = 'opponents/vyrex_assassin.png';
-$cloaked[] = 'opponents/vyrex_stinger.png';
-$cloaked[] = 'opponents/vyrex_mutant_mauler.png';
-$cloaked[] = 'opponents/vyrex_larva.png';
-
-sort($cloaked);
-
 for ($i = 1; $i < sizeof($maparray); $i++) {
 	$temp = explode(',', $maparray[$i]);
 	// Check to see if we got good data

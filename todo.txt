@@ -1,4 +1,7 @@
 new MySqlDB() to MySqlDB::instance()
+refactor DB double check function signatures and remove any http_response, change to required not null values where needed
+refactor DB stocks and building_stock and merge them
+refactor DB building_update and building_update_sector|cluster|x|y and merge them
 refactor debug
 refactor session, request, post calls
 move methods from MySqlDB to DB
@@ -6,3 +9,8 @@ finish prepared statements
 move loading from static tables from php files to DB
 re-run rector
 check files for TODO
+
+Script:
+- javascript error when visiting the trade settings
+- free space is also sent wrong: [fs] => NaN
+- import others building import, for trading outposts the script it doesn't send the trade list
