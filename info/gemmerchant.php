@@ -1,5 +1,9 @@
 <?php
 declare(strict_types=1);
+require_once('../app/settings.php');
+
+/** @var string $base_url */
+/** @var string $img_url */
 
 use Pardusmapper\Core\MySqlDB;
 use Pardusmapper\Core\ApiResponse;
@@ -7,8 +11,6 @@ use Pardusmapper\Request;
 use Pardusmapper\DB;
 use Pardusmapper\CORS;
 use Pardusmapper\Session;
-
-require_once('../app/settings.php');
 
 CORS::mapper();
 

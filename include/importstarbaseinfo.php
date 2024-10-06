@@ -57,14 +57,13 @@ $squads = Request::squads();  // SB squadrons
 // Get Map information
 $m = DB::map(id: $loc, universe: $uni);
 // Handle query error
-if (false === $m && $debug) {
-    echo "Query failed: " . MySqlDB::instance()->getDb()->error;
+if (false === $m) {
+    debug("Query failed: " . MySqlDB::instance()->getDb()->error);
 }
 // Stop of map not ofund
 http_response(is_null($m), ApiResponse::BADREQUEST, sprintf('map not found for location: %s', $loc));
 
-debug('Got Map Data');
-debug($m);
+debug('Got Map Data', $m);
 
 // Verify Building is already in DB Tables Add if Not
 // Perform the query to fetch building information
@@ -77,7 +76,7 @@ if ($b) {
     }
 } else {
     // Building not in DB
-    DB::building_add(universe: $uni, image: $m->fg, id: $loc, sb: 0);
+    DB::building_add(universe: $uni, image: $image, id: $loc, sb: 0);
 
     // After we add a buildimg, load the object
     $b = DB::building(id: $loc, universe: $uni);
@@ -159,6 +158,9 @@ if (count($sbt) > 0) {
         $cap = 0;
     }
 
+    $building_stock_level = 0;
+    $building_stock_max = 0;
+    
     // Loop through all sbt data
     for ($i = 1; $i < count($sbt); $i++) {
         $temp = explode(',', (string) $sbt[$i]);
@@ -172,8 +174,6 @@ if (count($sbt) > 0) {
         // Execute the query
         $u = DB::upkeep_static(name: $name, res: $res);
 
-        $building_stock_level = 0;
-        $building_stock_max = 0;
         if ($u !== null && isset($u->upkeep)) {
             if ($u->upkeep) {
                 $building_stock_level += $temp[1];

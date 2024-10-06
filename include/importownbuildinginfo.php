@@ -126,9 +126,9 @@ if (isset($bts)) {
         $updateStock['buy'] = (int)$temp[5];
         $updateStock['sell'] = (int)$temp[4];
         $updateStock['stock'] = (int)$stock_level;
-	}
 
-    DB::stock_update(id: $loc, name: $temp[0], params: $updateStock, universe: $uni);
+        DB::stock_update(id: $loc, name: $temp[0], params: $updateStock, universe: $uni);
+    }
 
 	if ($building_stock_max) {
 		$building_stock_level = round(($building_stock_level / $building_stock_max) * 100, 0);

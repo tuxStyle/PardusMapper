@@ -59,6 +59,7 @@ if (is_null($oldpwd)) {
 
 $invalidpwd = 0;
 $newpwdnotentered = 0;
+$newpwd = null;
 if (!is_null($newpwd1)){
 	if ($newpwd1 !== $newpwd2) {
 		debug('New Passwords do not Match');
@@ -75,7 +76,7 @@ if (!is_null($newpwd1)){
 }
 
 
-if (isset($_REQUEST['change'])) {
+if (isset($_REQUEST['change']) && !is_null($newpwd)) {
 	$db->execute(sprintf('UPDATE %s_Users SET password = ? WHERE username = ?', $uni), [
         'ss', sha1($newpwd), $_SESSION['user'],
     ]);

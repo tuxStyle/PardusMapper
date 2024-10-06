@@ -1,5 +1,12 @@
 <?php
-declare(strict_types=1); 
+declare(strict_types=1);
+/** @var string $base_url */
+/** @var string $uni */
+/** @var string $css */
+/** @var string $m_css */
+/** @var string $faction */
+/** @var string $syndicate */
+/** @var array $mission_list */
 use Pardusmapper\Core\Settings;
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">

@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+/** @var string $url */
 use Pardusmapper\Core\Settings;
 ?>
 <table id="clusterMapTable">

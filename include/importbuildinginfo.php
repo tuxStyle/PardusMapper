@@ -1,9 +1,10 @@
 <?php
 declare(strict_types=1);
+require_once('../app/settings.php');
+
+/** @var string $base_url */
 
 use Pardusmapper\CORS;
-
-require_once('../app/settings.php');
 
 CORS::pardus();
 

@@ -2,6 +2,9 @@
 declare(strict_types=1);
 require_once('../app/settings.php');
 
+/** @var string $base_url */
+/** @var string $img_url */
+
 use Pardusmapper\Core\MySqlDB;
 use Pardusmapper\Core\ApiResponse;
 use Pardusmapper\Post;
@@ -23,7 +26,7 @@ $pilot = Post::pstring(key: 'pilot');
 $pilot_s = Post::pstring(key: 'pilot_s');
 $mission_filter = Post::pstring(key: 'type');
 $sort = Post::pstring(key: 'sort', default: '');
-$order = Post::pstring(key: 'order');
+$order = Post::pint(key: 'order', default: 0);
 $mode = Post::pstring(key: 'mode');
 $source_id = Post::pint(key: 'loc');
 $sector = Post::pstring(key: 'sector');

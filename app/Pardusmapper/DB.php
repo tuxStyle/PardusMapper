@@ -437,7 +437,7 @@ class DB
 
 
         // empty map tile content
-        $query = sprintf('UPDATE %s_Maps SET `fg` = NULL , `fg_spotted` = UTC_TIMESTAMP(), `fg_updated` = UTC_TIMESTAMP() WHERE id = ?');
+        $query = sprintf('UPDATE %s_Maps SET `fg` = NULL , `fg_spotted` = UTC_TIMESTAMP(), `fg_updated` = UTC_TIMESTAMP() WHERE id = ?', $universe);
         // debug(__METHOD__, $query, $params);
         $db->execute($query, $params);
 
@@ -790,7 +790,7 @@ class DB
         if (!$n) {
             debug(__METHOD__, 'NPC not found, adding');
 
-            $db->execute(sprintf('INSERT INTO %s_Buildings (`id`) VALUES (?)', $universe), [
+            $db->execute(sprintf('INSERT INTO %s_Test_Npcs (`id`) VALUES (?)', $universe), [
                 'i', $id
             ]);
 
@@ -802,13 +802,13 @@ class DB
             // }
 
             // Combine multiple updates into one query
-            $query = "UPDATE %s_Test_Npcs
+            $query = sprintf("UPDATE %s_Test_Npcs
                         SET
                             `cluster` = ?, `sector` = ?, `cloaked` = null, `x` = ?, `y` = ?, 
                             `name` = ?, `image` = ?, 
                             `hull` = ?, `armor` = ?, `shield` = ?, `spotted` = UTC_TIMESTAMP()
                     WHERE (deleted is null or deleted = 0) and id = ?
-            ";
+            ", $universe);
             $params = [
                 'ssiissiiii',
                 $c->name, $s->name, $x, $y,
@@ -842,6 +842,8 @@ class DB
         $db->execute(sprintf('UPDATE %s_Maps SET `npc_updated` = UTC_TIMESTAMP() WHERE id = ?', $universe), [
             'i', $id
         ]);
+
+        return true;
     }
 
     /**

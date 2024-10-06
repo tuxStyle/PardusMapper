@@ -1,4 +1,11 @@
-<?php declare(strict_types=1); ?>
+<?php
+declare(strict_types=1);
+
+/** @var string $css */
+/** @var string $m_css */
+/** @var string $uni */
+
+?>
 <html>
 	<head>
 		<?php if (isset($s)) { echo '<title>' . $s->name . '\'s Mission Listing</title>'; } ?>

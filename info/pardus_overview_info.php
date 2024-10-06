@@ -1,13 +1,13 @@
 <?php
 declare(strict_types=1);
+require_once('../app/settings.php');
 
-use Pardusmapper\Core\MySqlDB;
 use Pardusmapper\Core\ApiResponse;
 use Pardusmapper\Request;
 use Pardusmapper\DB;
 use Pardusmapper\CORS;
 
-require_once('../app/settings.php');
+/** @var string $img_url */
 
 CORS::pardus();
 
@@ -115,7 +115,7 @@ if ($b_loc) {
 			if (strpos($loc->image,"planet") || strpos($loc->image,"starbase")) {
 				$return .= '<td align="right">';
 				if($s->bal != 0) {
-					if ($rs->bal > 0) { $return .= '<font color="#009900"><strong>+' . number_format((int)$s->bal) . '</strong></font>'; }
+					if ($s->bal > 0) { $return .= '<font color="#009900"><strong>+' . number_format((int)$s->bal) . '</strong></font>'; }
 					else { $return .= '<font color="#FFAA00"><strong>' . number_format((int)$s->bal) . '</strong></font>'; }
 				} else { $return .= number_format((int)$s->bal); }
 				$return .= '</td>';

@@ -1,4 +1,12 @@
-<?php declare(strict_types=1); ?>
+<?php
+declare(strict_types=1);
+/** @var string $base_url */
+/** @var string $css */
+/** @var string $uni */
+/** @var string $url */
+/** @var string $signedup */
+/** @var string $alreadysignedup */
+?>
 <!DOCTYPE html>
 <html>
     <head>

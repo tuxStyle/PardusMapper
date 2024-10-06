@@ -2,6 +2,9 @@
 declare(strict_types=1);
 require_once('../app/settings.php');
 
+/** @var string $base_url */
+/** @var string $img_url */
+
 use Pardusmapper\Core\MySqlDB;
 use Pardusmapper\Core\ApiResponse;
 use Pardusmapper\Post;
@@ -20,7 +23,7 @@ http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query paramet
 
 $npc_filter = Post::pstring(key: 'npc');
 $sort = Post::pstring(key: 'sort', default: '');
-$order = Post::pstring(key: 'order');
+$order = Post::pint(key: 'order', default: 0);
 $sector = Post::pstring(key: 'sector');
 $cluster = Post::pstring(key: 'cluster');
 

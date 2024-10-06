@@ -2,8 +2,10 @@
 declare(strict_types=1);
 require_once('../app/settings.php');
 
+/** @var string $base_url */
+/** @var string $img_url */
+
 use Pardusmapper\Core\ApiResponse;
-use Pardusmapper\Core\MySqlDB;
 use Pardusmapper\CORS;
 use Pardusmapper\Post;
 use Pardusmapper\DB;
@@ -110,7 +112,7 @@ if ($b_loc) {
 					$owner_table .= '<br><font size="1"><strong>' . $loc->alliance . '</b></font>';
 				}
 				$owner_table .= '</td>';
-				$owner_talbe .= '</tr>';
+				$owner_table .= '</tr>';
 			$owner_table .= '</table>';
 		}
 		if (strpos($loc->image,"planet") || strpos($loc->image,"starbase")) {

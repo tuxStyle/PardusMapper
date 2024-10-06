@@ -2,8 +2,9 @@
 declare(strict_types=1);
 require_once('../app/settings.php');
 
+/** @var string $base_url */
+
 use Pardusmapper\Core\ApiResponse;
-use Pardusmapper\Core\MySqlDB;
 use Pardusmapper\CORS;
 use Pardusmapper\DB;
 use Pardusmapper\Post;

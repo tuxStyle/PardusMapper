@@ -104,7 +104,7 @@ for ($i = 1; $i < count($mission); $i++) {
     $m_faction = vnull($m[1] ?? null);
     debug('Mission faction = ' . $m_faction);
 
-    if (1 === $db->numRows()) {
+    if ($q = $db->nextObject()) {
         debug('We have Existing Mission Data');
         if (is_null($m_faction)) {
             debug('Faction or Syndicate Mission Mission');

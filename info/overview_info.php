@@ -2,8 +2,9 @@
 declare(strict_types=1);
 require_once('../app/settings.php');
 
+/** @var string $img_url */
+
 use Pardusmapper\Core\ApiResponse;
-use Pardusmapper\Core\MySqlDB;
 use Pardusmapper\CORS;
 use Pardusmapper\Post;
 use Pardusmapper\DB;

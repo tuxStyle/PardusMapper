@@ -2,6 +2,8 @@
 declare(strict_types=1);
 require_once('../app/settings.php');
 
+/** @var string $base_url */
+
 use Pardusmapper\Core\ApiResponse;
 use Pardusmapper\Core\MySqlDB;
 use Pardusmapper\CORS;
@@ -91,7 +93,7 @@ for ($y = 0;$y < $s->rows;$y++) {
 					$fg_img = $img_url . $map->fg;
 					// Calculate Days/Hours/Mins Since last Visited
 					//$fg_diff['sec'] = strtotime($map->today) - strtotime($map->fg_date);
-					if (!empty($map) && !empty($map->today) && !empty($map->fg_updated)) {
+					if (!empty($map->today) && !empty($map->fg_updated)) {
 						$fg_diff['sec'] = strtotime($map->today) - strtotime($map->fg_updated);
 					} else {
 						echo "Invalid or missing date values.";

@@ -2,12 +2,14 @@
 declare(strict_types=1);
 require_once('app/settings.php');
 
+/** @var string $base_url */
+
 use Pardusmapper\Core\MySqlDB;
 use Pardusmapper\Post;
 use Pardusmapper\Request;
 use Pardusmapper\DB;
 
-$db = MySqlDB::getInstance();
+$db = MySqlDB::instance();
 
 // Set Univers Variable and Session Name
 $uni = Request::uni();

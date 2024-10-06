@@ -1,4 +1,21 @@
-<?php declare(strict_types=1); ?>
+<?php
+declare(strict_types=1);
+/** @var string $base_url */
+/** @var string $img_url */
+/** @var string $css */
+/** @var string $game_css */
+/** @var string $cluster_css */
+/** @var string $img_url */
+/** @var string $uni */
+/** @var string $sector */
+/** @var string $cluster */
+/** @var string $sector */
+/** @var string $title */
+/** @var bool $shownpc */
+/** @var int $id */
+/** @var int $security */
+/** @var object $s */
+?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>

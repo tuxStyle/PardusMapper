@@ -1,4 +1,8 @@
-<?php declare(strict_types=1); ?>
+<?php
+declare(strict_types=1);
+/** @var string $base_url */
+/** @var string $cluster */
+?>
 <table id="header_table" border="2" cellspacing="5" cellpadding="5">
 	<?php 
 		echo '<tr><td><a href="' . $base_url . '">Change Universe</a></td></tr>';
@@ -10,9 +14,9 @@
 			if (is_object($cluster)) {
 				// Extract the relevant property if $cluster is an object
 				$cluster = $cluster->code ?? 'Unknown Cluster';
-			} else {
+			} else if(!is_string($cluster)){
 				// Handle cases where $cluster is null or a string
-				$cluster ??= 'Unknown Cluster';
+				$cluster = 'Unknown Cluster';
 			}
 
 			// Output using the $cluster variable

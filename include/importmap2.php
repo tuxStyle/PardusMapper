@@ -56,8 +56,8 @@ if (is_null($sector)) {
 }
 http_response(is_null($sector), ApiResponse::BADREQUEST, 'sector/s query parameter is required');
 $s = DB::sector(sector: $sector);
-$x = Coordinates::getX($id, $s->s_id, $s->rows);
-$y = Coordinates::getY($id, $s->s_id, $s->rows, $x);
+$x = Coordinates::getX($loc, $s->s_id, $s->rows);
+$y = Coordinates::getY($loc, $s->s_id, $s->rows, $x);
 
 // Set Pilot Info
 $ip = $_SERVER['REMOTE_ADDR'];
@@ -376,6 +376,8 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
                             'ss', $r->cluster, $npc
                         ]);
                         ++$sqlcount; // Counting SQL iterations per connection
+
+                        $to_delete = [];
                         while ($t = $db->nextObject()) {
                             $to_delete[] = $t->id;
                         }

@@ -2,6 +2,9 @@
 declare(strict_types=1);
 require_once('../app/settings.php');
 
+/** @var string $base_url */
+/** @var string $img_url */
+
 use Pardusmapper\Core\ApiResponse;
 use Pardusmapper\Core\MySqlDB;
 use Pardusmapper\CORS;
@@ -19,7 +22,7 @@ http_response(is_null($sector), ApiResponse::BADREQUEST, 'sector query parameter
 
 $resource = Post::pstring(key: 'resource', default: '');
 $sort = Post::pstring(key: 'sort', default: '');
-$order = Post::pstring(key: 'order');
+$order = Post::pint(key: 'order', default: 0);
 $pilot = Post::pstring(key: 'pilot');
 
 session_name($uni);
@@ -81,12 +84,12 @@ if (isset($pilot) && $pilot === $user) {
 		$sql = 'SELECT *
                     , UTC_TIMESTAMP() "today"
                     , (SELECT stock FROM %s_New_Stock s WHERE b.id = s.id AND name = ?) "res_stock"
-                    , (SELECT amount FROM %w_New_Stock s WHERE b.id = s.id AND name = ?) "amount"
+                    , (SELECT amount FROM %s_New_Stock s WHERE b.id = s.id AND name = ?) "amount"
                     , (SELECT max FROM %s_New_Stock s WHERE b.id = s.id AND name = ?) "max"
                 FROM %s_Buildings b 
                 WHERE id IN (SELECT loc FROM %s_Personal_Resources WHERE id = ?)
                 AND b.name IN (SELECT name from Pardus_Upkeep_Data WHERE res = ? AND upkeep = 1)';
-        $query = sprintf($query, $uni, $uni, $uni, $uni, $uni);
+        $query = sprintf($sql, $uni, $uni, $uni, $uni, $uni);
         $params = ['sssis', $resource, $resource, $resource, $id, $resource];
 	} else {
 		$query = sprintf('SELECT *, UTC_TIMESTAMP() "today" FROM %s_Buildings b WHERE b.id IN (SELECT loc FROM %s_Personal_Resources WHERE id = ?)', $uni, $uni);
