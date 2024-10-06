@@ -162,7 +162,7 @@ if ($npc_loc) {
 	$loc = $npc_loc;
     debug($loc);
 
-	$npc = DB::npc_static($loc->name);
+	$npc = DB::npc_static(name: $loc->name);
     debug($npc);
 	
 	$return .= '<table class="messagestyle" width="210">';

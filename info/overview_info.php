@@ -28,8 +28,8 @@ $security = Session::pint(key: 'security', default: 0);
 //$war_status = $db->query('SELECT WarStatus FROM War_Status WHERE Universe = \'' . $uni.'\'');
 
 $b_loc = DB::building(id: $id, universe: $uni);
-$npc_loc = DB::npc($id, $uni);
-$m = DB::map($id, $uni);
+$npc_loc = DB::npc(id: $id, universe: $uni);
+$m = DB::map(id: $id, universe: $uni);
 
 
 $return = '';
@@ -215,7 +215,7 @@ if ($b_loc) {
 if ($npc_loc) {
 	$row = 3;
 	$loc = $npc_loc;
-	$npc = DB::npc_static($loc->name);
+	$npc = DB::npc_static(name: $loc->name);
 	$return .= '<table>';
 	$return .= '<tr style="background-color:#003040;">';
 	$return .= '<td colspan="' . $row . '" align="center">' . $loc->name . ' [' . $loc->x . ',' . $loc->y . ']</td>';

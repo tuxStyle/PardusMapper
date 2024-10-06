@@ -76,14 +76,12 @@ class DB
     /**
      * Get map by location id
      *
+     * @param string $universe
      * @param integer|null $id
-     * @param string|null $universe
      * @return object|null
      */
-    public static function map(?int $id, ?string $universe): object|null
+    public static function map(string $universe, ?int $id): object|null
     {
-        http_response(is_null($universe), ApiResponse::BADREQUEST, 'universe is required to load map by location');
-
         if (is_null($id)) {
             return null;
         }
@@ -104,9 +102,9 @@ class DB
     /**
      * Get building by location id
      *
+     * @param string $universe
      * @param integer|null $id
      * @param string|null $name
-     * @param string $universe
      * @return object|null
      */
     public static function building(string $universe, ?int $id = null, ?string $name = null,): object|null
@@ -275,15 +273,13 @@ class DB
     /**
      * Get NPC by location
      *
+     * @param string $universe
      * @param int|null $id
-     * @param string|null $universe
      * @param bool|null $excludeDeleted
      * @return object|null
      */
-    public static function npc(?int $id,  ?string $universe, ?bool $excludeDeleted = true): object|null
+    public static function npc(string $universe, ?int $id, ?bool $excludeDeleted = true): object|null
     {
-        http_response(is_null($universe), ApiResponse::BADREQUEST, 'universe is required to load npc by location');
-
         if (is_null($id)) {
             return null;
         }
@@ -306,15 +302,13 @@ class DB
     /**
      * Get user
      *
+     * @param string $universe
      * @param int|null $id
      * @param string|null $username
-     * @param string|null $universe
      * @return object|null
      */
-    public static function user(?int $id = null, ?string $username = null, ?string $universe = null): object|null
+    public static function user(string $universe, ?int $id = null, ?string $username = null): object|null
     {
-        http_response(is_null($universe), ApiResponse::BADREQUEST, 'universe is required to load user');
-
         if (is_null($id) && is_null($username)) {
             return null;
         }
@@ -364,14 +358,14 @@ class DB
     /**
      * Get stocks
      *
+     * @param string $universe
      * @param int $id
      * @param string|null $name
-     * @param string $universe
      * @param bool $warStatus
      * @param bool $nonZero
      * @return array
      */
-    public static function stocks(int $id, string $universe, ?string $name = null, bool $warStatus = false, bool $nonZero = false): array
+    public static function stocks(string $universe, int $id, ?string $name = null, bool $warStatus = false, bool $nonZero = false): array
     {
         if (is_null($id)) {
             return null;
@@ -416,12 +410,12 @@ class DB
     /**
      * Create stocks row
      *
+     * @param string $universe
      * @param integer $id
      * @param string $name
-     * @param string $universe
      * @return boolean
      */
-    public static function stock_create(int $id, string $name, string $universe): bool
+    public static function stock_create(string $universe, int $id, string $name): bool
     {
         debug('Create stock', func_get_args());
         $db = MySqlDB::instance();
@@ -438,13 +432,13 @@ class DB
     /**
      * Update stock fields
      *
+     * @param string $universe
      * @param integer $id
      * @param string $name
      * @param array $params
-     * @param string $universe
      * @return boolean
      */
-    public static function stock_update(int $id, string $name, array $params, string $universe): bool
+    public static function stock_update(string $universe, int $id, string $name, array $params): bool
     {
         debug('Updating stock fields', func_get_args());
 
@@ -484,15 +478,13 @@ class DB
     /**
      * Get stock by location id
      *
+     * @param string $universe
      * @param integer|null $id
      * @param string|null $name
-     * @param string|null $universe
      * @return object|array|null
      */
-    public static function building_stock(?int $id = null, ?string $name = null, ?string $universe = null): object|array|null
+    public static function building_stock(string $universe, ?int $id = null, ?string $name = null): object|array|null
     {
-        http_response(is_null($universe), ApiResponse::BADREQUEST, 'universe is required to load map by location');
-
         if (is_null($id)) {
             return null;
         }
@@ -520,12 +512,12 @@ class DB
     /**
      * Update building fields
      *
+     * @param string $universe
      * @param integer $id
      * @param array $params
-     * @param string $universe
      * @return boolean
      */
-    public static function building_update(int $id, array $params, string $universe): bool
+    public static function building_update(string $universe, int $id, array $params): bool
     {
         if (0 === count($params)) {
             return false;
@@ -565,12 +557,12 @@ class DB
     /**
      * Update building stock fields
      *
+     * @param string $universe
      * @param integer $id
      * @param array $params
-     * @param string $universe
      * @return boolean
      */
-    public static function building_stock_update(int $id, array $params, string $universe): bool
+    public static function building_stock_update(string $universe, int $id, array $params): bool
     {
         if (0 === count($params)) {
             return false;
@@ -625,12 +617,12 @@ class DB
     /**
      * Update building equipment fields
      *
+     * @param string $universe
      * @param integer $id
      * @param array $params
-     * @param string $universe
      * @return boolean
      */
-    public static function building_equipment_update(int $id, array $params, string $universe): bool
+    public static function building_equipment_update(string $universe, int $id, array $params): bool
     {
         if (0 === count($params)) {
             return false;
@@ -703,12 +695,12 @@ class DB
     /**
      * Update crew fields
      *
+     * @param string $universe
      * @param string $name
      * @param array $params
-     * @param string $universe
      * @return boolean
      */
-    public static function crew_update(string $name, array $params, string $universe): bool
+    public static function crew_update(string $universe, string $name, array $params): bool
     {
         debug('Updating crew fields');
         debug($name, $params);
@@ -746,12 +738,12 @@ class DB
     /**
      * Create crew row
      *
+     * @param string $universe
      * @param string $name
      * @param integer $location
-     * @param string $universe
      * @return boolean
      */
-    public static function crew_create(string $name, int $location, string $universe): bool
+    public static function crew_create(string $universe, string $name, int $location): bool
     {
         debug('Create crew');
         debug(func_get_args());
@@ -769,12 +761,12 @@ class DB
     /**
      * Get equipment
      *
+     * @param string $universe
      * @param string $name
      * @param integer $location
-     * @param string $universe
      * @return object|null
      */
-    public static function equipment(string $name, int $location, string $universe): object|null
+    public static function equipment(string $universe, string $name, int $location): object|null
     {
         if (empty($name)) {
             return null;
@@ -793,12 +785,12 @@ class DB
     /**
      * Create equipment row
      *
+     * @param string $universe
      * @param string $name
      * @param integer $location
-     * @param string $universe
      * @return boolean
      */
-    public static function equipment_create(string $name, int $location, string $universe): bool
+    public static function equipment_create(string $universe, string $name, int $location): bool
     {
         debug('Create equpment', func_get_args());
         $db = MySqlDB::instance();
@@ -815,13 +807,13 @@ class DB
     /**
      * Update equipment fields
      *
+     * @param string $universe
      * @param string $name
      * @param integer $location
      * @param array $params
-     * @param string $universe
      * @return boolean
      */
-    public static function equipment_update(string $name, int $location, array $params, string $universe): bool
+    public static function equipment_update(string $universe, string $name, int $location, array $params): bool
     {
         debug('Updating equipment fields', func_get_args());
 

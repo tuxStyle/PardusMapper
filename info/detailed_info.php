@@ -25,7 +25,7 @@ session_start();
 $security = Session::pint(key: 'security', default: 0);
 
 $b_loc = DB::building(id: $id, universe: $uni);
-$npc_loc = DB::npc($id, $uni);
+$npc_loc = DB::npc(id: $id, universe: $uni);
 
 $return = '';
 
@@ -318,7 +318,7 @@ if ($b_loc) {
 if ($npc_loc) {
 	$row = 3;
 	$loc = $npc_loc;
-	$npc = DB::npc_static($loc->name);
+	$npc = DB::npc_static(name: $loc->name);
 	$nid = $loc->nid;
 	$return .= '<table>';
 	$return .= '<tr style="background-color:#003040;">';

@@ -47,7 +47,7 @@ if (is_null($oldpwd)) {
 	unset($_REQUEST['change']);
 } else {
 	debug('Old Password entered');
-    $u = DB::user($_SESSION['user'], $uni);
+    $u = DB::user(username: $_SESSION['user'], universe: $uni);
 	if (!is_null($u)) {
 		if ($u->password != sha1($oldpwd)) {
 			debug('Old Password did not match');
