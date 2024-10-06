@@ -24,17 +24,17 @@ $pilot_s = Post::pstring(key: 'pilot_s');
 $mission_filter = Post::pstring(key: 'type');
 $sort = Post::pstring(key: 'sort', default: '');
 $order = Post::pstring(key: 'order');
-$mode = Post::mode();
-$source_id = Post::loc();
-$sector = Post::sector();
-$cluster = Post::cluster();
+$mode = Post::pstring(key: 'mode');
+$source_id = Post::pint(key: 'loc');
+$sector = Post::pstring(key: 'sector');
+$cluster = Post::pstring(key: 'cluster');
 
 session_name($uni);
 session_start();
 
-$security = Session::security();
-$comp = Session::comp();
-$rank = Session::rank();
+$security = Session::pint(key: 'security', default: 0);
+$comp = Session::pint(key: 'comp');
+$rank = Session::pint(key: 'rank');
 
 $cstart = 0;
 if ($comp >= 2) {$cstart = $comp - 2; }

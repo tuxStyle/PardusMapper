@@ -22,27 +22,27 @@ http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query paramet
 
 // Get Version
 $minVersion = 5.8;
-$version = Request::version();
+$version = Request::pint(key: 'version', default: 0);
 http_response($version < $minVersion, ApiResponse::BADREQUEST, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
 
 // Set Location
-$source_id = Request::loc();
+$source_id = Request::pint(key: 'loc');
 http_response(is_null($source_id), ApiResponse::BADREQUEST, sprintf('location(loc) query parameter is required or invalid: %s', $source_id ?? 'null'));
 debug('Source ID = ' . $source_id);
 
-$mid = Request::mid();
+$mid = Request::pint(key: 'mid');
 debug('Mission ID = ' . $mid);
 
-$comp = Request::comp();
+$comp = Request::pint(key: 'comp');
 debug('Comp = ' . $comp);
 
-$rank = Request::rank();
+$rank = Request::pint(key: 'rank');
 debug('Rank = ' . $rank);
 
-$faction = Request::faction();
+$faction = Request::pstring(key: 'faction');
 debug('faction = ' . $faction);
 
-$syndicate = Request::syndicate();
+$syndicate = Request::pstring(key: 'syndicate');
 debug('syndicate = ' . $syndicate);
 
 $mission = Request::mission();

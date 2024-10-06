@@ -21,14 +21,14 @@ http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query paramet
 // TODO: i think it needs session start here
 
 $id = Request::pint(key: 'id', default: 0);
-$user = Request::user(default: 'Unknown');
-$version = Request::version();
+$user = Request::pstring(key: 'user', default: 'Unknown');
+$version = Request::pint(key: 'version', default: 0);
 // http_response(0 === $version, ApiResponse::BADREQUEST, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
 $browser = Request::pstring(key: 'browser', default: 'Unknown');
-$faction = Request::faction(default: 'Unknown');
-$syndicate = Request::syndicate(default: 'Unknown');
-$comp = Request::comp();
-$rank = Request::rank();
+$faction = Request::pstring(key: 'faction', default: 'Unknown');
+$syndicate = Request::pstring(key: 'syndicate', default: 'Unknown');
+$comp = Request::pint(key: 'comp');
+$rank = Request::pint(key: 'rank');
 $ip = $_SERVER['REMOTE_ADDR'];
 
 if (isset($_REQUEST['el'])) {

@@ -15,7 +15,7 @@ CORS::pardus();
 
 debug($_REQUEST);
 
-$mapdata = Request::mapdata();
+$mapdata = Request::pstring(key: 'mapdata');
 http_response(is_null($mapdata), ApiResponse::BADREQUEST, sprintf('mapdata query parameter is required or invalid: %s', $mapdata ?? 'null'));
 
 if (str_contains((string) $mapdata, "sb_")) {
@@ -31,10 +31,10 @@ http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query paramet
 
 // Get Version
 $minVersion = 6.5;
-$version = Request::version();
+$version = Request::pint(key: 'version', default: 0);
 http_response($version < $minVersion, ApiResponse::BADREQUEST, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
 
-$loc = Request::loc(key: 'id');
+$loc = Request::pint(key: 'id');
 http_response(is_null($loc), ApiResponse::BADREQUEST, sprintf('location(loc) query parameter is required or invalid: %s', $loc ?? 'null'));
 
 
@@ -52,15 +52,15 @@ $db = MySqlDB::instance();  // Create an instance of the Database class
 
 $sector = Request::pstring(key: 'sector');
 if (is_null($sector)) {
-    $sector = Request::sector(key: 's');
+    $sector = Request::pstring(key: 's');
 }
 http_response(is_null($sector), ApiResponse::BADREQUEST, 'sector/s query parameter is required');
 
 // Set Pilot Info
 $ip = $_SERVER['REMOTE_ADDR'];
 
-$uid = Request::uid(default: 0);
-$user = Request::user(default: "Unknown");
+$uid = Request::pint(key: 'uid', default: 0);
+$user = Request::pstring(key: 'user', default: "Unknown");
 
 /****************************************************************************************************
  * 

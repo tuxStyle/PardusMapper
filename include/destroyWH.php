@@ -1,7 +1,6 @@
 <?php
 declare(strict_types=1);
 
-use Pardusmapper\Coordinates;
 use Pardusmapper\Core\ApiResponse;
 use Pardusmapper\Core\MySqlDB;
 use Pardusmapper\CORS;
@@ -23,6 +22,8 @@ session_start();
 
 // Get Location
 $id = Request::pint(key: 'id');
+
+$db = MySqlDB::instance();
 
 $m = DB::map(id: $id, universe: $uni);
 if (!is_null($m->fg)||!is_null($m->wormhole)) {

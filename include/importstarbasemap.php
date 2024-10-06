@@ -30,7 +30,7 @@ http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query paramet
 
 // Get Version
 $minVersion = 5.8;
-$version = Request::version();
+$version = Request::pint(key: 'version', default: 0);
 http_response($version < $minVersion, ApiResponse::BADREQUEST, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
 
 $db = MySqlDB::instance();

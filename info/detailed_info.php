@@ -17,14 +17,14 @@ $db = MySqlDB::instance();
 $uni = Post::uni();
 http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
 
-$id = Post::loc(key: 'id');
+$id = Post::pint(key: 'id');
 http_response(is_null($id), ApiResponse::BADREQUEST, sprintf('location(id) query parameter is required or invalid: %s', $loc ?? 'null'));
 session_name($uni);
 session_start();
 
-$security = Session::security();
+$security = Session::pint(key: 'security', default: 0);
 
-$b_loc = DB::building($id, $uni);
+$b_loc = DB::building(id: $id, universe: $uni);
 $npc_loc = DB::npc($id, $uni);
 
 $return = '';

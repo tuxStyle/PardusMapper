@@ -11,13 +11,13 @@ use Pardusmapper\Session;
 $uni = Request::uni();
 http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
 
-$cluster = Request::cluster();
-$sector = Request::sector();
+$cluster = Request::pstring(key: 'cluster');
+$sector = Request::pstring(key: 'sector');
 
 session_name($uni);
 session_start();
 
-$security = Session::security();
+$security = Session::pint(key: 'security', default: 0);
 
 // do this before sector or it will mess with the template
 // TODO: fix it at some point

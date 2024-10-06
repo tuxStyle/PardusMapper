@@ -22,6 +22,8 @@ http_response(is_null($id), ApiResponse::BADREQUEST, sprintf('id query parameter
 
 $b_loc = DB::building(id: $id, universe: $uni);
 $m = DB::map(id: $id, universe: $uni);
+
+// REVIEW
 // the original query here was not ignoring the deleted NPCs
 // 'SELECT *, UTC_TIMESTAMP() "today"  FROM ' . $uni . '_Test_Npcs WHERE id = ' . $id
 // TODO: check if we can ignore the deleted NPCs, we sprobably should as they are not on the pardus mao

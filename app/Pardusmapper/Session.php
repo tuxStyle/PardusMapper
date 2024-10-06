@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Pardusmapper;
 
+use Pardusmapper\Core\MySqlDB;
 use Pardusmapper\Core\Settings;
 
 class Session
@@ -16,9 +17,16 @@ class Session
      */
     public static function pstring(string $key, ?string $default = null): ?string
     {
-        return vstring(($_SESSION[$key] ?? null), $default);
-    }
+        $value = vstring(($_SESSION[$key] ?? null), $default);
 
+        if (!is_null($value)) {
+            $value = MySqlDB::instance()->protect($value);
+        }
+
+        debug(sprintf('%s: %s', $key, $value));
+
+        return $value;
+    }
 
     /**
      * Returns protected int from $_SESSION
@@ -29,71 +37,42 @@ class Session
      */
     public static function pint(string $key, ?int $default = null): ?int
     {
-        $svalue = ($_SESSION[$key] ?? null);
-        $value = vint((is_numeric($svalue) ? $svalue . '' : $svalue), $default);
+        $value = vint(($_SESSION[$key] ?? null), $default);
 
         debug(sprintf('%s: %s', $key, $value));
 
         return $value;
     }
-    
+
     /**
-     * Returns protected security from $_SESSION
+     * Returns protected bool from $_SESSION
      *
      * @param string $key
-     * @param integer $default
-     * @return integer
+     * @param bool $default
+     * @return bool
      */
-    public static function security(string $key = 'security', int $default = 0): int
+    public static function pbool(string $key, bool $default = false): bool
     {
-        return self::pint(key: $key, default: $default);
+        $value = vbool(($_SESSION[$key] ?? null), $default);
+
+        debug(sprintf('%s: %s', $key, $value ? 'true' : 'false'));
+
+        return $value;
     }
 
     /**
-     * Returns protected rank from $_SESSION
+     * Returns protected float from $_SESSION
      *
      * @param string $key
-     * @param integer|null $default
-     * @return integer|null
+     * @param float|null $default
+     * @return float|null
      */
-    public static function rank(string $key = 'rank', ?int $default = null): ?int
+    public static function pfloat(string $key, ?float $default = null): ?float
     {
-        return self::pint(key: $key, default: $default);
-    }
+        $value = vfloat(($_SESSION[$key] ?? null), $default);
 
-    /**
-     * Returns protected competency from $_SESSION
-     *
-     * @param string $key
-     * @param integer|null $default
-     * @return integer|null
-     */
-    public static function comp(string $key = 'comp', ?int $default = null): ?int
-    {
-        return self::pint(key: $key, default: $default);
-    }
+        debug(sprintf('%s: %s', $key, $value));
 
-    /**
-     * Returns protected faction from $_SESSION
-     *
-     * @param string $key
-     * @param string|null $default
-     * @return string|null
-     */
-    public static function faction(string $key = 'faction', ?string $default = null): ?string
-    {
-        return self::pstring(key: $key, default: $default);
-    }
-
-    /**
-     * Returns protected syndicate from $_SESSION
-     *
-     * @param string $key
-     * @param string|null $default
-     * @return string|null
-     */
-    public static function syndicate(string $key = 'syndicate', ?string $default = null): ?string
-    {
-        return self::pstring(key: $key, default: $default);
+        return $value;
     }
 }

@@ -17,8 +17,8 @@ $db = MySqlDB::getInstance();  // Create an instance of the Database class
 $uni = Post::uni();
 http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
 
-$sector = Post::sector();
-$cluster = Post::cluster();
+$sector = Post::pstring(key: 'sector');
+$cluster = Post::pstring(key: 'cluster');
 
 // TODO: sesion start needed?
 

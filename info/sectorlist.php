@@ -18,7 +18,7 @@ http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query paramet
 session_name($uni);
 session_start();
 
-$security = Session::security();
+$security = Session::pint(key: 'security', default: 0);
 
 $sector = [];
 $db->execute('SELECT * from Pardus_Sectors order by name');

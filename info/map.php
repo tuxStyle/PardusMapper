@@ -18,25 +18,24 @@ $dbClass = MySqlDB::instance();  // Create an instance of the Database class
 $uni = Post::uni();
 http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
 
-$sector = Post::sector();
+$sector = Post::pstring(key: 'sector');
 http_response(is_null($sector), ApiResponse::BADREQUEST, 'sector/s query parameter is required');
 
-$cluster = Post::cluster();
-$img_url = Post::img_url(); // this will override the settings/cookies value
-$mode = Post::mode();
-$shownpc = Post::shownpc(); // below we override it from $mode based on options
-$whole = Post::whole(); // below we override it from $mode based on options
-$grid = Post::grid();
+$cluster = Post::pstring(key: 'cluster');
+$img_url = Post::pstring(key: 'img_url'); // this will override the settings/cookies value
+$mode = Post::pstring(key: 'mode');
+$shownpc = Post::pbool(key: 'shownpc'); // below we override it from $mode based on options
+$whole = Post::pbool(key: 'whole'); // below we override it from $mode based on options
+$grid = Post::pbool(key: 'grid');
 
-$loc = Post::loc(key: 'id'); //trying to figure out why $loc is missing definition
+$loc = Post::pint(key: 'id'); //trying to figure out why $loc is missing definition
 // http_response(is_null($loc), ApiResponse::BADREQUEST, sprintf('location(loc) query parameter is required or invalid: %s', $loc ?? 'null'));
-
-$security = Session::security();
 
 // Start the Session
 session_name($uni);
 session_start();
 
+$security = Session::pint(key: 'security', default: 0);
 
 $coreWH = ['Pardus', 'Enif', 'Quaack', 'Nhandu', 'Procyon'];
 if (in_array($sector, $coreWH)) {

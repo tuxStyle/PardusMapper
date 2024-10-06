@@ -11,10 +11,13 @@ use Pardusmapper\Core\Settings;
 
 // Universe is required
 $uni = Request::uni();
-$sector = Request::sector();
-$cluster = Request::cluster();
-
 http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
+
+$cluster = Request::pstring(key: 'cluster');
+$sector = Request::pstring(key: 'sector');
+$x1 = Request::pint(key: 'x1');
+$y1 = Request::pint(key: 'y1');
+
 
 // Set Univers Variable and Session Name
 session_name($uni);
@@ -23,14 +26,12 @@ session_start();
 debug($_REQUEST);
 debug($_SESSION);
 
-$security = Session::security();
-$rank = Session::rank();
-$comp = Session::comp();
-$faction = Session::faction();
-$syndicate = Session::syndicate();
+$security = Session::pint(key: 'security', default: 0);
+$rank = Session::pint(key: 'rank');
+$comp = Session::pint(key: 'comp');
+$faction = Session::pstring(key: 'faction');
+$syndicate = Session::pstring(key: 'syndicate');
 
-$x1 = Request::x(key: 'x1');
-$y1 = Request::y(key: 'y1');
 
 $s = null;
 $c = null;

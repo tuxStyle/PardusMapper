@@ -15,16 +15,16 @@ $uni = Request::uni();
 
 if (is_null($uni)) { require_once(templates('lannding')); exit; }
 
-$security = Session::security();
-$url = Request::url();
+$security = Session::pint(key: 'security', default: 0);
+$url = Request::pstring(key: 'url');
 
 session_name($uni);
 session_start();
 
 if (isset($_REQUEST['login'])) {
     if (0 === $security) {
-        $name = Post::username();
-        $pwd = Post::password();
+        $name = Post::pstring(key: 'username');
+        $pwd = Post::pstring(key: 'password');
 
         debug($name, sha1($pwd));
 

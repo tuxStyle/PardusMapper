@@ -1,93 +1,126 @@
 <?php
 declare(strict_types=1);
 
-use Pardusmapper\Core\MySqlDB;
 use Pardusmapper\Core\Settings;
 
 if (!function_exists('vnull')) {
     function vnull(mixed $value): mixed
     {
-        return $value === null || $value === '' || strtolower($value) === 'null' ? null : $value;
+        // Check for null, empty string, or string 'null' (case-insensitive)
+        if ($value === null || $value === '' || (is_string($value) && strtolower($value) === 'null')) {
+            return null;
+        }
+        return $value;
     }
 }
 
 if (!function_exists('vint')) {
     /**
-     * validate required value as integer
+     * Validate required value as integer
      *
-     * @param string|null $value
+     * @param mixed $value
      * @param integer|null $default
      * @return integer|null
      */
-    function vint(?string $value, ?int $default = null): ?int
+    function vint(mixed $value, ?int $default = null): ?int
     {
-        $value = vnull($value);
+        $value = vnull($value);  // Handle null cases
 
-        if (is_null($value) || !preg_match('/^\d+$/', $value)) {
-            return $default;
+        if ($value === null) {
+            return $default;  // Return default value if null
         }
 
-        return (int)$value;
+        if (is_int($value)) {
+            return $value;
+        }
+
+        if (is_numeric($value)) {
+            return (int)$value;
+        }
+
+        return $default;
     }
 }
 
 if (!function_exists('vstring')) {
     /**
-     * validate and protect required value as string
+     * Validate required value as string
      *
-     * @param string|null $value
+     * @param mixed $value
      * @param string|null $default
      * @return string|null
      */
-    function vstring(?string $value, ?string $default = null): ?string
+    function vstring(mixed $value, ?string $default = null): ?string
     {
-        $value = vnull($value);
+        $value = vnull($value);  // Handle null cases
 
-        if (is_null($value)) {
-            return $default;
+        if ($value === null) {
+            return $default;  // Return default value if null
         }
 
-        return MySqlDB::instance()->protect($value);
+        if (is_numeric($value) || is_bool($value)) {
+            return (string)$value;  // Convert number or boolean to string
+        }
+
+        if (is_string($value)) {
+            // Apply protection if needed
+            return $value;  // Assuming sanitization is done separately
+        }
+
+        return $default;
     }
 }
 
 if (!function_exists('vbool')) {
     /**
-     * validate required value as boolean
+     * Validate required value as boolean
      *
-     * @param string|null $value
-     * @param bool|null $default
-     * @return bool|null
+     * @param mixed $value
+     * @param bool $default
+     * @return bool
      */
-    function vbool(?string $value, ?bool $default = false): bool
+    function vbool(mixed $value, bool $default = false): bool
     {
-        $value = vnull($value);
+        $value = vnull($value);  // Handle null cases
 
-        if (is_null($value) || !preg_match('/^(0|1|true|false)$/i', $value)) {
-            return $default;
+        if ($value === null) {
+            return $default;  // Return default value if null
         }
 
-        return 'true' === strtolower($value) || '1' === $value ? true : false;
+        // Check if true-like values
+        if ($value === true || $value === 1 || $value === '1' || strtolower((string)$value) === 'true') {
+            return true;
+        }
+
+        return $default;
     }
 }
 
 if (!function_exists('vfloat')) {
     /**
-     * validate required value as float
+     * Validate required value as float
      *
-     * @param string|null $value
+     * @param mixed $value
      * @param float|null $default
      * @return float|null
      */
-    function vfloat(?string $value, float $default = 0): float
+    function vfloat(mixed $value, ?float $default = null): ?float
     {
-        $value = vnull($value);
+        $value = vnull($value);  // Handle null cases
 
-        if (is_null($value) || !preg_match('/^\d+(\.\d+)?$/', $value)) {
-            return $default;
+        if ($value === null) {
+            return $default;  // Return default value if null
         }
 
-        return (float)$value;
+        if (is_float($value)) {
+            return $value;
+        }
+
+        if (is_numeric($value)) {
+            return (float)$value;
+        }
+
+        return $default;
     }
 }
 

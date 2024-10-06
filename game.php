@@ -16,10 +16,10 @@ $id = null;
 $shownpc = 0;
 
 $uni = Request::uni();
-$security = Session::security();
-$sector = Request::sector();
-$x2 = Request::x(key: 'x2');
-$y2 = Request::y(key: 'y2');
+$security = Session::pint(key: 'security', default: 0);
+$sector = Request::pstring(key: 'sector');
+$x2 = Request::pint(key: 'x2');
+$y2 = Request::pint(key: 'y2');
 
 // Universe and Sector name are required
 http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));

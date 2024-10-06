@@ -16,14 +16,14 @@ if (is_null($uni)) { require_once(templates('lannding')); exit; }
 session_name($uni);
 session_start();
 
-$name = Post::username();
-$pwd = Post::password('password1');
-$pwdCheck = Post::password('password2');
+$name = Post::pstring(key: 'username');
+$pwd = Post::pstring(key: 'password1');
+$pwdCheck = Post::pstring(key: 'password2');
 $url = null;
 $invalidusr = 0;
 $invalidpwd = 0;
 
-$url = Request::url();
+$url = Request::pstring(key: 'url');
 if (is_null($url)) { $url = $_SERVER['HTTP_REFERER']; }
 
 if (!is_null($name))  {

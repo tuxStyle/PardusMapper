@@ -15,12 +15,12 @@ if (is_null($uni)) { require_once(templates('lannding')); exit; }
 session_name($uni);
 session_start();
 
-$url = Request::url();
+$url = Request::pstring(key: 'url');
 if (is_null($url)) { $url = $_SERVER['HTTP_REFERER']; }
 
-$image = Request::img(key: 'image');
-$loc2 = Request::loc(key: 'loc2');
-$loc3 = Request::loc(key: 'loc3');
+$image = Request::pstring(key: 'image');
+$loc2 = Request::pint(key: 'loc2');
+$loc3 = Request::pint(key: 'loc3');
 
 debug($_SESSION);
 

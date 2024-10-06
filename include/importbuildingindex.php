@@ -20,7 +20,7 @@ http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query paramet
 
 // Get Version
 $minVersion = 5.7;
-$version = Request::version();
+$version = Request::pint(key: 'version', default: 0);
 http_response($version < $minVersion, ApiResponse::BADREQUEST, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
 
 $sector = Request::pstring(key: 'sector');
@@ -29,8 +29,8 @@ http_response(is_null($sector), ApiResponse::BADREQUEST, sprintf('sector query p
 $date = Request::pstring(key: 'date');
 http_response(is_null($date), ApiResponse::BADREQUEST, sprintf('date query parameter is required or invalid: %s', $date ?? 'null'));
 
-$x = Request::x(key: 'x');
-$y = Request::y(key: 'y');
+$x = Request::pint(key: 'x');
+$y = Request::pint(key: 'y');
 $image = Request::pstring(key: 'img');
 $name = Request::pstring(key: 'name');
 $owner = Request::pstring(key: 'owner');

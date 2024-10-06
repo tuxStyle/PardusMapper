@@ -23,34 +23,34 @@ http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query paramet
 
 // Get Version
 $minVersion = 5.8;
-$version = Request::version();
+$version = Request::pint(key: 'version', default: 0);
 http_response($version < $minVersion, ApiResponse::BADREQUEST, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
 
 // Starbase Main Page Variables
-$loc = Request::loc();
+$loc = Request::pint(key: 'loc');
 http_response(is_null($loc), ApiResponse::BADREQUEST, sprintf('location(loc) query parameter is required or invalid: %s', $loc ?? 'null'));
 
-$name = Request::name();
-$image = Request::img();
-$faction = Request::faction();
-$owner = Request::owner();
-$alliance = Request::alliance();
-$pop = Request::pop();
-$crime = Request::crime();
+$name = Request::pstring(key: 'name');
+$image = Request::pstring(key: 'img');
+$faction = Request::pstring(key: 'faction');
+$owner = Request::pstring(key: 'owner');
+$alliance = Request::pstring(key: 'alliance');
+$pop = Request::pint(key: 'pop');
+$crime = Request::pint(key: 'crime');
 
 // Trade Page Variables (Additional)
-$credit = Request::credit();
+$credit = Request::pint(key: 'credit');
 
 // Starbase Building Page Variables (additional)
-$x = Request::x();
-$y = Request::y();
-$condition = Request::condition();
+$x = Request::pint(key: 'x');
+$y = Request::pint(key: 'y');
+$condition = Request::pint(key: 'condition');
 
 // Extra request data
-$sb = Request::sb();    // visited SB
-$sbb = Request::sbb();    // visited SB building
+$sb = Request::pbool(key: 'sb');   // visited SB
+$sbb = Request::pbool(key: 'sbt');    // visited SB building
 $sbt = Request::sbt();  // SB trade data
-$fs = Request::fs(default: 0);    // free space
+$fs = Request::pint(key: 'fs', default: 0);    // free space
 $squads = Request::squads();  // SB squadrons
 
 

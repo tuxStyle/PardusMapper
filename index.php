@@ -11,7 +11,7 @@ if (is_null($uni)) { require_once(templates('landing')); exit; }
 session_name($uni);
 session_start();
 
-$cluster = Request::cluster();
-$gems = Request::gems();
+$cluster = Request::pstring(key: 'cluster');
+$gems = Request::pstring(key: 'gems');
 
 require_once(templates('map'));

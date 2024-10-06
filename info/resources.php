@@ -25,7 +25,7 @@ $pilot = Post::pstring(key: 'pilot');
 session_name($uni);
 session_start();
 
-$security = Session::security();
+$security = Session::pint(key: 'security', default: 0);
 $user = Session::pstring(key: 'user');
 $id = Session::pint(key: 'id');
 

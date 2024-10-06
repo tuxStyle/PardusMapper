@@ -21,13 +21,13 @@ http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query paramet
 $npc_filter = Post::pstring(key: 'npc');
 $sort = Post::pstring(key: 'sort', default: '');
 $order = Post::pstring(key: 'order');
-$sector = Post::sector();
-$cluster = Post::cluster();
+$sector = Post::pstring(key: 'sector');
+$cluster = Post::pstring(key: 'cluster');
 
 session_name($uni);
 session_start();
 
-$security = Session::security();
+$security = Session::pint(key: 'security', default: 0);
 
 $static = DB::static_locations();
 $delete = [];

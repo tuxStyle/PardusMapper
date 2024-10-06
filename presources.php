@@ -21,7 +21,7 @@ session_start();
 
 debug($_SESSION);
 
-$security = Session::security();
+$security = Session::pint(key: 'security', default: 0);
 $user = Session::pstring(key: 'user');
 $id = Session::pint(key: 'id');
 $pilot = Request::pstring(key: 'pilot');
