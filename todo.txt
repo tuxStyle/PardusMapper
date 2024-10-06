@@ -1,6 +1,4 @@
 run file format
-dump fresh seed SQL
-re-run rector
 check files for TODO
 
 Script:
