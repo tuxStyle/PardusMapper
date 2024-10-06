@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 
+use Pardusmapper\Coordinates;
 use Pardusmapper\Core\Settings;
 use Pardusmapper\Core\ApiResponse;
 use Pardusmapper\Core\MySqlDB;
@@ -13,7 +14,7 @@ require_once('../app/settings.php');
 
 CORS::pardus();
 
-$db = MySqlDB::instance(['source' => MySqlDB::PARDUS]); // Create an instance of the Database class
+$db = MySqlDB::instance(); // Create an instance of the Database class
 
 debug($_REQUEST);
 
@@ -54,6 +55,9 @@ if (is_null($sector)) {
     $sector = Request::pstring(key: 's');
 }
 http_response(is_null($sector), ApiResponse::BADREQUEST, 'sector/s query parameter is required');
+$s = DB::sector(sector: $sector);
+$x = Coordinates::getX($id, $s->s_id, $s->rows);
+$y = Coordinates::getY($id, $s->s_id, $s->rows, $x);
 
 // Set Pilot Info
 $ip = $_SERVER['REMOTE_ADDR'];
@@ -131,7 +135,7 @@ for ($i = 1; $i < count($maparray); $i++) { //This loop addresses only the curre
             debug($temp[1]);
             debug('??NPC has been killed');
             debug('Blow Away 6');
-            $db->removeNPC($uni, $id); //removed to debug 9.16.24
+            DB::npc_remove(universe: $uni, id: $id); //removed to debug 9.16.24
             ++$sqlcount; // Counting SQL iterations per connection
             //die("0,Fatal Error");
         }
@@ -173,7 +177,7 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
             $r_npc = 1;
             if (isset($temp[2]) && $temp[2] !== false) {
                 $r_fg = 0;
-                $dbClass->removeBuilding($uni, $id, 0); // can't have a building if we can see the NPC from the map view
+                DB::building_remove(universe: $uni, id: $id, sb: 0); // can't have a building if we can see the NPC from the map view
                 ++$sqlcount; // Counting SQL iterations per connection
             }
             // Must be a Ship or something I don't want
@@ -207,7 +211,7 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
             debug($id . ' New Information Inserting into DB');
 
             // Call method to add new map
-            DB::add_map(universe: $uni, image: $temp[$r_bg], id: $id);
+            DB::map_add(universe: $uni, image: $temp[$r_bg], id: $id);
 
             // Counting SQL iterations per connection
             ++$sqlcount;
@@ -270,7 +274,7 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
             if (is_null($r->fg)) {
                 // DB is NULL Just Add new Info
                 debug('Adding Building');
-                $db->addBuilding($uni, $temp[$r_fg], $id, 0);
+                DB::building_add(universe: $uni, image: $temp[$r_fg], id: $id, sb: 0);
                 ++$sqlcount; // Counting SQL iterations per connection
             } else if (sizeof($temp) != 3) { // this isn't an NPC record from the non-blocking window
                 //Test to See if Map and DB match
@@ -305,22 +309,23 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
 
                         // Process each gem
                         foreach ($gems as $g) {
-                            $db->removeBuilding($uni, $g->id, 0);
+                            DB::building_remove(universe: $uni, id: $g->id, sb: 0);
                             // Counting SQL iterations per connection
                             ++$sqlcount;
                         }
                     }
                     debug($id . ' Deleting Old Building');
 
-                    $db->removeBuilding($uni, $id, 0);
+                    DB::building_remove(universe: $uni, id: $id, sb: 0);
+
                     ++$sqlcount; // Counting SQL iterations per connection
                     debug($id . ' Inserting New Building');
 
-                    $db->addBuilding($uni, $temp[$r_fg], $id, 0);
+                    DB::building_add(universe: $uni, image: $temp[$r_fg], id: $id, sb: 0);
                     ++$sqlcount; // Counting SQL iterations per connection
                 } else {
                     debug($id . ' Foreground info Matches DB');
-                    DB::update_map_fg(universe: $uni, image: $temp[$r_fg], id: $id);
+                    DB::map_update_fg(universe: $uni, image: $temp[$r_fg], id: $id);
                     ++$sqlcount; // Counting SQL iterations per connection
                     if ($temp[$r_fg] != $r->fg) {
                         debug($id . ' Foreground Image Changed');
@@ -336,11 +341,11 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
         if ($r_npc != 0) { //we have an NPC on the map but no NPC ID to record (non blocking NPC with newer mapper script)
             if (!is_null($r->fg) && (isset($temp[2]) && $temp[2] !== false)) { // we have an NPC on the map but not an NID, thus can't have a building or SB or we wouldn't see the NPC
                 if (strpos($r->fg, "starbase")) {
-                    $db->removeBuilding($uni, $id, 1);
+                    DB::building_remove(universe: $uni, id: $id, sb: 1);
                     ++$sqlcount; // Counting SQL iterations per connection
                 } else {
                     debug('Blowing Away a building');
-                    $db->removeBuilding($uni, $id, 0);
+                    DB::building_remove(universe: $uni, id: $id, sb: 0);
                     ++$sqlcount; // Counting SQL iterations per connection
                 }
             }
@@ -378,35 +383,29 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
                             for ($t = 0; $t < count($to_delete); $t++) {
                                 // Delete NPC from Data Table
                                 debug('Blow Away 1');
-                                $db->removeNPC($uni, $to_delete[$t]);
+                                DB::npc_remove(universe: $uni, id: $to_delete[$t]);
                                 ++$sqlcount; // Counting SQL iterations per connection
                             }
                         }
                     }
                     $nid = isset($temp[2]) ? (int)$temp[2] : null;
                     debug('Adding NPC with nid' . ($uni . $temp[$r_npc] . $id . $nid));
-                    $db->addNPC($uni, $temp[$r_npc], $id, " ", 0, 0, $nid); // Adding nid
+                    DB::npc_add(universe: $uni, image: $temp[$r_npc], id: $id, sector: null, x: $x, y: $y, nid: $nid); // Adding nid
                     ++$sqlcount; // Counting SQL iterations per connection
                 }
             } elseif ($temp[$r_npc] == $r->npc) { // it's the same NPC the map shows
                 $nid = isset($temp[2]) ? (int)$temp[2] : null;
                 debug($id . ' with nid = ' . $nid . ' and Uncloaked');
-                if (is_null($nid)) {
-                    $db->updateMapNPC($uni, $temp[$r_npc], $id, 0, $nid);
-                } else {
-                    // Handle the case where $temp[2] is not set
-                    $db->updateMapNPC($uni, $temp[$r_npc], $id, 0); // Adding nid if known as well
-                    debug("Error: {$temp[2]} is not set.");
-                }
+                DB::map_update_npc(universe: $uni, image: $temp[$r_npc], id: $id, cloaked: 0, nid: $nid);
                 ++$sqlcount; // Counting SQL iterations per connection
             } else {
                 $nid = isset($temp[2]) ? (int)$temp[2] : null;
                 debug($id . ' with nid = ' . $nid . ' and Uncloaked');
 
                 debug($id . ' Has a Different NPC so Blow Away 2');
-                $db->removeNPC($uni, $id);
+                DB::npc_remove(universe: $uni, id: $id);
                 ++$sqlcount; // Counting SQL iterations per connection
-                $db->addNPC($uni, $temp[$r_npc], $id, "", 1, $nid); // Adding nid
+                DB::npc_add(universe: $uni, image: $temp[$r_npc], id: $id, sector: null, x: $x, y: $y, nid: $nid); // Adding nid
                 ++$sqlcount; // Counting SQL iterations per connection
             }
         } else {
@@ -419,10 +418,10 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
                 //if ($id == $_REQUEST['id']) { //Not sure what this check is doing as id is our current location which means we can only remove a building we are standing on? NOTED
                 debug($id . ' Deleting Foreground info from DB');
                 if (strpos($r->fg, "starbase")) {
-                    $db->removeBuilding($uni, $id, 1);
+                    DB::building_remove(universe: $uni, id: $id, sb: 1);
                     ++$sqlcount; // Counting SQL iterations per connection
                 } else {
-                    $db->removeBuilding($uni, $id, 0);
+                    DB::building_remove(universe: $uni, id: $id, sb: 0);
                     ++$sqlcount; // Counting SQL iterations per connection
                 }
                 //}
@@ -436,20 +435,20 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
                     debug('is this working or what');
                     debug('??NPC has been killed');
                     debug('Blow Away 3');
-                    $db->removeNPC($uni, $id);
+                    DB::npc_remove(universe: $uni, id: $id);
                     ++$sqlcount; // Counting SQL iterations per connection
                 } else {
                     if ((in_array($r->npc, $cloaked)) && !(in_array($r->npc, $mobile))) {
                         debug('NPC has cloaked');
                         $nid = isset($temp[2]) ? (int)$temp[2] : null;
                         if (is_null($r->npc_cloaked)) {
-                            $db->updateMapNPC($uni, $temp[$r_npc], $id, 1, $nid);
+                            DB::map_update_npc(universe: $uni, image: $temp[$r_npc], id: $id, cloaked: 1, nid: $nid);
                             ++$sqlcount; // Counting SQL iterations per connection
                         } else {
                             $show = strtotime($r->today) - strtotime($r->npc_updated);
                             if ($show > 432000) {
                                 debug('Blow Away 4');
-                                $db->removeNPC($uni, $id);
+                                DB::npc_remove(universe: $uni, id: $id);
                                 ++$sqlcount; // Counting SQL iterations per connection
                             }
                         }
@@ -458,7 +457,7 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
                         debug($id . '-' . $_REQUEST['id']);
                         debug('???Now Trying to remove the record');
                         debug('Blow Away 5');
-                        $db->removeNPC($uni, $id);
+                        DB::npc_remove(universe: $uni, id: $id);
                         ++$sqlcount; // Counting SQL iterations per connection
                     }
                 }
@@ -474,5 +473,3 @@ $exec_time = $time_post - $time_pre;
 $db->execute("INSERT INTO connection_log (`universe`,`username`,`user_id`,`querycount`,`duration`, `date`, `payload`) VALUES (?, ?, ?, ?, ?, UTC_TIMESTAMP(), ?)", [
     'ssiidb', $uni, $user, $uid, $sqlcount, $exec_time, $dataString
 ]);
-$db->close();
-$db = null;

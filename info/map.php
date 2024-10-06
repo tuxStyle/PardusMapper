@@ -39,7 +39,7 @@ $security = Session::pint(key: 'security', default: 0);
 
 $coreWH = ['Pardus', 'Enif', 'Quaack', 'Nhandu', 'Procyon'];
 if (in_array($sector, $coreWH)) {
-    $dbClass->pardusWHStatus($uni); // Call the method on the mysqldb instance
+    DB::wh_update_pardus_status(universe: $uni); // Call the method on the mysqldb instance
 }
 
 // Get Sector Information

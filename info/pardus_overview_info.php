@@ -11,8 +11,6 @@ require_once('../app/settings.php');
 
 CORS::pardus();
 
-$db = MySqlDB::instance(['source' => MySqlDB::PARDUS]); // Create an instance of the Database class
-
 debug($_REQUEST);
 
 // Set Univers Variable and Session Name
@@ -50,7 +48,7 @@ if ($b_loc) {
         $stocks = DB::stocks(id: $id, universe: $uni);
 	}
     
-	while($q = $db->nextObject()) { $stock[$res_id[$q->name]] = $q; }
+	foreach($stocks as $q) { $stock[$res_id[$q->name]] = $q; }
 	// Make sure the Stock is in the correct order
 	if ($stock) { ksort($stock, SORT_NUMERIC); }
 
@@ -233,6 +231,4 @@ if (!($b_loc || $npc_loc)) {
 	
 	$return .= '<tr><td align="center" colspan="2"><h3>No Info in DB</h3></td></tr></table>';
 }
-$db->close();
-
 echo $return;

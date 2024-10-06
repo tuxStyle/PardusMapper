@@ -291,7 +291,7 @@ while ($q = $db->nextObject()) {
 	else { $mission[] = $q; }
 }
 
-if (count($delete) > 0) { foreach ($delete as $d) { $db->removeMission($uni, $d); } }
+if (count($delete) > 0) { foreach ($delete as $d) { DB::mission_remove(universe: $uni, id: $d); } }
 
 $return = '<table id="mission_table">';
 $return .= '<tr>';

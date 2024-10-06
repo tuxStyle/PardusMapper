@@ -4,13 +4,14 @@ declare(strict_types=1);
 use Pardusmapper\Core\ApiResponse;
 use Pardusmapper\Core\MySqlDB;
 use Pardusmapper\CORS;
+use Pardusmapper\DB;
 use Pardusmapper\Request;
 
 require_once('../app/settings.php');
 
 CORS::pardus();
 
-$db = MySqlDB::instance(['source' => MySqlDB::PARDUS]); // Create an instance of the Database class
+$db = MySqlDB::instance(); // Create an instance of the Database class
 
 debug($_REQUEST);
 
@@ -44,18 +45,15 @@ $m = $db->nextObject();
 
 if (is_null($m->npc)) {
     debug('Inserting New Info into DB');
-	$db->addNPC($uni, $image, $loc, "", 0, 0, $nid);
+	DB::npc_add(universe: $uni, image: $image, id: $loc, sector: null, x: 0, y: 0, nid: $nid);
 } elseif ($dead) {
 	debug('You killed it, good job...removing NPC');
-	$db->removeNPC($uni, $loc);
+	DB::npc_remove(universe: $uni, id: $loc);
 } elseif ($m->npc == $image) {
     debug('Updating Hull, Armor, and Shield');
-	$db->updateNPCHealth($uni, $loc, $hull, $armor, $shield, $nid);
+	DB::npc_update_health(universe: $uni, id: $loc, hull: $hull, armor: $armor, shield: $shield, nid: $nid);
 } else {
     debug($m->npc . 'Removing Old NPC adding New<br>');
-	$db->removeNPC($uni, $loc);
-	$db->addNPC($uni, $image, $loc, "", 0, 0, $nid);
+	DB::npc_remove(universe: $uni, id: $loc);
+	DB::npc_add(universe: $uni, image: $image, id: $loc, sector: null, x: 0, y: 0, nid: $nid);
 }
-
-$db->close();
-$db = null;

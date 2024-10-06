@@ -11,8 +11,6 @@ require_once('../app/settings.php');
 
 CORS::pardus();
 
-$db = MySqlDB::instance(['source' => MySqlDB::PARDUS]); // Create an instance of the Database class
-
 debug($_REQUEST);
 
 // Set Univers Variable
@@ -29,9 +27,7 @@ $loc = Request::pint(key: 'loc');
 http_response(is_null($loc), ApiResponse::BADREQUEST, sprintf('location(loc) query parameter is required or invalid: %s', $loc ?? 'null'));
 
 // Delete All Crew for This Location
-$db->execute(sprintf('DELETE FROM %s_Crew WHERE loc = ?', $uni), [
-    'i', $loc
-]);
+DB::crew_delete(universe: $uni, location: $loc);
 
 $crew = Request::pstring(key: 'crew');
 http_response(is_null($crew), ApiResponse::OK, sprintf('for the current location, no crew was found: %s', $crew ?? 'null'));

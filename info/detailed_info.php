@@ -11,8 +11,6 @@ use Pardusmapper\Session;
 
 CORS::mapper();
 
-$db = MySqlDB::instance();
-
 // Set Univers Variable and Session Name
 $uni = Post::uni();
 http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));

@@ -11,8 +11,6 @@ require_once('../app/settings.php');
 
 CORS::pardus();
 
-$db = MySqlDB::instance(['source' => MySqlDB::PARDUS]); // Create an instance of the Database class
-
 debug($_REQUEST);
 
 // REVIEW
@@ -111,7 +109,7 @@ for ($i = 1; $i < sizeof($maparray); $i++) {
 				// There is no existing information for the current tile
                 debug($tid . ' New Information Inserting into DB');
 
-				DB::add_map(universe: $uni, image: $temp[$r_bg], id: $tid, sb: $sb->id);
+				DB::map_add(universe: $uni, image: $temp[$r_bg], id: $tid, sb: $sb->id);
                 $r = DB::map(id: $tid, universe: $uni);
 			}
 
@@ -124,7 +122,7 @@ for ($i = 1; $i < sizeof($maparray); $i++) {
 
 			if ($temp[$r_bg] != $r->bg) {
                 debug($tid . ' Updating BG Info');
-				DB::update_map_bg(universe: $uni, image: $temp[$r_bg], id: $tid);
+				DB::map_update_bg(universe: $uni, image: $temp[$r_bg], id: $tid);
 			} else {
                 debug($tid . ' Not Updating BG Info');
 			}
@@ -139,7 +137,7 @@ for ($i = 1; $i < sizeof($maparray); $i++) {
 					// DB is NULL Just Add new Info
                     debug($tid . ' Adding BG Info');
 
-					$db->addBuilding($uni, $temp[$r_fg], $tid, $sb->id);
+					DB::building_add(universe: $uni, image: $temp[$r_fg], id: $tid, sb: $sb->id);
 				} else {
                     $updateBuilding = [];
 
@@ -149,16 +147,16 @@ for ($i = 1; $i < sizeof($maparray); $i++) {
                         debug($tid . ' Deleting Old Building');
 
 						// See if we have a Gem merchant
-						$db->removeBuilding($uni, $tid, 0);
+						DB::building_remove(universe: $uni, id: $tid, sb: 0);
 
                         debug($tid . ' Inserting New Building');
 
-						$db->addBuilding($uni, $temp[$r_fg], $tid, $sb->id);
+						DB::building_add(universe: $uni, image: $temp[$r_fg], id: $tid, sb: $sb->id);
                         $updateBuilding['starbase'] = 1;
 					} else {
                         debug($tid . ' Foreground info Matches DB');
 
-						DB::update_map_fg(universe: $uni, image: $temp[$r_fg], id: $tid);
+						DB::map_update_fg(universe: $uni, image: $temp[$r_fg], id: $tid);
 
 						$x = floor(($tid - $sb->starbase) / 13);
 						$y = ($tid - ($sb->starbase + ($x * 13)));
@@ -175,9 +173,9 @@ for ($i = 1; $i < sizeof($maparray); $i++) {
                 debug($tid . ' Deleting Foreground info from DB');
 
 				if (strpos($r->fg, "starbase")) {
-					$db->removeBuilding($uni, $tid, 1);
+					DB::building_remove(universe: $uni, id: $tid, sb: 1);
 				} else {
-					$db->removeBuilding($uni, $tid, 0);
+					DB::building_remove(universe: $uni, id: $tid, sb: 0);
 				}
 			} else {
                 debug($tid . ' No Foreground info to worry about');
@@ -187,5 +185,3 @@ for ($i = 1; $i < sizeof($maparray); $i++) {
 		}
 	}
 }
-
-$db->close();

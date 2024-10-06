@@ -9,6 +9,9 @@ use Pardusmapper\Core\Settings;
 
 class CORS
 {
+    public const PARDUS = 'pardus';
+    public const MAPPER = 'mapper';
+    
     /**
      * Allow access only from pardus.at with extended headers
      *

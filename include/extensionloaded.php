@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+define('REQUEST_SOURCE', 'pardus');
 
 use Pardusmapper\Core\MySqlDB;
 use Pardusmapper\Core\ApiResponse;
@@ -11,7 +12,7 @@ require_once('../app/settings.php');
 
 CORS::pardus();
 
-$db = MySqlDB::instance(['source' => MySqlDB::PARDUS]); // Create an instance of the Database class
+$db = MySqlDB::instance(); // Create an instance of the Database class
 
 debug($_REQUEST);
 
@@ -163,5 +164,3 @@ if (isset($_REQUEST['lud'])) {
         debug($user . ' Not found, cannot update');
     }
 }
-
-$db->close();

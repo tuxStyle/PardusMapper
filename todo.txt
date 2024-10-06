@@ -1,5 +1,4 @@
-finish prepared statements
-move methods from MySqlDB to DB
+run file format
 re-run rector
 check files for TODO
 

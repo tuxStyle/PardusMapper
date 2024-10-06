@@ -12,8 +12,6 @@ require_once('../app/settings.php');
 
 CORS::pardus();
 
-$db = MySqlDB::instance(['source' => MySqlDB::PARDUS]); // Create an instance of the Database class
-
 debug($_REQUEST);
 
 // Set Univers Variable
@@ -60,12 +58,12 @@ if ($b) {
 
 	if (null === $stocks) {
         debug('Adding Stock Info');
-		$db->addBuildingStock($uni, $image, $loc);
+		DB::building_stock_add(universe: $uni, image: $image, id: $loc);
 	}
 } else {
 	// Building not in DB
     debug('Building not in DB Adding');
-	$db->addBuilding($uni, $image, $loc, 0);    // it will also add building stock
+	DB::building_add(universe: $uni, image: $image, id: $loc, sb: 0);    // it will also add building stock
 
     $b = DB::building(id: $loc, universe: $uni);
     debug('Got Building Info');
@@ -163,5 +161,3 @@ DB::building_update(id: $loc, params: $updateBuilding, universe: $uni);
 DB::building_stock_update(id: $loc, params: $updateBuildingStock, universe: $uni);
 
 debug('Finished updating stocks');
-
-$db->close();

@@ -154,7 +154,7 @@ while ($q = $db->nextObject()) {
 	unset($aged);
 }
 
-if (count($delete) > 0) { foreach ($delete as $d) { $db->removeNPC($uni,$d); } }
+if (count($delete) > 0) { foreach ($delete as $d) { DB::npc_remove(universe: $uni,id: $d); } }
 
 $db->close();
 

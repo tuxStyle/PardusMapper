@@ -11,8 +11,6 @@ require_once('../app/settings.php');
 
 CORS::pardus();
 
-$db = MySqlDB::instance(['source' => MySqlDB::PARDUS]); // Create an instance of the Database class
-
 debug($_REQUEST);
 
 // Set Univers Variable
@@ -53,7 +51,7 @@ for ($i = 1; $i < $bo; $i++) {
 
     if (is_null($bldg)) {
         debug('Adding New Building ' . $name);
-        $db->addBuilding($uni, $image, $loc, 0);
+        DB::building_add(universe: $uni, image: $image, id: $loc, sb: 0);
     }
 
     debug('Getting Sector and Cluster Information');
@@ -130,5 +128,3 @@ for ($i = 1; $i < $bo; $i++) {
     debug('Finished Updating Stock Info');
     DB::building_stock_update(id: $loc, params: [], universe: $uni); //just set stock updated timestamp
 }
-
-$db->close();

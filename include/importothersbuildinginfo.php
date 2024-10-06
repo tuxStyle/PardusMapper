@@ -12,7 +12,7 @@ require_once('../app/settings.php');
 
 CORS::pardus();
 
-$db = MySqlDB::instance(['source' => MySqlDB::PARDUS]); // Create an instance of the Database class
+$db = MySqlDB::instance(); // Create an instance of the Database class
 
 debug($_REQUEST);
 
@@ -59,12 +59,12 @@ if ($b) {
 
         $stocks = DB::stocks(id: $loc, universe: $uni);
 		if (0 === count($stocks)) {
-			$db->addBuildingStock($uni, $m->fg, $loc);
+			DB::building_stock_add(universe: $uni, image: $m->fg, id: $loc);
 		}
 	}
 } else {
 	// Building not in DB
-	$db->addBuilding($uni, $m->fg, $loc, 0);
+	DB::building_add(universe: $uni, image: $m->fg, id: $loc, sb: 0);
     $b = DB::building(id: $loc, universe: $uni);
 }
 
@@ -73,7 +73,7 @@ debug($b);
 if (str_contains("sb_", $m->fg)) {
 	debug('We are Flying Close to a SB');
 
-	$db->execute('SELECT * FROM Pardus_Buildings where starbase < ? ORDER BY starbase DESC LIMIT 1', [
+	$db->execute(sprintf('SELECT * FROM %s_Buildings where starbase < ? ORDER BY starbase DESC LIMIT 1', $uni), [
         'i', $loc
     ]);
 	$q = $db->nextObject();
@@ -141,7 +141,7 @@ if (isset($_REQUEST['building'])) {
 	}
 
 	// If we can see the Building then there are no NPCs at this location
-	$db->removeNPC($uni, $loc);
+	DB::npc_remove(universe: $uni, id: $loc);
 }
 if (isset($bt)) {
 	// Visited Building Trade
@@ -322,5 +322,3 @@ if (isset($bt)) {
 }
 
 DB::building_update(id: $loc, params: $updateBuilding, universe: $uni);
-
-$db->close();

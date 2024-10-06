@@ -12,7 +12,7 @@ require_once('../app/settings.php');
 
 CORS::pardus();
 
-$db = MySqlDB::instance(['source' => MySqlDB::PARDUS]); // Create an instance of the Database class
+$db = MySqlDB::instance(); // Create an instance of the Database class
 
 // Test Mission Table
 
@@ -28,28 +28,17 @@ http_response($version < $minVersion, ApiResponse::BADREQUEST, sprintf('version 
 // Set Location
 $source_id = Request::pint(key: 'loc');
 http_response(is_null($source_id), ApiResponse::BADREQUEST, sprintf('location(loc) query parameter is required or invalid: %s', $source_id ?? 'null'));
-debug('Source ID = ' . $source_id);
 
 $mid = Request::pint(key: 'mid');
-debug('Mission ID = ' . $mid);
-
 $comp = Request::pint(key: 'comp');
-debug('Comp = ' . $comp);
-
 $rank = Request::pint(key: 'rank');
-debug('Rank = ' . $rank);
-
 $faction = Request::pstring(key: 'faction');
-debug('faction = ' . $faction);
-
 $syndicate = Request::pstring(key: 'syndicate');
-debug('syndicate = ' . $syndicate);
-
 $mission = Request::mission();
 
 
 if (!is_null($mid)) {
-    $db->removeMission($uni, $mid);
+    DB::mission_remove(universe: $uni, id: $mid);
 } 
 
 // If we don't have these two pieces of info ABORT!!!
@@ -237,8 +226,8 @@ for ($i = 1; $i < count($mission); $i++) {
 
         debug('Inserting New Mission');  //Why would we do an insert and then multiple updates?  NOTED
         $sql = "INSERT INTO %s_Test_Missions (
-                    id, source_id, sector, cluster, loc, x, y, comp, rank, faction, `type`, type_img, amount, hack, 
-                    t_loc, t_sector, t_cluster, t_x, t_y, `time`, credits, war, spotted
+                    `id`, `source_id`, `sector`, `cluster`, `loc`, `x`, `y`, `comp`, `rank`, `faction`, `type`, `type_img`, `amount`, `hack`, 
+                    `t_loc`, `t_sector`, `t_cluster`, `t_x`, `t_y`, `time`, `credits`, `war`, `spotted`
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP())
         ";
         $params = [
@@ -255,7 +244,7 @@ for ($i = 1; $i < count($mission); $i++) {
         
         if ($m_type === "Assassination" && is_null($v_ammount)) {
             debug('We have Coords for a NPC lets add them to the Map');
-            $db->addNPC($uni, $m_type_img, 0, $m_sector, (int)$m_x, (int)$m_y);
+            DB::npc_add(universe: $uni, image: $m_type_img, id: null, sector: $m_sector, x: (int)$m_x, y: (int)$m_y);
         }
     }
 

@@ -8,9 +8,11 @@ date_default_timezone_set("UTC");
 
 require_once(dirname(__DIR__) . '/vendor/autoload.php');
 
+use Pardusmapper\Core\MySqlDB;
 use Pardusmapper\Core\Environment;
 use Pardusmapper\Core\Settings;
 use Pardusmapper\Request;
+use Pardusmapper\CORS;
 
 Environment::load();
 Settings::init();
@@ -20,6 +22,12 @@ $debug = Settings::$DEBUG;
 
 // Load debug from REQUEST, if not valid, use $debug from settings
 $debug = Request::debug(default: Settings::$DEBUG);
+
+// if the request comes from Pardus.AT
+// set initialize the MySQL instace with source PARDUS so it can use a different connect function
+if (isset($_SERVER['HTTP_ORIGIN']) && preg_match('/^https?:\/\/(orion|artemis|pegasus)?\.pardus\.at$/i', (string) $_SERVER['HTTP_ORIGIN'])) {
+    MySqlDB::instance(['source' => CORS::PARDUS]);
+}
 
 $base_url = Settings::$BASE_URL;
 $img_url = Settings::$IMG_DIR;

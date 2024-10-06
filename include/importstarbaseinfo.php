@@ -13,7 +13,7 @@ require_once('../app/settings.php');
 // Enable CORS for any subdomain of pardus.at
 CORS::pardus_extended();
 
-$db = MySqlDB::instance(['source' => MySqlDB::PARDUS]); // Create an instance of the Database class
+$db = MySqlDB::instance(); // Create an instance of the Database class
 
 debug($_REQUEST);
 
@@ -73,11 +73,11 @@ if ($b) {
     // Building in DB, Verify Stock is in DB
     $stocks = DB::stocks(id: $loc, universe: $uni);
     if (0 === count($stocks)) {
-        $db->addBuildingStock($uni, $m->fg, $loc);
+        DB::building_stock_add(universe: $uni, image: $m->fg, id: $loc);
     }
 } else {
     // Building not in DB
-    $db->addBuilding($uni, $m->fg, $loc, 0);
+    DB::building_add(universe: $uni, image: $m->fg, id: $loc, sb: 0);
 
     // After we add a buildimg, load the object
     $b = DB::building(id: $loc, universe: $uni);
