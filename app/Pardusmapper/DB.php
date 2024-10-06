@@ -871,4 +871,115 @@ class DB
         return $sector;
     }
 
+    /**
+     * Save map info from pardus
+     *
+     * @param string $universe
+     * @param string $image
+     * @param integer $id
+     * @param integer $sb
+     * @return boolean
+     */
+    public static function add_map(string $universe, string $image, int $id, int $sb = 0): bool
+    {
+        $db = MySqlDB::instance();
+
+        // if (preg_match('/^\d+$/', $image)) {
+        //     debug(__FILE__, $image);
+        //     $this->execute('SELECT image FROM background WHERE id = ?', [
+        //         'i', $image
+        //     ]);
+        //     $dbImg = $this->fetchObject();
+        //     $image = $dbImg->image;
+        // }
+
+        $db->execute(sprintf('INSERT INTO %s_Maps (`id`, `bg`, `security`) VALUES (?, ?, 0)', $universe), [
+            'is', $id, $image
+        ]);
+
+        $params = [];
+
+        if ($sb) {
+            debug(__METHOD__, __LINE__, 'we have building');
+
+            $b = self::building(universe: $universe, id: $sb);
+            $x = Coordinates::getX($id,$b->starbase,13);
+            $y = Coordinates::getY($id,$b->starbase,13,$x);
+
+            $params['cluster'] = $b->cluster;
+            $params['sector'] = $b->sector;
+            $params['x'] = $x;
+            $params['y'] = $y;            
+        } else {
+            debug(__METHOD__, __LINE__, 'no building');
+
+            $s = self::sector(id: $id);  // Here, $id is passed as expected
+            $c = self::cluster(id: $s->c_id);  // Assuming this is correct
+            $x = Coordinates::getX($id,$s->s_id,$s->rows);
+            $y = Coordinates::getY($id,$s->s_id,$s->rows,$x);
+
+            $params['cluster'] = $c->name;
+            $params['sector'] = $s->name;
+            $params['x'] = $x;
+            $params['y'] = $y;            
+        }
+
+        $bindType = [];
+        $bindValues = [];
+        $fields = [];
+
+        foreach($params as $key => $value) {
+            $fields[] = sprintf('`%s` = ?', $key);
+            $bindValues[] = $value;
+            if (is_int($value)) {
+                $bindType[] = 'i';
+            } elseif (is_float($value)) {
+                $bindType[] = 'd';
+            } else {
+                $bindType[] = 's';
+            }
+        }
+
+        $bindValues[] = $id;
+        $bindType[] = 'i';
+
+        $binds = [];
+        $binds[] = implode('', $bindType);
+        $binds = array_merge($binds, $bindValues);
+        $query = sprintf('UPDATE %s_Maps SET %s WHERE id = ?', $universe, implode(', ', $fields));
+
+        $db = MySqlDB::instance();
+
+        debug(__METHOD__, $query, $binds);
+        $db->execute($query, $binds);
+
+        return true;
+    }
+
+    public static function update_map_fg(string $universe, string $image, int $id): bool
+    {
+        $db = MySqlDB::instance();
+
+        $query = sprintf('UPDATE %s_Maps SET `fg` = ? , `fg_updated` = UTC_TIMESTAMP() WHERE id = ?', $universe);
+        $params = ['si', $image, $id];
+
+        debug(__METHOD__, $query, $params);
+        $db->execute($query, $params);
+    
+        return true;
+    }
+
+    public static function update_map_bg(string $universe, string $image, ?int $id): bool
+    {
+        $db = MySqlDB::instance();
+
+        $query = sprintf('UPDATE %s_Maps SET `bg` = ? WHERE id = ?', $universe);
+        $params = ['si', $image, $id];
+
+        debug(__METHOD__, $query, $params);
+        $db->execute($query, $params);
+        
+        return true;
+    }
+
 }

@@ -10,7 +10,10 @@ use Pardusmapper\DB;
 
 class MySqlDB
 {
+    public const PARDUS = 'pardus';
+    public const MAPPER = 'mapper';
     public \mysqli $db;  // Publicly accessible mysqli object
+    public $source = null;
     private bool $isClosed = true;
     public ?\mysqli_result $queryID = null;
     public $a_record;
@@ -20,14 +23,22 @@ class MySqlDB
         getInstance as private _getInstance;
     }
 
-    public static function instance(): MySqlDB
+    public static function instance(array $args = []): MySqlDB
     {
-        return self::_getInstance();
+        return self::_getInstance($args);
     }
 
-    public function __construct()
+    public function __construct(array $args = [])
     {
-        $this->connect();  // Open connection when the class is instantiated
+        $this->source = $args['source'] ?? null;
+        // debug(__METHOD__, $this->source);
+
+        // Open connection when the class is instantiated
+        if (self::PARDUS === $this->source) {
+            $this->connect2();  
+        } else {
+            $this->connect();
+        }
     }
 
     public function __destruct()
@@ -231,49 +242,6 @@ class MySqlDB
         return false;
     }
 
-    // // Get Sector and Cluster Info
-    // public function getSector(?int $id, ?string $sector): ?object
-    // {
-    //     if (empty($this->db)) {
-    //         $this->connect();
-    //     }
-    //     if ($id) {
-    //         $this->query('SELECT * FROM Pardus_Sectors WHERE s_id <= ' . $id . ' ORDER BY s_id DESC LIMIT 1');
-    //     } else {
-    //         $this->query('SELECT * FROM Pardus_Sectors WHERE name = \'' . $sector . '\'');
-    //     }
-    //     return $this->nextObject();
-    // }
-
-    // public function getCluster(?int $id, ?string $code): ?object
-    // {
-    //     if (empty($this->db)) {
-    //         $this->connect();
-    //     }
-    //     if ($id) {
-    //         $this->query('SELECT * FROM Pardus_Clusters WHERE c_id = ' . $id);
-    //     } else {
-    //         $this->query('SELECT * FROM Pardus_Clusters WHERE code = \'' . $code . '\'');
-    //     }
-    //     return $this->nextObject();
-    // }
-
-    // // Coordinate Calculations
-    // public function getX($id, $s_id, $rows)
-    // {
-    //     return floor(($id - $s_id) / $rows);
-    // }
-
-    // public function getY($id, $s_id, $rows, $x)
-    // {
-    //     return $id - ($s_id + ($x * $rows));
-    // }
-
-    // public function getID($s_id, $rows, $x, $y)
-    // {
-    //     return $s_id + ($rows * $x) + $y;
-    // }
-
     // NPC Management
     public function addNPC(string $uni, string $image, ?int $id, ?string $sector, int $x, int $y, ?int $nid = null)
     {
@@ -472,37 +440,6 @@ class MySqlDB
         return true;
     }
 
-    public function updateMapFG(string $uni, string $image, ?int $id): bool
-    {
-        if (is_null($id)) {
-            return false;
-        }
-
-        if (empty($this->db)) {
-            $this->connect2();
-        }
-
-        $this->query('UPDATE ' . $uni . '_Maps SET `fg` = \'' . $image . '\' , `fg_updated` = UTC_TIMESTAMP() WHERE id = ' . $id);
-        debug(__METHOD__, 'UPDATE ' . $uni . '_Maps SET `fg` = \'' . $image . '\' , `fg_updated` = UTC_TIMESTAMP() WHERE id = ' . $id);
-        return true;
-    }
-
-    public function updateMapBG(string $uni, string $image, ?int $id)
-    {
-        if (is_null($id)) {
-            return false;
-        }
-
-        if (empty($this->db)) {
-            $this->connect2();
-        }
-
-        debug('UPDATE ' . $uni . '_Maps SET `bg` = \'' . $image . '\' WHERE id = ' . $id);
-        $this->query('UPDATE ' . $uni . '_Maps SET `bg` = \'' . $image . '\' WHERE id = ' . $id);
-        
-        return true;
-    }
-
     public function updateMapNPC(string $uni, string $image, ?int $id, int $cloaked, ?int $nid = null): bool
     {
         if (is_null($id)) {
@@ -601,45 +538,6 @@ class MySqlDB
             //var nextWH = WHs[(shift+1) % 4];
             $this->query('UPDATE ' . $uni . '_Maps SET `fg` = \'foregrounds/wormholeseal_open.png\' , `fg_updated` = UTC_TIMESTAMP() WHERE id != ' . $closedWH . ' and id != ' . $closedPWH . ' and id in (162194,160536,139222,163055,159205,159794,151630,156058)');
             $this->query('UPDATE ' . $uni . '_Maps SET `fg` = \'foregrounds/wormholeseal_closed.png\' , `fg_updated` = UTC_TIMESTAMP() WHERE (id = ' . $closedWH . ' or id = ' . $closedPWH . ') and id in (162194,160536,139222,163055,159205,159794,151630,156058)');
-        }
-    }
-
-    public function addMap(string $uni, string $image, int $id, int $sb) {
-        if (empty($this->db)) { $this->connect(); }
-
-        // if (preg_match('/^\d+$/', $image)) {
-        //     debug(__FILE__, $image);
-        //     $this->execute('SELECT image FROM background WHERE id = ?', [
-        //         'i', $image
-        //     ]);
-        //     $dbImg = $this->fetchObject();
-        //     $image = $dbImg->image;
-        // }
-        if ($id) {
-            $this->query('INSERT INTO ' . $uni . '_Maps (`id`, `bg`, `security`) VALUES (' . $id . ',\'' . $image . '\' , 0)');
-            debug(__METHOD__, __LINE__, 'INSERT INTO ' . $uni . '_Maps (`id`, `bg`, `security`) VALUES (' . $id . ',\'' . $image . '\' , 0)');
-
-            if ($sb) {
-                debug(__METHOD__, __LINE__, 'we have building');
-                $this->query('SELECT * FROM ' . $uni . '_Buildings WHERE id = ' . $sb);
-                $b = $this->nextObject();
-                $this->query('UPDATE ' . $uni . '_Maps SET cluster = \'' . $b->cluster . '\' WHERE id = ' . $id);
-                $this->query('UPDATE ' . $uni . '_Maps SET sector = \'' . $b->sector . '\' WHERE id = ' . $id);
-                $x = Coordinates::getX($id,$b->starbase,13);
-                $y = Coordinates::getY($id,$b->starbase,13,$x);
-                $this->query('UPDATE ' . $uni . '_Maps SET x = ' . $x . ' WHERE id = ' . $id);
-                $this->query('UPDATE ' . $uni . '_Maps SET y = ' . $y . ' WHERE id = ' . $id);					
-            } else {
-                debug(__METHOD__, __LINE__, 'no building');
-                $s = DB::sector(id: $id);  // Here, $id is passed as expected
-                $c = DB::cluster(id: $s->c_id);  // Assuming this is correct
-                $this->query('UPDATE ' . $uni . '_Maps SET cluster = \'' . $c->name . '\' WHERE id = ' . $id);
-                $this->query('UPDATE ' . $uni . '_Maps SET sector = \'' . $s->name . '\' WHERE id = ' . $id);
-                $x = Coordinates::getX($id,$s->s_id,$s->rows);
-                $y = Coordinates::getY($id,$s->s_id,$s->rows,$x);
-                $this->query('UPDATE ' . $uni . '_Maps SET x = ' . $x . ' WHERE id = ' . $id);
-                $this->query('UPDATE ' . $uni . '_Maps SET y = ' . $y . ' WHERE id = ' . $id);
-            }
         }
     }
 

@@ -11,6 +11,8 @@ require_once('../app/settings.php');
 
 CORS::pardus();
 
+$db = MySqlDB::instance(['source' => MySqlDB::PARDUS]); // Create an instance of the Database class
+
 debug($_REQUEST);
 
 // Set Univers Variable
@@ -19,14 +21,12 @@ http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query paramet
 
 // Get Version
 $minVersion = 5.8;
-$version = Request::pint(key: 'version', default: 0);
+$version = Request::pfloat(key: 'version', default: 0);
 
 http_response($version < $minVersion, ApiResponse::BADREQUEST, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
 
 $loc = Request::pint(key: 'loc');
 http_response(is_null($loc), ApiResponse::BADREQUEST, sprintf('location(loc) query parameter is required or invalid: %s', $loc ?? 'null'));
-
-$db = MySqlDB::instance();
 
 // Delete All Crew for This Location
 $db->execute(sprintf('DELETE FROM %s_Crew WHERE loc = ?', $uni), [

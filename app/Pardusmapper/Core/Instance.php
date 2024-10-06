@@ -6,7 +6,7 @@ namespace Pardusmapper\Core;
 trait Instance {
 	private $args = [];
 
-	public static function getInstance($args = []) {
+	public static function getInstance(array $args = []) {
 		static $aoInstance = [];
 
 		$calledClassName = static::class;

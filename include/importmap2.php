@@ -13,6 +13,8 @@ require_once('../app/settings.php');
 
 CORS::pardus();
 
+$db = MySqlDB::instance(['source' => MySqlDB::PARDUS]); // Create an instance of the Database class
+
 debug($_REQUEST);
 
 $mapdata = Request::pstring(key: 'mapdata');
@@ -31,7 +33,7 @@ http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query paramet
 
 // Get Version
 $minVersion = 6.5;
-$version = Request::pint(key: 'version', default: 0);
+$version = Request::pfloat(key: 'version', default: 0);
 http_response($version < $minVersion, ApiResponse::BADREQUEST, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
 
 $loc = Request::pint(key: 'id');
@@ -46,9 +48,6 @@ $mobile = NPC::mobile();
 
 $time_pre = microtime(true);
 $sqlcount = 0;
-
-$db = MySqlDB::instance();  // Create an instance of the Database class
-
 
 $sector = Request::pstring(key: 'sector');
 if (is_null($sector)) {
@@ -110,7 +109,8 @@ for ($i = 1; $i < count($maparray); $i++) { //This loop addresses only the curre
     $temp = explode(',', $maparray[$i]);
     debug($temp);
 
-    $id = 'NaN' === $temp[0] ? null : (int)$temp[0];
+    $id = preg_match('/^\d+$/', $temp[0]) ? (int)$temp[0] : null;
+
     if ($id == $loc) { 
         // this scenario will never happen as the foreground in map view can't be an opponent, it's always your ship.
         // Should look to "other ships" screen NOTED
@@ -143,7 +143,8 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
     global $sqlcount;
     $temp = explode(',', $maparray[$i]);
     debug($temp);
-    $id = 'NaN' === $temp[0] ? null : (int)$temp[0];
+
+    $id = preg_match('/^\d+$/', $temp[0]) ? (int)$temp[0] : null;
     //debug($id);
     //$db->query("INSERT INTO connection_log (`universe`,`username`,`user_id`,`querycount`,`duration`, `date`) VALUES ('Test','$i','5','5','1.1',UTC_TIMESTAMP())");
     if (in_array($id, $static)) {
@@ -195,16 +196,10 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
         // Do Nothing if there is current info
         // This should not be the case with a complete map as every ID should be in the system, consider removing? REMOVED 4.2.20
         // Perform the initial query
-        $result = DB::map(id: $id, universe: $uni);
-
-        // Check for query errors
-        http_response(!$result, ApiResponse::BADREQUEST, sprintf('(1) Query failed: %s', $db->getDb()->error));
+        $r = DB::map(id: $id, universe: $uni);
 
         // Counting SQL iterations per connection
         ++$sqlcount;
-
-        // Fetch the first row
-        $r = $db->fetchObject();
 
         // Check if any row was returned
         if (!$r) {
@@ -212,23 +207,16 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
             debug($id . ' New Information Inserting into DB');
 
             // Call method to add new map
-            $db->addMap($uni, $temp[$r_bg], $id, 0);
+            DB::add_map(universe: $uni, image: $temp[$r_bg], id: $id);
 
             // Counting SQL iterations per connection
             ++$sqlcount;
 
             // Perform the query again after adding new map
-            $result = DB::map(id: $id, universe: $uni);
-
-    
-            // Check for query errors
-            http_response(!$result, ApiResponse::BADREQUEST, sprintf('(2) Query failed: %s', $db->getDb()->error));
+            $r = DB::map(id: $id, universe: $uni);
 
             // Counting SQL iterations per connection
             ++$sqlcount;
-
-            // Fetch the updated row
-            $r = $db->fetchObject();
         }
 
         // Free the result set
@@ -332,7 +320,7 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
                     ++$sqlcount; // Counting SQL iterations per connection
                 } else {
                     debug($id . ' Foreground info Matches DB');
-                    $db->updateMapFG($uni, $temp[$r_fg], $id);
+                    DB::update_map_fg(universe: $uni, image: $temp[$r_fg], id: $id);
                     ++$sqlcount; // Counting SQL iterations per connection
                     if ($temp[$r_fg] != $r->fg) {
                         debug($id . ' Foreground Image Changed');
@@ -361,7 +349,6 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
                 continue;
             }
             debug($id . ' Not Static NPC');
-            debug($temp[$r_npc], $r->npc, $temp[$r_npc] == $r->npc, $r->fg);
             if (is_null($r->npc)) {
                 debug($id . ' No NPC Data in DB');
                 if (is_null($r->fg) || $temp[2]) { //Add check that we say the FG is not a building but the DB might have something?

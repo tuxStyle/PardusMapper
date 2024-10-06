@@ -140,7 +140,9 @@ while ($q = $db->nextObject()) {
 
 $checked = [];
 if (isset($id) && $id > 0) {
-	$db->query('SELECT * FROM ' . $uni . '_Personal_Resources WHERE id = ' . $id);
+	$db->execute(sprintf('SELECT * FROM %s_Personal_Resources WHERE id = ?', $uni), [
+        'i', $id
+    ]);
 	while ($a = $db->nextObject()) { $checked[] = $a->loc; }
 	if ($checked) { sort($checked); }
 }

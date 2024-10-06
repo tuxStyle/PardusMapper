@@ -12,6 +12,8 @@ require_once('../app/settings.php');
 
 CORS::pardus();
 
+$db = MySqlDB::instance(['source' => MySqlDB::PARDUS]); // Create an instance of the Database class
+
 debug($_REQUEST);
 
 // Set Univers Variable
@@ -20,7 +22,7 @@ http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query paramet
 
 // Get Version
 $minVersion = 5.8;
-$version = Request::pint(key: 'version', default: 0);
+$version = Request::pfloat(key: 'version', default: 0);
 http_response($version < $minVersion, ApiResponse::BADREQUEST, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
 
 // Building Main Page Variables
@@ -42,9 +44,6 @@ $bm = Request::pstring(key: 'bm');
 // Get Map information
 $m = DB::map(id: $loc, universe: $uni);
 http_response(is_null($m), ApiResponse::BADREQUEST, sprintf('could not load map for location: %s', $loc ?? 'null'));
-
-
-$db = MySqlDB::instance();
 
 // Verify Building is already in DB Tables Add if Not
 $b = DB::building(id: $loc, universe: $uni);

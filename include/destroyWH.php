@@ -11,6 +11,8 @@ require_once('../app/settings.php');
 
 CORS::mapper();
 
+$db = MySqlDB::instance();
+
 debug($_REQUEST);
 
 // Set Univers Variable
@@ -22,8 +24,6 @@ session_start();
 
 // Get Location
 $id = Request::pint(key: 'id');
-
-$db = MySqlDB::instance();
 
 $m = DB::map(id: $id, universe: $uni);
 if (!is_null($m->fg)||!is_null($m->wormhole)) {

@@ -11,9 +11,9 @@ require_once('../app/settings.php');
 
 CORS::pardus();
 
-debug($_REQUEST);
+$db = MySqlDB::instance(['source' => MySqlDB::PARDUS]); // Create an instance of the Database class
 
-$db = MySqlDB::instance();
+debug($_REQUEST);
 
 // Set Univers Variable and Session Name
 $uni = Request::uni();
@@ -22,7 +22,7 @@ http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query paramet
 
 $id = Request::pint(key: 'id', default: 0);
 $user = Request::pstring(key: 'user', default: 'Unknown');
-$version = Request::pint(key: 'version', default: 0);
+$version = Request::pfloat(key: 'version', default: 0);
 // http_response(0 === $version, ApiResponse::BADREQUEST, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
 $browser = Request::pstring(key: 'browser', default: 'Unknown');
 $faction = Request::pstring(key: 'faction', default: 'Unknown');

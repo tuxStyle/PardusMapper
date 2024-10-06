@@ -13,9 +13,9 @@ require_once('../app/settings.php');
 // Enable CORS for any subdomain of pardus.at
 CORS::pardus_extended();
 
-debug($_REQUEST);
+$db = MySqlDB::instance(['source' => MySqlDB::PARDUS]); // Create an instance of the Database class
 
-$db = MySqlDB::instance();
+debug($_REQUEST);
 
 // Set Univers Variable and Session Name
 $uni = Request::uni();
@@ -23,7 +23,7 @@ http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query paramet
 
 // Get Version
 $minVersion = 5.8;
-$version = Request::pint(key: 'version', default: 0);
+$version = Request::pfloat(key: 'version', default: 0);
 http_response($version < $minVersion, ApiResponse::BADREQUEST, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
 
 // Starbase Main Page Variables

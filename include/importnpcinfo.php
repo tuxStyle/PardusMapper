@@ -10,6 +10,8 @@ require_once('../app/settings.php');
 
 CORS::pardus();
 
+$db = MySqlDB::instance(['source' => MySqlDB::PARDUS]); // Create an instance of the Database class
+
 debug($_REQUEST);
 
 // Set Univers Variable
@@ -18,7 +20,7 @@ http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query paramet
 
 // Get Version
 $minVersion = 5.8;
-$version = Request::pint(key: 'version', default: 0);
+$version = Request::pfloat(key: 'version', default: 0);
 http_response($version < $minVersion, ApiResponse::BADREQUEST, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
 
 // Get Location
@@ -34,9 +36,6 @@ $dead = Request::pbool('dead');
 $hull = Request::pint(key: 'hull', default: 0);
 $armor = Request::pint(key: 'armor', default: 0);
 $shield = Request::pint(key: 'shield', default: 0);
-
-$db = MySqlDB::instance();
-
 
 $db->execute(sprintf('SELECT * FROM %s_Maps M inner join %s_Test_Npcs TN on M.id = TN.id and TN.deleted is null where M.id = ?', $uni, $uni), [
     'i', $loc
