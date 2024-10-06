@@ -58,7 +58,7 @@ if ($b) {
 
     $stocks = DB::building_stock(id: $loc, universe: $uni);
 
-	if (is_array($stocks) && 0 === count($stocks)) {
+	if (null === $stocks) {
         debug('Adding Stock Info');
 		$db->addBuildingStock($uni, $image, $loc);
 	}

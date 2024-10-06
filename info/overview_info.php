@@ -37,12 +37,9 @@ $return = '';
 if ($b_loc) {
 	$loc = $b_loc;
 	debug($loc);
+
 	//Get Resource Data
-	$db->execute('SELECT * FROM Pardus_Res_Data');
-	while ($q = $db->fetchObject()) { // Use fetch_object() to get each row as an object
-		$res_img[$q->name] = $q->image;
-		$res_id[$q->name] = $q->r_id;
-	}
+    list($res_img, $res_id) = DB::res_data_static();
 
 	// Get Stocking Information
 	$stock = [];

@@ -359,13 +359,13 @@ class DB
      * Get stocks
      *
      * @param string $universe
-     * @param int $id
+     * @param integer|null $id
      * @param string|null $name
      * @param bool $warStatus
      * @param bool $nonZero
      * @return array
      */
-    public static function stocks(string $universe, int $id, ?string $name = null, bool $warStatus = false, bool $nonZero = false): array
+    public static function stocks(string $universe, ?int $id, ?string $name = null, bool $warStatus = false, bool $nonZero = false): array
     {
         if (is_null($id)) {
             return null;
@@ -374,7 +374,7 @@ class DB
         $bindType = [];
         $bindValues = [];
 
-        $query = sprintf('SELECT * FROM %s_New_Stock WHERE id = ?', $universe);
+        $query = sprintf('SELECT *, UTC_TIMESTAMP() AS today FROM %s_New_Stock WHERE id = ?', $universe);
         $bindType[] = 'i';
         $bindValues[] = $id;
 
@@ -483,29 +483,18 @@ class DB
      * @param string|null $name
      * @return object|array|null
      */
-    public static function building_stock(string $universe, ?int $id = null, ?string $name = null): object|array|null
+    public static function building_stock(string $universe, ?int $id, ?string $name = null): object|array|null
     {
         if (is_null($id)) {
             return null;
         }
 
-        $db = MySqlDB::instance();
+        $stocks = self::stocks(universe: $universe, id: $id, name: $name);
 
-        if ($id && $name) {
-            $db->execute(sprintf('SELECT *, UTC_TIMESTAMP() AS today FROM %s_New_Stock WHERE name = ? AND id = ?', $universe), [
-                'si', $name, $id
-            ]);
-
-            return $db->numRows() === 1 ? $db->fetchObject() : null;
-        } elseif ($id) {
-            $db->execute(sprintf('SELECT *, UTC_TIMESTAMP() AS today FROM %s_New_Stock WHERE id = ?', $universe), [
-                'i', $id
-            ]);
-
-            $stocks = [];
-            while($q = $db->nextObject()) { $stocks[] = $q; }
-    
-            return $stocks;
+        switch(count($stocks)) {
+            case 0: return null;
+            case 1: return array_shift($stocks);
+            default: return $stocks;
         }
     }
 
@@ -674,7 +663,6 @@ class DB
         return true;
     }
 
-
     /**
      * Get resource data
      *
@@ -690,6 +678,25 @@ class DB
         ]);
 
         return $db->numRows() === 1 ? $db->fetchObject() : null;
+    }
+
+    /**
+     * Returns startc pardus res data
+     */
+    public static function res_data_static(): array
+    {
+        $db = MySqlDB::instance();
+
+        $res_img = [];
+        $res_id = [];
+
+        $db->execute('SELECT * FROM Pardus_Res_Data');
+        while ($q = $db->nextObject()) {
+            $res_img[$q->name] = $q->image;
+            $res_id[$q->name] = $q->r_id;
+        }
+
+        return [$res_img, $res_id];
     }
 
     /**
@@ -848,6 +855,20 @@ class DB
         $db->execute($query, $binds);
 
         return true;
+    }
+
+    /**
+     * Returns startc sectors list
+     */
+    public static function sectors_static(): array
+    {
+        $db = MySqlDB::instance();
+
+        $sector = [];
+        $db->execute('SELECT * from Pardus_Sectors order by name');
+        while ($s = $db->nextObject()) { $sector[] = $s; }
+
+        return $sector;
     }
 
 }

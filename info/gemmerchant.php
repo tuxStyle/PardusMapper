@@ -33,8 +33,7 @@ $db->execute(sprintf('SELECT *,  UTC_TIMESTAMP() "today" FROM %s_Maps WHERE fg L
 ]);
 while ($b = $db->nextObject()) { $building[] = $b; }
 
-$db->execute('SELECT * from Pardus_Sectors');
-while ($s = $db->nextObject()) { $sector[] = $s; }
+$sector = DB::sectors_static();
 	
 foreach ($building as $b) {
 	foreach ($sector as $s) {

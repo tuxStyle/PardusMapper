@@ -105,25 +105,6 @@ debug($maparray);
 $static = DB::static_locations();
 ++$sqlcount;
 
-// // Perform the SELECT query
-// $db->execute("SELECT * FROM Pardus_Static_Locations");
-// // Counting SQL iterations per connection
-// ++$sqlcount;
-
-// // Check if the query was successful
-// http_response($db->numRows() < 1, ApiResponse::BADREQUEST, 'Missing static locations');
-
-// // Initialize an array to hold the results
-// $static = [];
-
-// // Fetch each row as an object
-// while ($c = $db->fetchObject()) {
-//     $static[] = $c->id;
-// }
-
-// // Free the result set
-// $db->free();
-
 for ($i = 1; $i < count($maparray); $i++) { //This loop addresses only the current tile
 
     $temp = explode(',', $maparray[$i]);
@@ -214,12 +195,7 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
         // Do Nothing if there is current info
         // This should not be the case with a complete map as every ID should be in the system, consider removing? REMOVED 4.2.20
         // Perform the initial query
-        debug(sprintf('SELECT *, UTC_TIMESTAMP() AS today FROM %s_Maps WHERE id = ?', $uni), [
-            'i', $id
-        ]);
-        $result = $db->execute(sprintf('SELECT *, UTC_TIMESTAMP() AS today FROM %s_Maps WHERE id = ?', $uni), [
-            'i', $id
-        ]);
+        $result = DB::map(id: $id, universe: $uni);
 
         // Check for query errors
         http_response(!$result, ApiResponse::BADREQUEST, sprintf('(1) Query failed: %s', $db->getDb()->error));
@@ -242,9 +218,8 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
             ++$sqlcount;
 
             // Perform the query again after adding new map
-            $result = $db->execute(sprintf('SELECT *, UTC_TIMESTAMP() AS today FROM %s_Maps WHERE id = ?', $uni), [
-                'i', $id
-            ]);
+            $result = DB::map(id: $id, universe: $uni);
+
     
             // Check for query errors
             http_response(!$result, ApiResponse::BADREQUEST, sprintf('(2) Query failed: %s', $db->getDb()->error));

@@ -38,11 +38,7 @@ if ($b_loc) {
     $stock = [];
 
 	//Get Resource Data
-	$db->execute('SELECT * FROM Pardus_Res_Data');
-	while ($q = $db->nextObject()) {
-		$res_img[$q->name] = $q->image;
-		$res_id[$q->name] = $q->r_id;
-	}
+    list($res_img, $res_id) = DB::res_data_static();
 
 	if (strpos($loc->image,"planet") || strpos($loc->image,"starbase") || strpos($loc->image,"outpost")) {
 		// Get Stocking Info for TOs/Planets/SBs

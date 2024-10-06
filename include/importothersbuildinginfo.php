@@ -86,9 +86,6 @@ if (str_contains("sb_", $m->fg)) {
     debug('Get location information for location: ' . $loc);
 
 	// Get Sector and Cluster Information from Location
-	$db->execute('SELECT * FROM Pardus_Sectors WHERE s_id < ? ORDER BY s_id DESC LIMIT 1', [
-        'i', $loc
-    ]);
 	$s = DB::sector(id: $loc);
 	$x = Coordinates::getX($loc, $s->s_id, $s->rows);
 	$y = Coordinates::getY($loc, $s->s_id, $s->rows, $x);

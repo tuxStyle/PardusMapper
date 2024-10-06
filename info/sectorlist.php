@@ -5,6 +5,7 @@ require_once('../app/settings.php');
 use Pardusmapper\Core\ApiResponse;
 use Pardusmapper\Core\MySqlDB;
 use Pardusmapper\CORS;
+use Pardusmapper\DB;
 use Pardusmapper\Post;
 use Pardusmapper\Session;
 
@@ -20,10 +21,7 @@ session_start();
 
 $security = Session::pint(key: 'security', default: 0);
 
-$sector = [];
-$db->execute('SELECT * from Pardus_Sectors order by name');
-while ($s = $db->nextObject()) { $sector[] = $s; }
-$db->close();
+$sector = DB::sectors_static();
 
 //$return = "<table style=\"height:100px; overflow-y:auto\">";
 $return = '<table>';
