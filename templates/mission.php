@@ -143,13 +143,13 @@ use Pardusmapper\Core\Settings;
 				<?php if (isset($cluster)) { echo 'params += "&cluster=" + \'' . $cluster . '\';'; } ?>
 				<?php if (isset($s)) { echo 'params += "&sector=" + \'' . $s->name . '\';'; } ?>
 				<?php if (isset($id)) { echo 'params += "&loc=" + \'' . $id . '\';'; } ?>
-				
+
 
 				bodyhttp.open("POST",url,true);
 				bodyhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 				//bodyhttp.setRequestHeader("Content-length", params.length);
 				//bodyhttp.setRequestHeader("Connection" , "close");
-				
+
 				bodyhttp.onreadystatechange = function () {
 					if (bodyhttp.readyState == 4) {
 						var el = document.getElementById("mission_body");
@@ -160,7 +160,7 @@ use Pardusmapper\Core\Settings;
 				}
 				bodyhttp.send(params);
 			}
-			
+
 			var sort_var = "";
 			var sort_order = 0;		
 			var mission = 'all';
@@ -168,11 +168,11 @@ use Pardusmapper\Core\Settings;
 			var pilot = "";
 			var pilot_s = "";
 			<?php 
-				if (!is_null($faction) && strpos($faction,'_uni_')) { echo 'pilot = \'uni\';'; }
-				if (!is_null($faction) && strpos($faction,'_emp_')) { echo 'pilot = \'emp\';'; }
-				if (!is_null($faction) && strpos($faction,'_fed_')) { echo 'pilot = \'fed\';'; }
-				if (!is_null($syndicate) && strpos($syndicate,'tss')) { echo 'pilot_s = \'tss\';'; }
-				if (!is_null($syndicate) && strpos($syndicate,'eps')) { echo 'pilot_s = \'eps\';'; }
+				if (!is_null($faction) && strpos((string) $faction,'_uni_')) { echo 'pilot = \'uni\';'; }
+				if (!is_null($faction) && strpos((string) $faction,'_emp_')) { echo 'pilot = \'emp\';'; }
+				if (!is_null($faction) && strpos((string) $faction,'_fed_')) { echo 'pilot = \'fed\';'; }
+				if (!is_null($syndicate) && strpos((string) $syndicate,'tss')) { echo 'pilot_s = \'tss\';'; }
+				if (!is_null($syndicate) && strpos((string) $syndicate,'eps')) { echo 'pilot_s = \'eps\';'; }
 			?>
 			var bodyhttp = getXMLHttpObject();
 			//]]>
@@ -183,7 +183,7 @@ use Pardusmapper\Core\Settings;
 			_gaq.push(['_setAccount', 'UA-15475436-5']);
 			_gaq.push(['_setDomainName', '.mhwva.net']);
 			_gaq.push(['_trackPageview']);
-	
+
 			(function() {
 				var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
 				ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';

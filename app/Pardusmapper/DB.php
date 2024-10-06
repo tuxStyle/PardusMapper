@@ -1067,11 +1067,11 @@ class DB
 
         $stocks = self::stocks(universe: $universe, id: $id, name: $name);
 
-        switch(count($stocks)) {
-            case 0: return null;
-            case 1: return array_shift($stocks);
-            default: return $stocks;
-        }
+        return match (count($stocks)) {
+            0 => null,
+            1 => array_shift($stocks),
+            default => $stocks,
+        };
     }
 
     /**

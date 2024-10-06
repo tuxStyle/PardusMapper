@@ -33,7 +33,7 @@ $base_url = Settings::$BASE_URL;
 $img_url = Settings::$IMG_DIR;
 // Override the $img_url if an image pack is used 
 if (isset($_COOKIE['imagepack'])) {
-	$img_url = rtrim($_COOKIE['imagepack'], '/') . '/';
+	$img_url = rtrim((string) $_COOKIE['imagepack'], '/') . '/';
 }
 
 if ($testing) { $base_url .= '/TestMap'; }

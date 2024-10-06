@@ -70,7 +70,7 @@ if ($b) {
 }
 
 // Verify Index Info is newer than DB
-debug('Index Date ' . (new DateTime($date))->format('Y-m-d H:i:s') . ' - ' . strtotime($date));
+debug('Index Date ' . (new DateTime($date))->format('Y-m-d H:i:s') . ' - ' . strtotime((string) $date));
 debug('Building Date ' . $b->stock_updated . ' - ' . strtotime($b->stock_updated));
 // http_response(strtotime($date) < strtotime($b->stock_updated), ApiResponse::BADREQUEST, sprintf('Index Date: %s Older the Stocking Date: %s', strtotime($date), strtotime($b->stock_updated)));
 

@@ -161,7 +161,7 @@ if (count($sbt) > 0) {
 
     // Loop through all sbt data
     for ($i = 1; $i < count($sbt); $i++) {
-        $temp = explode(',', $sbt[$i]);
+        $temp = explode(',', (string) $sbt[$i]);
         debug($temp);
 
         $temp[1] = str_replace(',', '', $temp[1]); // Remove commas from the second element
@@ -232,7 +232,7 @@ if (count($squads) > 0) {
     ]);
 
     for ($i = 0; $i < sizeOf($squads); $i++) {
-        $temp = explode(',', $squads[$i]);
+        $temp = explode(',', (string) $squads[$i]);
 
         $db->execute(sprintf('INSERT INTO %s_Squadrons (`image`,`type`,`weapons`,`credit`,`date`,`id`) VALUES (?, ?, ?, ?, UTC_TIMESTAMP(), ?)', $uni), [
             'ssiii', $temp[0], $temp[1], $temp[2], $temp[3], $loc

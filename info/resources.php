@@ -33,10 +33,10 @@ $buildings = [];
 $return = '';
 $sort_by = '';
 
-if (strlen($sort)) {
+if (strlen((string) $sort)) {
 	$sort_by = ' ORDER BY ';
-	for($i=0;$i<strlen($sort);$i++) {
-		switch(substr($sort,$i,1)) {
+	for($i=0;$i<strlen((string) $sort);$i++) {
+		switch(substr((string) $sort,$i,1)) {
 			case "L" :
 				$sort_by .= "x ";
 				if ($order & 1) { $sort_by .= " ASC, "; }
@@ -51,7 +51,7 @@ if (strlen($sort)) {
 				else { $sort_by .= " DESC, "; }
 				break;
 			case "S" :
-				if (strtolower($resource) != 'all') { $sort_by .= "res_stock "; }
+				if (strtolower((string) $resource) != 'all') { $sort_by .= "res_stock "; }
 				else { $sort_by .= "stock "; }
 				if ($order & 4) { $sort_by .= " ASC, "; }
 				else { $sort_by .= " DESC, "; }
@@ -77,7 +77,7 @@ if (strlen($sort)) {
 }
 
 if (isset($pilot) && $pilot === $user) {
-	if (strtolower($resource) != 'all') {
+	if (strtolower((string) $resource) != 'all') {
 		$sql = 'SELECT *
                     , UTC_TIMESTAMP() "today"
                     , (SELECT stock FROM %s_New_Stock s WHERE b.id = s.id AND name = ?) "res_stock"
@@ -93,7 +93,7 @@ if (isset($pilot) && $pilot === $user) {
         $params = ['i', $id];
 	}
 } else {
-	if (strtolower($resource) != 'all') {
+	if (strtolower((string) $resource) != 'all') {
 		$sql = 'SELECT *
                     , UTC_TIMESTAMP() "today"
                     , (SELECT stock FROM %s_New_Stock s WHERE b.id = s.id AND name = ?) "res_stock"
@@ -154,7 +154,7 @@ $return .= '<table id="resource_table">';
 $return .= '<tr>';
 if (isset($id) && $id > 0) { $return .= '<th></th>'; }
 $return .= '<th>';
-if (str_contains($sort,"L")) { 
+if (str_contains((string) $sort,"L")) { 
 	if ($order & 1) { $return .= '<span class="symbol">&uarr;</span>'; } else { $return .= '<span class="symbol">&darr;</span>'; }
 	$return .= '<a href="#" onClick="multiSort(\'L\');return false;">&nbsp;Location&nbsp;</a>';
 	$return .= '<a href="#" onClick="removeSort(\'L\');return false;"><span class="symbol">&times;</span></a>';
@@ -163,7 +163,7 @@ if (str_contains($sort,"L")) {
 }
 $return .= '</th>';
 $return .= '<th>';
-if (str_contains($sort,"B")) { 
+if (str_contains((string) $sort,"B")) { 
 	if ($order & 2) { $return .= '<span class="symbol">&uarr;</span>'; } else { $return .= '<span class="symbol">&darr;</span>'; }
 	$return .= '<a href="#" onClick="multiSort(\'B\');return false;">&nbsp;Building&nbsp;</a>';
 	$return .= '<a href="#" onClick="removeSort(\'B\');return false;"><span class="symbol">&times;</span></a>';
@@ -173,7 +173,7 @@ if (str_contains($sort,"B")) {
 $return .= '</th>';
 if ($security == 1 || $security == 100) {
 	$return .= '<th colspan="2">';
-	if (str_contains($sort,"O")) { 
+	if (str_contains((string) $sort,"O")) { 
 		if ($order & 16) { $return .= '<span class="symbol">&uarr;</span>'; } else { $return .= '<span class="symbol">&darr;</span>'; }
 		$return .= '<a href="#" onClick="multiSort(\'O\');return false;">&nbsp;Owner&nbsp;</a>';
 		$return .= '<a href="#" onClick="removeSort(\'O\');return false;"><span class="symbol">&times;</span></a>';
@@ -182,7 +182,7 @@ if ($security == 1 || $security == 100) {
 	}
 	$return .= '</th>';
 	$return .= '<th>';
-	if (str_contains($sort,"A")) { 
+	if (str_contains((string) $sort,"A")) { 
 		if ($order & 32) { $return .= '<span class="symbol">&uarr;</span>'; } else { $return .= '<span class="symbol">&darr;</span>'; }
 		$return .= '<a href="#" onClick="multiSort(\'A\');return false;">&nbsp;Alliance&nbsp;</a>';
 		$return .= '<a href="#" onClick="removeSort(\'A\');return false;"><span class="symbol">&times;</span></a>';
@@ -192,7 +192,7 @@ if ($security == 1 || $security == 100) {
 	$return .= '</th>';
 }
 $return .= '<th>';
-if (str_contains($sort,"S")) { 
+if (str_contains((string) $sort,"S")) { 
 	if ($order & 4) { $return .= '<span class="symbol">&uarr;</span>'; } else { $return .= '<span class="symbol">&darr;</span>'; }
 	$return .= '<a href="#" onClick="multiSort(\'S\');return false;">&nbsp;Stock Level&nbsp;</a>';
 	$return .= '<a href="#" onClick="removeSort(\'S\');return false;"><span class="symbol">&times;</span></a>';
@@ -201,7 +201,7 @@ if (str_contains($sort,"S")) {
 }
 $return .= '</th>';
 $return .= '<th>';
-if (str_contains($sort,"T")) { 
+if (str_contains((string) $sort,"T")) { 
 	if ($order & 8) { $return .= '<span class="symbol">&uarr;</span>'; } else { $return .= '<span class="symbol">&darr;</span>'; }
 	$return .= '<a href="#" onClick="multiSort(\'T\');return false;">&nbsp;Last Updated&nbsp;</a>';
 	$return .= '<a href="#" onClick="removeSort(\'T\');return false;"><span class="symbol">&times;</span></a>';
@@ -243,7 +243,7 @@ foreach ($buildings as $b) {
 	$return .= '<td align="center">';
 	$return .= '<div class="bar-wrap" style="width: 100px;">';
 	
-	if (strtolower($resource) != 'all') { $stock_level = $b->res_stock; }
+	if (strtolower((string) $resource) != 'all') { $stock_level = $b->res_stock; }
 	else { $stock_level = $b->stock; }
 		
 	if ($stock_level == 100) {

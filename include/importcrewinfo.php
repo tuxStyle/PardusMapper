@@ -37,7 +37,7 @@ http_response(is_null($crew), ApiResponse::OK, sprintf('for the current location
 $s = DB::sector(id:$loc);
 $c = DB::cluster(id: $s->c_id);
 
-$data = explode('~', $crew);
+$data = explode('~', (string) $crew);
 for ($i = 1; $i < sizeof($data); $i++) {
 	debug($data[$i]);
 

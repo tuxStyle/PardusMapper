@@ -38,7 +38,7 @@ if ($b_loc) {
     $stock = [];
 
 	//Get Resource Data
-    list($res_img, $res_id) = DB::res_data_static();
+    [$res_img, $res_id] = DB::res_data_static();
 
 	if (strpos($loc->image,"planet") || strpos($loc->image,"starbase") || strpos($loc->image,"outpost")) {
 		// Get Stocking Info for TOs/Planets/SBs

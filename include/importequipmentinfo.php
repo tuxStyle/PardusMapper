@@ -35,7 +35,7 @@ http_response(is_null($eq), ApiResponse::OK, sprintf('equipment(eq) query parame
 $s = DB::sector(id:$loc);
 $c = DB::cluster(id: $s->c_id);
 
-$data = explode('~', $eq);
+$data = explode('~', (string) $eq);
 switch ($tab) {
 	case 'weapon':
 	case 'drive':

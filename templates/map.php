@@ -101,8 +101,8 @@
 			</div>
 			<div id="cluster-map">
 				<?php if (isset($cluster)) { 
-                    $url = rtrim($base_url) . '/' . $uni . '/';
-                    require_once(clusters(strtolower($cluster))); 
+                    $url = rtrim((string) $base_url) . '/' . $uni . '/';
+                    require_once(clusters(strtolower((string) $cluster))); 
                 } ?>
 			</div>
 			<div id="gem_merchant"></div>

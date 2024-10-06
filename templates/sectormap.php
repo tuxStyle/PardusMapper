@@ -91,8 +91,8 @@
 		<div id="body">
 			<div id="clusterMapDiv" onmouseover="this.style.zIndex=20" onmouseout="this.style.zIndex=0">
                 <?php 
-                    $url = rtrim($base_url) . '/' . $uni . '/';
-                    require_once(clusters(strtolower($cluster)));
+                    $url = rtrim((string) $base_url) . '/' . $uni . '/';
+                    require_once(clusters(strtolower((string) $cluster)));
                 ?>
             </div>
 			<div id="mapSelection">

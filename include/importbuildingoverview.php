@@ -83,7 +83,7 @@ for ($i = 1; $i < $bo; $i++) {
     DB::building_update(id: $loc, params: $updateBuilding, universe: $uni);
 
     $ru = Request::pstring(key: 'u' . $i);
-    $u = explode("~", $ru);
+    $u = explode("~", (string) $ru);
     debug($u);
 
     for ($x = 1; $x < count($u); $x++) {

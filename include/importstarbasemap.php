@@ -49,7 +49,7 @@ if (is_null($sb->starbase)) {
 
 debug($sb);
 
-$maparray = explode('~', $mapdata);
+$maparray = explode('~', (string) $mapdata);
 debug($maparray);
 
 for ($i = 1; $i < sizeof($maparray); $i++) {

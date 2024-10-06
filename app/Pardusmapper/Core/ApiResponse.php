@@ -9,7 +9,7 @@ class ApiResponse
     /**
      * HTTP response code constant
      */
-    final public const OK            = 200,
+    final public const int OK            = 200,
         CREATED                      = 201,
         NOCONTENT                    = 204,
         MOVEDPERMANENTLY             = 301,

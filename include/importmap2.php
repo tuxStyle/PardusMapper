@@ -118,7 +118,7 @@ for ($i = 1; $i < count($maparray); $i++) { //This loop addresses only the curre
     if ($id == $loc) { 
         // this scenario will never happen as the foreground in map view can't be an opponent, it's always your ship.
         // Should look to "other ships" screen NOTED
-        debug((strpos($temp[1], "ponents") != false ? 'true' : 'false'). ' Evaluation Check');
+        debug((str_contains($temp[1], "ponents") ? 'true' : 'false'). ' Evaluation Check');
         http_response(str_contains($temp[1], "ponents") && !(in_array($temp[1], $nonblocking)), ApiResponse::OK, '(0) Fatal Error');
 
         debug(strpos($temp[1], "ponents") . ' vs !strpos($temp[1],"ponents") ');

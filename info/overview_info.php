@@ -37,7 +37,7 @@ if ($b_loc) {
 	debug($loc);
 
 	//Get Resource Data
-    list($res_img, $res_id) = DB::res_data_static();
+    [$res_img, $res_id] = DB::res_data_static();
 
 	// Get Stocking Information
 	$stock = [];

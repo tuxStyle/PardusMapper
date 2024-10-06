@@ -91,7 +91,7 @@ if (count($mission) <= 1) { // because the first row is always empty we need at 
 debug('Mission Data Exists');
 
 for ($i = 1; $i < count($mission); $i++) {
-    $m = explode(',', $mission[$i]);
+    $m = explode(',', (string) $mission[$i]);
 
     debug($m);
 
@@ -108,7 +108,7 @@ for ($i = 1; $i < count($mission); $i++) {
         debug('We have Existing Mission Data');
         if (is_null($m_faction)) {
             debug('Faction or Syndicate Mission Mission');
-            if ((str_contains($m_faction, 'uni')) || (str_contains($m_faction, 'emp')) || (str_contains($m_faction, 'fed'))) {
+            if ((str_contains((string) $m_faction, 'uni')) || (str_contains((string) $m_faction, 'emp')) || (str_contains((string) $m_faction, 'fed'))) {
                 debug('Updating Faction Mission');
                 if ($rank - 2 <= $q->rank && $q->rank <= $rank + 2) {
                     $db->execute(sprintf('UPDATE %s_Test_Missions SET rank = ? WHERE id = ?', $uni), [

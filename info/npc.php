@@ -35,10 +35,10 @@ $npc = [];
 $return = '';
 $sort_by = '';
 
-if (strlen($sort)) {
+if (strlen((string) $sort)) {
 	$sort_by = ' ORDER BY ';
-	for($i=0;$i<strlen($sort);$i++) {
-		switch(substr($sort,$i,1)) {
+	for($i=0;$i<strlen((string) $sort);$i++) {
+		switch(substr((string) $sort,$i,1)) {
 			case "C" :
 				$sort_by .= "cluster ";
 				if ($order & 1) { $sort_by .= " ASC, "; }
@@ -98,7 +98,7 @@ if (isset($sector)) {
 	}	
 }/*  else {
 } */
-if (strtolower($npc_filter) != 'all') {
+if (strtolower((string) $npc_filter) != 'all') {
     $query .= ' AND name = ?';
     $bindType[] = 's';
     $bindValues[] = $npc_filter;
@@ -161,7 +161,7 @@ $db->close();
 $return .= '<table id="npc_table">';
 $return .= '<tr>';
 $return .= '<th>';
-if (str_contains($sort,"C"))  {
+if (str_contains((string) $sort,"C"))  {
 	if ($order & 1) { $return .= '<span class="symbol">&uarr;</span>'; } else { $return .= '<span class="symbol">&darr;</span>'; }
 	$return .= '<a href="#" onClick="multiSort(\'C\');return false;">&nbsp;Cluster&nbsp;</a>';
 	$return .= '<a href="#" onClick="removeSort(\'C\');return false;"><span class="symbol">&times;</span></a>';
@@ -170,7 +170,7 @@ if (str_contains($sort,"C"))  {
 }
 $return .= '</th>';
 $return .= '<th>';
-if (str_contains($sort,"S")) { 
+if (str_contains((string) $sort,"S")) { 
 	if ($order & 2) { $return .= '<span class="symbol">&uarr;</span>'; } else { $return .= '<span class="symbol">&darr;</span>'; }
 	$return .= '<a href="#" onClick="multiSort(\'S\');return false;">&nbsp;Sector&nbsp;</a>';
 	$return .= '<a href="#" onClick="removeSort(\'S\');return false;"><span class="symbol">&times;</span></a>';
@@ -179,7 +179,7 @@ if (str_contains($sort,"S")) {
 }
 $return .= '</th>';
 $return .= '<th>';
-if (str_contains($sort,"L")) { 
+if (str_contains((string) $sort,"L")) { 
 	if ($order & 4) { $return .= '<span class="symbol">&uarr;</span>'; } else { $return .= '<span class="symbol">&darr;</span>'; }
 	$return .= '<a href="#" onClick="multiSort(\'L\');return false;">&nbsp;Location&nbsp;</a>';
 	$return .= '<a href="#" onClick="removeSort(\'L\');return false;"><span class="symbol">&times;</span></a>';
@@ -188,7 +188,7 @@ if (str_contains($sort,"L")) {
 }
 $return .= '</th>';
 $return .= '<th colspan="2">';
-if (str_contains($sort,"N")) { 
+if (str_contains((string) $sort,"N")) { 
 	if ($order & 8) { $return .= '<span class="symbol">&uarr;</span>'; } else { $return .= '<span class="symbol">&darr;</span>'; }
 	$return .= '<a href="#" onClick="multiSort(\'N\');return false;">&nbsp;NPC&nbsp;</a>';
 	$return .= '<a href="#" onClick="removeSort(\'N\');return false;"><span class="symbol">&times;</span></a>';
@@ -197,7 +197,7 @@ if (str_contains($sort,"N")) {
 }
 $return .= '</th>';
 $return .= '<th>';
-if (str_contains($sort,"A")) { 
+if (str_contains((string) $sort,"A")) { 
 	if ($order & 16) { $return .= '<span class="symbol">&uarr;</span>'; } else { $return .= '<span class="symbol">&darr;</span>'; }
 	$return .= '<a href="#" onClick="multiSort(\'A\');return false;">&nbsp;First Spotted&nbsp;</a>';
 	$return .= '<a href="#" onClick="removeSort(\'A\');return false;"><span class="symbol">&times;</span></a>';
@@ -206,7 +206,7 @@ if (str_contains($sort,"A")) {
 }
 $return .= '</th>';
 $return .= '<th>';
-if (str_contains($sort,"T")) { 
+if (str_contains((string) $sort,"T")) { 
 	if ($order & 32) { $return .= '<span class="symbol">&uarr;</span>'; } else { $return .= '<span class="symbol">&darr;</span>'; }
 	$return .= '<a href="#" onClick="multiSort(\'T\');return false;">&nbsp;Last Spotted&nbsp;</a>';
 	$return .= '<a href="#" onClick="removeSort(\'T\');return false;"><span class="symbol">&times;</span></a>';
