@@ -1,219 +1,171 @@
 <?php
+declare(strict_types=1);
 
-if ($_SERVER['HTTP_ORIGIN'] == "https://orion.pardus.at") {
-	header('Access-Control-Allow-Origin: https://orion.pardus.at');
-} else if ($_SERVER['HTTP_ORIGIN'] == "https://artemis.pardus.at") {
-	header('Access-Control-Allow-Origin: https://artemis.pardus.at');
-} else if ($_SERVER['HTTP_ORIGIN'] == "https://pegasus.pardus.at") {
-	header('Access-Control-Allow-Origin: https://pegasus.pardus.at');
-} else if ($_SERVER['HTTP_ORIGIN'] == "http://orion.pardus.at") {
-	header('Access-Control-Allow-Origin: http://orion.pardus.at');
-} else if ($_SERVER['HTTP_ORIGIN'] == "http://artemis.pardus.at") {
-	header('Access-Control-Allow-Origin: http://artemis.pardus.at');
-} else if ($_SERVER['HTTP_ORIGIN'] == "http://pegasus.pardus.at") {
-	header('Access-Control-Allow-Origin: http://pegasus.pardus.at');
-} else {
-	die('0,Information Not coming from Pardus');
-}
+use Pardusmapper\Coordinates;
+use Pardusmapper\Core\ApiResponse;
+use Pardusmapper\Core\MySqlDB;
+use Pardusmapper\CORS;
+use Pardusmapper\DB;
+use Pardusmapper\Request;
 
-require_once("mysqldb.php");
-$db = new mysqldb();  // Create an instance of the Database class//not clear as to why sometimes ChatGPT suggests a dbClass at this point
+require_once('../app/settings.php');
 
-$debug = true;
-if (!isset($_REQUEST['debug'])) {
-	$debug = false;
-}
+CORS::pardus();
 
-// Set Univers Variable and Session Name
-if (!isset($_REQUEST['uni'])) {
-	exit;
-}
+debug($_REQUEST);
 
-$uni = $db->real_escape_string($_REQUEST['uni']);
-
-if ($debug) {
-	echo 'Universe = ' . $uni . '<br>';
-}
+// Set Univers Variable
+$uni = Request::uni();
+http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
 
 // Get Version
-$version = 0;
-if (isset($_REQUEST['version'])) {
-	$version = $db->real_escape_string($_REQUEST['version']);
-}
+$minVersion = 5.8;
+$version = Request::pfloat(key: 'version', default: 0);
+http_response($version < $minVersion, ApiResponse::BADREQUEST, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
 
-if ($version < 5.8) {
-	exit;
-}
+$loc = Request::pint(key: 'loc');
+http_response(is_null($loc), ApiResponse::BADREQUEST, sprintf('location(loc) query parameter is required or invalid: %s', $loc ?? 'null'));
 
-if ($debug) {
-	print_r($_REQUEST);
-	echo '<br>';
-}
+$faction = Request::pstring(key: 'faction');
+if (!is_null($faction)) { $faction = str_replace('64x64', '16x16', $faction); } 	// Resize Faction Image
 
-// Planet Main Page Variables
-if (isset($_REQUEST['loc'])) {
-	$loc = $db->real_escape_string($_REQUEST['loc']);
-} else {
-	exit;
-}
-if (isset($_REQUEST['faction'])) {
-	$faction = $db->real_escape_string($_REQUEST['faction']);
-	// Resize Faction Image
-	$faction = str_replace('64x64', '16x16', $faction);
-}
-if (isset($_REQUEST['img'])) {
-	$image = $db->real_escape_string($_REQUEST['img']);
-}
-if (isset($_REQUEST['name'])) {
-	$name = $db->real_escape_string($_REQUEST['name']);
-}
-if (isset($_REQUEST['pop'])) {
-	$pop = $db->real_escape_string($_REQUEST['pop']);
-}
-if (isset($_REQUEST['crime'])) {
-	$crime = $db->real_escape_string($_REQUEST['crime']);
-}
+$planet = Request::pbool(key: 'planet');
+$image = Request::pstring(key: 'img');
+$name = Request::pstring(key: 'name');
+$pop = Request::pint(key: 'pop');
+$crime = Request::pstring(key: 'crime');
+$faction = Request::pstring(key: 'faction');
+$credit = Request::pint(key: 'credit');
+$pt = Request::pstring(key: 'pt');
 
+// Get Sector And Cluster Info
+$s = DB::sector(id:$loc);
+$c = DB::cluster(id: $s->c_id);
 
-if ($debug) {
-	echo 'Location : ' . $loc . '<br>';
-}
+$updateBuilding = [];
+$updateBuildingStock = [];
+$updateStock = [];
 
 // Get Map information
-$result = $db->query('SELECT * FROM ' . $uni . '_Maps WHERE id = ' . $loc);
-if ($result) {
-    $m = $result->fetch_object();
-} else {
-    // Handle query error
-    echo "Query failed: " . $db->error;
-}
+// Get Map information
+$m = DB::map(id: $loc, universe: $uni);
+// Stop of map not found
+http_response(is_null($m), ApiResponse::BADREQUEST, sprintf('map not found for location: %s', $loc));
 
-$result = $db->query('SELECT * FROM ' . $uni . '_Buildings WHERE id = ' . $loc);
-// Now pass the result to fetchObject()
-if ($b = $db->fetchObject($result)) {
+$b = DB::building(id: $loc, universe: $uni);
+if ($b) {
     // Building in DB, Verify Stock is in DB
-    $result = $db->query('SELECT * FROM ' . $uni . '_New_Stock WHERE id = ' . $loc);
-    if ($db->numRows($result) < 1) {
-        addBuildingStock($uni, $m->fg, $loc);
+    $stocks = DB::stocks(id: $loc, universe: $uni);
+    if (count($stocks) < 1) {
+        DB::building_stock_add(universe: $uni, image: $m->fg, id: $loc);
     }
 } else {
     // Building not in DB
-    $db->addBuilding($uni, $m->fg, $loc);
-    $result = $db->query('SELECT * FROM ' . $uni . '_Buildings WHERE id = ' . $loc);
-    $b = $db->fetchObject($result);  // Pass $result here too
+    DB::building_add(universe: $uni, image: $m->fg, id: $loc, sb: 0);
+    $b = DB::building(id: $loc, universe: $uni);
 }
-
-// Get Sector and Cluster Information from Location
-$s = $db->getSector($loc, "");
-$c = $db->getCluster($s->c_id, "");
 
 // Double Check that Cluster and Sector have been Set for the Building
 if (is_null($b->cluster)) {
-	$db->query('UPDATE ' . $uni . '_Buildings SET cluster = \'' . $c->name . '\' WHERE id = ' . $loc);
+    $updateBuilding['cluster'] = $c->name;
 }
 if (is_null($b->sector)) {
-	$db->query('UPDATE ' . $uni . '_Buildings SET sector = \'' . $s->name . '\' WHERE id = ' . $loc);
+    $updateBuilding['sector'] = $s->name;
 }
 
+if ($planet) {
+    // Visited Planet
+    debug('Visited Planet');
 
-if (isset($_REQUEST['planet'])) {
-	// Visited Planet
-	if ($debug) {
-		echo 'Visited Planet<br>';
-	}
-	// Collect Info
+    // Collect Info
 
-	if (!$b->x && !$b->y) {
-		$x = $db->getX($loc, $s->s_id, $s->rows);
-		$y = $db->getY($loc, $s->s_id, $s->rows, $x);
-		$db->query('UPDATE `' . $uni . '_Buildings` SET `x` = ' . $x . ', `y`= ' . $y . ' WHERE id = ' . $loc);
-	}
-	$db->query('UPDATE `' . $uni . '_Buildings` SET `name`= \'' . $name . '\', `image`= \'' . $image . '\', `population`= ' . $pop . ', `crime`= \'' . $crime . '\', `updated`= UTC_TIMESTAMP() WHERE id = ' . $loc);
-	if (isset($_REQUEST['faction'])) {
-		if ($debug) {
-			echo 'Updating Faction<br>';
-		}
-		$db->query('UPDATE `' . $uni . '_Buildings` SET `faction`= \'' . $faction . '\' WHERE id = ' . $loc);
-	} else {
-		if ($debug) {
-			echo 'Nulling Faction<br>';
-		}
-		$db->query('UPDATE `' . $uni . '_Buildings` SET `faction`= null WHERE id = ' . $loc);
-	}
+    if (!$b->x && !$b->y) {
+        $x = Coordinates::getX($loc, $s->s_id, $s->rows);
+        $y = Coordinates::getY($loc, $s->s_id, $s->rows, $x);
+        $updateBuilding['x'] = $x;
+        $updateBuilding['y'] = $y;
+    }
+
+    $updateBuilding['name'] = $name;
+    $updateBuilding['image'] = $image;
+    $updateBuilding['population'] = $pop;
+    $updateBuilding['crime'] = $crime;
+    $updateBuilding['faction'] = $faction;
+
+    if (isset($faction)) {
+        debug('Updating Faction');
+    } else {
+        debug('Nulling Faction');
+    }
 }
 
-if (isset($_REQUEST['pt'])) {
-	// Visited Planet Trade
-	if ($debug) {
-		echo 'Visited Planet Trade<br>';
-	}
-	// Find out what type of planet
-	$db->query('SELECT * FROM Pardus_Buildings_Data WHERE image = \'' . $m->fg . '\'');
-	$p = $db->nextObject();
+if (isset($pt)) {
+    // Visited Planet Trade
+    debug('Visited Planet Trade', $pt);
 
-	if ($debug) {
-		echo $loc . ' Planet Type = ' . $p->name . '<br>';
-	}
-	// Collect Info
+    // Find out what type of planet
+    $p = DB::building_static(image: $m->fg);
+    debug($loc . ' Planet Type = ' . $p->name);
 
-	$cap = 0;
-	$credit = $db->real_escape_string($_REQUEST['credit']);
-	$building_stock_level = 0;
-	$building_stock_max = 0;
+    // Collect Info
+    $cap = 0;
+    $building_stock_level = 0;
+    $building_stock_max = 0;
 
-	$pt = explode('~', $db->real_escape_string($_REQUEST['pt']));
-	// Loop through all pt data
-	for ($i = 1; $i < sizeof($pt); $i++) {
-		$temp = explode(',', $pt[$i]);
-		if ($debug) {
-			print_r($temp);
-			echo '<br>';
-		}
-		$cap += $temp[1];
-		$db->query('SELECT * FROM Pardus_Upkeep_Data WHERE name = \'' . $p->name . '\' AND res = \'' . $temp[0] . '\'');
-		$u = $db->nextObject();
-		if ($u->upkeep) {
-			$building_stock_level += $temp[1];
-			$building_stock_max += $temp[3];
-		}
-		$stock = 0;
-		if ($temp[3]) {
-			$stock = round(($temp[1] / $temp[3]) * 100, 0);
-			if ($stock > 100) {
-				$stock = 100;
-			}
-		}
+    $pt = explode('~', $pt);
+    debug($pt);
 
-		if ($debug) {
-			echo 'Stocking for ' . $temp[0] . ' = ' . $stock . '<br>';
-		}
-		$db->query('SELECT * FROM `' . $uni . '_New_Stock` WHERE name = \'' . $temp[0] . '\' AND id = ' . $loc);
-		if ($db->numRows() < 1) {
-			$db->query('INSERT INTO ' . $uni . '_New_Stock (id,name) VALUES (' . $loc . ',\'' . $temp[0] . '\')');
-		}
-		$db->query('UPDATE `' . $uni . '_New_Stock` SET `amount` = ' . $temp[1] . ' WHERE name = \'' . $temp[0] . '\' AND id = ' . $loc);
-		$db->query('UPDATE `' . $uni . '_New_Stock` SET `bal` = ' . $temp[2] . ' WHERE name = \'' . $temp[0] . '\' AND id = ' . $loc);
-		$db->query('UPDATE `' . $uni . '_New_Stock` SET `min` = 0 WHERE id = ' . $loc);
-		$db->query('UPDATE `' . $uni . '_New_Stock` SET `max` = ' . $temp[3] . ' WHERE name = \'' . $temp[0] . '\' AND id = ' . $loc);
-		$db->query('UPDATE `' . $uni . '_New_Stock` SET `buy` = ' . $temp[4] . ' WHERE name = \'' . $temp[0] . '\' AND id = ' . $loc);
-		$db->query('UPDATE `' . $uni . '_New_Stock` SET `sell` = ' . $temp[5] . ' WHERE name = \'' . $temp[0] . '\' AND id = ' . $loc);
-		$db->query('UPDATE `' . $uni . '_New_Stock` SET `stock` = ' . $stock . ' WHERE name = \'' . $temp[0] . '\' AND id = ' . $loc);
-	}
-	$db->query('UPDATE `' . $uni . '_Buildings` SET `capacity`= ' . $cap . ', `credit`= ' . $credit . ' WHERE id = ' . $loc);
-	// Set Building Stock level
-	if ($building_stock_max) {
-		$building_stock_level = round(($building_stock_level / $building_stock_max) * 100, 0);
-		if ($building_stock_level > 100) {
-			$building_stock_level = 100;
-		}
-	}
+    // Loop through all pt data
+    for ($i = 1; $i < sizeof($pt); $i++) {
+        $temp = explode(',', $pt[$i]);
+        debug($temp);
 
-	if ($debug) {
-		echo 'Building Stock Level ' . $building_stock_level . '<br>';
-	}
+        $cap += $temp[1];
+        $u = DB::upkeep_static(name: $p->name, res: $temp[0]);
+        if ($u && $u->upkeep) {
+            $building_stock_level += $temp[1];
+            $building_stock_max += $temp[3];
+        }
+        $stock = 0;
+        if ($temp[3]) {
+            $stock = round(($temp[1] / $temp[3]) * 100, 0);
+            if ($stock > 100) {
+                $stock = 100;
+            }
+        }
 
-	$db->query('UPDATE ' . $uni . '_Buildings SET stock = ' . $building_stock_level . ', stock_updated = UTC_TIMESTAMP() WHERE id = ' . $loc);
+        debug('Stocking for ' . $temp[0] . ' = ' . $stock);
+
+        $stocks = DB::stocks(id: $loc, name: $temp[0], universe: $uni);
+        if (0 === count($stocks)) {
+            DB::stock_create(id: $loc, name: $temp[0], universe: $uni);
+        }
+
+        $updateStock['amount'] = (int)$temp[1];
+        $updateStock['bal'] = (int)$temp[2];
+        $updateStock['min'] = 0;
+        $updateStock['max'] = (int)$temp[3];
+        $updateStock['buy'] = (int)$temp[4];
+        $updateStock['sell'] = (int)$temp[5];
+        $updateStock['stock'] = (int)$stock;
+
+        DB::stock_update(id: $loc, name: $temp[0], params: $updateStock, universe: $uni);
+    }
+
+    // Set Building Stock level
+    if ($building_stock_max) {
+        $building_stock_level = round(($building_stock_level / $building_stock_max) * 100, 0);
+        if ($building_stock_level > 100) {
+            $building_stock_level = 100;
+        }
+    }
+
+    debug('Building Stock Level ' . $building_stock_level);
+    $updateBuildingStock['capacity'] = (int)$cap;
+    $updateBuildingStock['credit'] = (int)$credit;
+    $updateBuildingStock['stock'] = (int)$building_stock_level;
+
+    DB::building_stock_update(id: $loc, params: $updateBuildingStock, universe: $uni);
 }
 
-$db->close();
-?>
+DB::building_update(id: $loc, params: $updateBuilding, universe: $uni);

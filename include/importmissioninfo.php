@@ -1,285 +1,258 @@
 <?php
+declare(strict_types=1);
 
-if ($_SERVER['HTTP_ORIGIN'] == "https://orion.pardus.at") {
-	header('Access-Control-Allow-Origin: https://orion.pardus.at');
-} else if ($_SERVER['HTTP_ORIGIN'] == "https://artemis.pardus.at") {
-	header('Access-Control-Allow-Origin: https://artemis.pardus.at');
-} else if ($_SERVER['HTTP_ORIGIN'] == "https://pegasus.pardus.at") {
-	header('Access-Control-Allow-Origin: https://pegasus.pardus.at');
-} else if ($_SERVER['HTTP_ORIGIN'] == "http://orion.pardus.at") {
-	header('Access-Control-Allow-Origin: http://orion.pardus.at');
-} else if ($_SERVER['HTTP_ORIGIN'] == "http://artemis.pardus.at") {
-	header('Access-Control-Allow-Origin: http://artemis.pardus.at');
-} else if ($_SERVER['HTTP_ORIGIN'] == "http://pegasus.pardus.at") {
-	header('Access-Control-Allow-Origin: http://pegasus.pardus.at');
-} else {
-	die('0,Information Not coming from Pardus');
-}
+use Pardusmapper\Core\MySqlDB;
+use Pardusmapper\Core\ApiResponse;
+use Pardusmapper\Request;
+use Pardusmapper\DB;
+use Pardusmapper\Coordinates;
+use Pardusmapper\CORS;
 
-require_once("mysqldb.php");
-$db = new mysqldb;
-$debug = true;
-if (!isset($_REQUEST['debug'])) {
-	$debug = false;
-}
+require_once('../app/settings.php');
 
-if ($debug) print_r($_REQUEST);
-if ($debug) echo '<br>';
+CORS::pardus();
+
+$db = MySqlDB::instance(); // Create an instance of the Database class
 
 // Test Mission Table
 
 // Set Univers Variable and Session Name
-if (!isset($_REQUEST['uni'])) {
-	exit;
-}
-
-$uni = $db->protect($_REQUEST['uni']);
+$uni = Request::uni();
+http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
 
 // Get Version
-$version = 0;
-if (isset($_REQUEST['version'])) {
-	$version = $db->protect($_REQUEST['version']);
-}
-
-if ($version < 5.8) {
-	exit;
-}
-
-date_default_timezone_set("UTC");
+$minVersion = 5.8;
+$version = Request::pfloat(key: 'version', default: 0);
+http_response($version < $minVersion, ApiResponse::BADREQUEST, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
 
 // Set Location
-$loc = 0;
-if (isset($_REQUEST['loc'])) {
-	$source_id = $db->protect($_REQUEST['loc']);
+$source_id = Request::pint(key: 'loc');
+http_response(is_null($source_id), ApiResponse::BADREQUEST, sprintf('location(loc) query parameter is required or invalid: %s', $source_id ?? 'null'));
+
+$mid = Request::pint(key: 'mid');
+$comp = Request::pint(key: 'comp');
+$rank = Request::pint(key: 'rank');
+$faction = Request::pstring(key: 'faction');
+$syndicate = Request::pstring(key: 'syndicate');
+$mission = Request::mission();
+
+
+if (!is_null($mid)) {
+    DB::mission_remove(universe: $uni, id: $mid);
+} 
+
+// If we don't have these two pieces of info ABORT!!!
+http_response(is_null($comp) || is_null($rank), ApiResponse::BADREQUEST, sprintf('comp(%s) and rank(%s) query parameter are required or invalid', ($comp ?? 'null'), ($rank ?? 'null')));
+
+$cstart = 0;
+if ($comp >= 2) {
+    $cstart = $comp - 2;
 }
-if ($debug) echo 'Source ID = ' . $source_id .  '<br>';
+$cend = $comp + 2;
 
-if (isset($_REQUEST['mid'])) {
-	$mid = $db->protect($_REQUEST['mid']);
-	$db->removeMission($uni, $mid, 0);
-	//$db->query('DELETE FROM `' . $uni . '_Test_Missions` WHERE id = ' . $mid);
-} else {
-	// If we don't have these two pieces of info ABORT!!!
-	if (!($source_id)) {
-		return;
-	}
+debug('Comp Range = ' . $cstart . ' AND ' . $cend);
 
-	// Set Comp
-	$comp = 0;
-	if (isset($_REQUEST['comp'])) {
-		$comp = $db->protect($_REQUEST['comp']);
-	}
-	if ($debug) echo 'Comp = ' . $comp .  '<br>';
+// Delete all Non EPS or TSS neutral Missions with the same Comp Level or Lower previously seen at that location
+debug('Deleting all Non EPS/TSS neutral missions');
+$db->execute(sprintf('DELETE FROM %s_Test_Missions WHERE comp BETWEEN ? AND ? AND faction IS NULL AND source_id = ?', $uni), [
+    'iii', $cstart, $cend, $source_id
+]);
 
-	// Set Rank
-	$rank = 0;
-	if (isset($_REQUEST['rank'])) {
-		$rank = $db->protect($_REQUEST['rank']);
-	}
-	if ($debug) echo 'Rank = ' . $rank .  '<br>';
+// Check if our Pilot is a Faction Member
+if ($faction) {
+    $rstart = 0;
+    if ($rank >= 2) {
+        $rstart = $rank - 2;
+    }
+    $rend = $rank + 2;
 
+    debug('Rank Range = ' . $rstart . ' AND ' . $rend);
 
-	// If we don't have these two pieces of info ABORT!!!
-	if (!($comp || $rank)) {
-		return;
-	}
-
-	// Set Faction
-	$faction = 0;
-	if (isset($_REQUEST['faction'])) {
-		$faction = $db->protect($_REQUEST['faction']);
-	}
-	if ($debug) echo 'faction = ' . $faction .  '<br>';
-
-	// Set Syndicate
-	$syndicate = 0;
-	if (isset($_REQUEST['syndicate'])) {
-		$syndicate = $db->protect($_REQUEST['syndicate']);
-	}
-	if ($debug) echo 'syndicate = ' . $syndicate .  '<br>';
-
-	$cstart = 0;
-	if ($comp >= 2) {
-		$cstart = $comp - 2;
-	}
-	$cend = $comp + 2;
-
-	if ($debug) echo 'Comp Range = ' . $cstart . ' AND ' . $cend . '<br>';
-
-	if ($debug) echo 'Deleting all Non EPS/TSS neutral missions<br>';
-	// Delete all Non EPS or TSS neutral Missions with the same Comp Level or Lower previously seen at that location
-	$db->query('DELETE FROM `' . $uni . '_Test_Missions` WHERE `faction` IS NULL AND `source_id` = ' . $source_id . ' AND `comp` BETWEEN ' . $cstart . ' AND ' . $cend);
-
-	// Check if our Pilot is a Faction Member
-	if ($faction) {
-		$rstart = 0;
-		if ($rank >= 2) {
-			$rstart = $rank - 2;
-		}
-		$rend = $rank + 2;
-
-		if ($debug) echo 'Rank Range = ' . $rstart . ' AND ' . $rend . '<br>';
-
-		// Member of a Faction
-		if ($debug) echo 'Deleting Faction Missions<br>';
-		$db->query('DELETE FROM `' . $uni . '_Test_Missions` WHERE `rank` between  ' . $rstart . ' AND ' . $rend . ' AND `faction` = \'' . $faction . '\' AND `source_id` = ' . $source_id);
-	}
-	if ($syndicate) {
-		// Member of a Syndicate
-		if ($debug) echo 'Deleting Syndicate Missions<br>';
-		$db->query('DELETE FROM `' . $uni . '_Test_Missions` WHERE `faction` = \'' . $syndicate . '\' AND `comp` BETWEEN ' . $cstart . ' AND ' . $cend . ' AND `source_id` = ' . $source_id);
-	}
-
-	if (isset($_REQUEST['mission'])) {
-		if ($debug) echo 'Mission Data Exists<br>';
-
-		$mission = explode('~', $db->protect($_REQUEST['mission']));
-
-		for ($i = 1; $i < count($mission); $i++) {
-			$m = explode(',', $mission[$i]);
-
-			if ($debug) print_r($m);
-			if ($debug) echo '<br>';
-
-			// Check if Mission Still Exists
-			$db->query('SELECT * FROM `' . $uni . '_Test_Missions` WHERE id = ' . $m[0]);
-			if ($q = $db->nextObject()) {
-				if ($debug) echo 'We have Existing Mission Data<br>';
-				if ($m[1]) {
-					if ($debug) echo 'Faction or Syndicate Mission Mission<br>';
-					if ((strpos($m[1], 'uni') !== false) || (strpos($m[1], 'emp') !== false) || (strpos($m[1], 'fed') !== false)) {
-						if ($rank - 2 <= $q->rank && $q->rank <= $rank + 2) {
-							$db->query('UPDATE `' . $uni . '_Test_Missions` SET `rank` = ' . $rank . ' WHERE id = ' . $m[0]);
-						}
-					} else {
-						if ($debug) echo 'Updating Syndicate Mission<br>';
-						if ($comp - 2 <= $q->comp && $q->comp <= $comp + 2) {
-							$db->query('UPDATE `' . $uni . '_Test_Missions` SET `comp` = ' . $comp . ' WHERE id = ' . $m[0]);
-						}
-					}
-				} else {
-					if ($comp - 2 <= $q->comp && $q->comp <= $comp + 2) {
-						$db->query('UPDATE `' . $uni . '_Test_Missions` SET `comp` = ' . $comp . ' WHERE id = ' . $m[0]);
-					}
-				}
-			} else {
-				if ($debug) echo 'Inserting New Mission<br>';  //Why would we do an insert and then multiple updates?  NOTED
-				$db->query('INSERT INTO `' . $uni . '_Test_Missions` (`id`) VALUES (' . $m[0] . ')');
-
-				//Set Source ID
-				$db->query('UPDATE `' . $uni . '_Test_Missions` SET `source_id` = ' . $source_id . ' WHERE id = ' . $m[0]);
-
-				// Set Sector Information
-				$s = $db->getSector($source_id, "");
-				$db->query('UPDATE `' . $uni . '_Test_Missions` SET `sector` = \'' . $s->name . '\' WHERE id = ' . $m[0]);
-
-				// Get Cluster Information
-				$c = $db->getCluster($s->c_id, "");
-				$db->query('UPDATE `' . $uni . '_Test_Missions` SET `cluster` = \'' . $c->code . '\' WHERE id = ' . $m[0]);
-
-				// Get Building Name,X, and Y
-				$db->query('SELECT * FROM ' . $uni . '_Buildings WHERE id = ' . $source_id);
-				$b = $db->nextObject();
-				$db->query('UPDATE `' . $uni . '_Test_Missions` SET loc = \'' . $b->name . '\' WHERE id = ' . $m[0]);
-
-				$x = $db->getX($source_id, $s->s_id, $s->rows);
-				$y = $db->getY($source_id, $s->s_id, $s->rows, $x);
-				$db->query('UPDATE `' . $uni . '_Test_Missions` SET x = ' . $x . ', y = ' . $y . ' WHERE id = ' . $m[0]);
-
-				// Update Comp & Rank
-				$db->query('UPDATE ' . $uni . '_Test_Missions SET comp = ' . $comp . ', rank = ' . $rank . ' WHERE id = ' . $m[0]);
-
-				if ($debug) echo 'Updating faction<br>';
-				if ($m[1]) {
-					$db->query('UPDATE `' . $uni . '_Test_Missions` SET `faction` = \'' . $m[1] . '\' WHERE id = ' . $m[0]);
-				}
-
-				if (strpos($m[2], "LONG-TERM")) {
-					$m[2] = substr($m[2], 0, strpos($m[2], "LONG-TERM"));
-				}
-				if (strpos($m[2], "(")) {
-					$m[2] = substr($m[2], 0, strpos($m[2], "("));
-				}
-				if ($debug) echo 'Updating Type ' . $m[2] . '<br>';
-				if ($m[2]) {
-					$db->query('UPDATE `' . $uni . '_Test_Missions` SET `type` = \'' . $m[2] . '\' WHERE id = ' . $m[0]);
-				}
-
-				if ($debug) echo 'Updating Type Img ' . $m[3] . '<br>';
-				if ($m[3]) {
-					if ($debug) echo 'STRPOS -->' . strpos($m[3], 'packages') . '<br>';
-					if (strpos($m[3], 'packages') !== false || strpos($m[3], 'smuggle') !== false || strpos($m[3], 'vip') !== false || strpos($m[3], 'scout') !== false || strpos($m[3], 'explosives') !== false || strpos($m[3], 'espionage') !== false) {
-						if (strpos($m[3], '/') !== false) {
-							$m[3] = substr($m[3], strpos($m[3], '/') + 1);
-						}
-						if ($debug) echo 'Image = ' . $m[3] . '<br>';
-					}
-					$db->query('UPDATE `' . $uni . '_Test_Missions` SET `type_img` = \'' . $m[3] . '\' WHERE id = ' . $m[0]);
-				}
-				if ($debug) echo 'Updating Amont ' . $m[4] . '<br>';
-				if ($m[4]) {
-					if (is_numeric($m[4])) {
-						$db->query('UPDATE `' . $uni . '_Test_Missions` SET `amount` = ' . $m[4] . ' WHERE id = ' . $m[0]);
-					} else {
-						$db->query('UPDATE `' . $uni . '_Test_Missions` SET `hack` = \'' . $m[4] . '\' WHERE id = ' . $m[0]);
-					}
-				}
-
-				if ($debug) echo 'Updating Target Loc ' . $m[5] . '<br>';
-				if ($m[5]) {
-					$db->query('UPDATE `' . $uni . '_Test_Missions` SET `t_loc` = \'' . $m[5] . '\' WHERE id = ' . $m[0]);
-				}
-
-				if ($debug) echo 'Updating Target Sector ' . $m[6] . '<br>';
-				if ($m[6]) {
-					$db->query('UPDATE `' . $uni . '_Test_Missions` SET `t_sector` = \'' . $m[6] . '\' WHERE id = ' . $m[0]);
-					$ts = $db->getSector(0, $m[6]);
-					$tc = $db->getCluster($ts->c_id, "");
-					$db->query('UPDATE `' . $uni . '_Test_Missions` SET `t_cluster` = \'' . $tc->code . '\' WHERE id = ' . $m[0]);
-				}
-
-				if ($debug) echo 'Updating X ' . $m[7] . '<br>';
-				if ($m[7]) {
-					$db->query('UPDATE `' . $uni . '_Test_Missions` SET `t_x` = ' . $m[7] . ' WHERE id = ' . $m[0]);
-				}
-
-				if ($debug) echo 'Updating Y ' . $m[8] . '<br>';
-				if ($m[8]) {
-					$db->query('UPDATE `' . $uni . '_Test_Missions` SET `t_y` = ' . $m[8] . ' WHERE id = ' . $m[0]);
-				}
-
-				if ($debug) echo 'Updating Time ' . $m[9] . '<br>';
-				if ($m[9]) {
-					$db->query('UPDATE `' . $uni . '_Test_Missions` SET `time` = ' . $m[9] . ' WHERE id = ' . $m[0]);
-				}
-
-				if ($debug) echo 'Updating Credits ' . $m[10] . '<br>';
-				if ($m[10]) {
-					$db->query('UPDATE `' . $uni . '_Test_Missions` SET `credits` = ' . $m[10] . ' WHERE id = ' . $m[0]);
-				}
-
-				if ($debug) echo 'Updating War Points ' . $m[11] . '<br>';
-				if (isset($m[11])) {
-					$db->query('UPDATE `' . $uni . '_Test_Missions` SET `war` = \'' . $m[11] . '\' WHERE id = ' . $m[0]);
-				}
-
-				$db->query('UPDATE ' . $uni . '_Test_Missions SET spotted = UTC_TIMESTAMP() WHERE id = ' . $m[0]);
-
-				if ($m[2] == "Assassination" && !$m[4]) {
-					if ($debug) {
-						echo 'We have Coords for a NPC lets add them to the Map<br>';
-					}
-					$db->addNPC($uni, $m[3], 0, $m[6], $m[7], $m[8]);
-				}
-			}
-			if ($debug) echo 'Updating Dates<br>';
-			$db->query('UPDATE ' . $uni . '_Test_Missions SET updated = UTC_TIMESTAMP() WHERE id = ' . $m[0]);
-		}
-		// Clean up any Errors
-		$db->query('DELETE FROM ' . $uni . '_Test_Missions WHERE spotted IS NULL');
-	}
+    // Member of a Faction
+    debug('Deleting Faction Missions');
+    $db->execute(sprintf('DELETE FROM %s_Test_Missions WHERE rank BETWEEN ? AND ? AND faction = ? AND source_id = ?', $uni), [
+        'iisi', $rstart, $rend, $faction, $source_id
+    ]);
 }
 
-$db->close();
+if ($syndicate) {
+    // Member of a Syndicate
+    debug('Deleting Syndicate Missions');
+    $db->execute(sprintf('DELETE FROM %s_Test_Missions WHERE comp BETWEEN ? AND ? AND faction = ? AND source_id = ?', $uni), [
+        'iisi', $cstart, $cend, $syndicate, $source_id
+    ]);
+}
 
-?>
+if (count($mission) <= 1) { // because the first row is always empty we need at least 2 rows so, use <= 1
+    debug('No Available Mission Data');
+    exit;
+}
+
+debug('Mission Data Exists');
+
+for ($i = 1; $i < count($mission); $i++) {
+    $m = explode(',', (string) $mission[$i]);
+
+    debug($m);
+
+    // Check if Mission Still Exists
+    $db->execute(sprintf('SELECT * FROM %s_Test_Missions WHERE id = ?', $uni), [
+        'i', $m[0]
+    ]);
+
+    // mission faction
+    $m_faction = vnull($m[1] ?? null);
+    debug('Mission faction = ' . $m_faction);
+
+    if ($q = $db->nextObject()) {
+        debug('We have Existing Mission Data');
+        if (is_null($m_faction)) {
+            debug('Faction or Syndicate Mission Mission');
+            if ((str_contains((string) $m_faction, 'uni')) || (str_contains((string) $m_faction, 'emp')) || (str_contains((string) $m_faction, 'fed'))) {
+                debug('Updating Faction Mission');
+                if ($rank - 2 <= $q->rank && $q->rank <= $rank + 2) {
+                    $db->execute(sprintf('UPDATE %s_Test_Missions SET rank = ? WHERE id = ?', $uni), [
+                        'ii', $rank, $m[0]
+                    ]);
+                }
+            } else {
+                debug('Updating Syndicate Mission');
+                if ($comp - 2 <= $q->comp && $q->comp <= $comp + 2) {
+                    $db->execute(sprintf('UPDATE %s_Test_Missions SET comp = ? WHERE id = ?', $uni), [
+                        'ii', $comp, $m[0]
+                    ]);
+                }
+            }
+        } else {
+            // Are these neutral missions?
+            debug('Updating Neutral Mission');
+            if ($comp - 2 <= $q->comp && $q->comp <= $comp + 2) {
+                $db->execute(sprintf('UPDATE %s_Test_Missions SET comp = ? WHERE id = ?', $uni), [
+                    'ii', $comp, $m[0]
+                ]);
+            }
+        }
+    } else {
+        // Get Sector
+        $s = DB::sector(id: $source_id);
+        http_response(is_null($s), ApiResponse::BADREQUEST, sprintf('sector not found for loc: %s', $source_id)); // exit if not found in DB
+
+        // Get Cluster Information
+        $c = DB::cluster(id: $s->c_id);
+        http_response(is_null($c), ApiResponse::BADREQUEST, sprintf('cluster not found for sector: %s(%s)', $source_id, $s->c_id)); // exit if not found in DB
+
+        // Prepare Data
+
+        // Get Building Name,X, and Y
+        $x = Coordinates::getX($source_id, $s->s_id, $s->rows);
+        $y = Coordinates::getY($source_id, $s->s_id, $s->rows, $x);
+        $b = DB::building(id: $source_id, universe: $uni);
+        http_response(is_null($b), ApiResponse::BADREQUEST, sprintf('building not found for loc: %s', $source_id)); // exit if not found in DB
+
+        // mission tupe
+        $m_type = null;
+        if (!is_null($m[2] ?? null)) {
+            if (strpos($m[2], "LONG-TERM")) {
+                $m[2] = substr($m[2], 0, strpos($m[2], "LONG-TERM"));
+            }
+            if (strpos($m[2], "(")) {
+                $m[2] = substr($m[2], 0, strpos($m[2], "("));
+            }
+
+            $m_type = vnull($m[2]);
+        }
+        debug('Mission type = ' . $m_type);
+
+        // mission image
+        $m_type_img = null;
+        if (!is_null($m[3] ?? null)) {
+            debug('STRPOS -->' . strpos($m[3], 'packages'));
+            if (str_contains($m[3], 'packages') || str_contains($m[3], 'smuggle') || str_contains($m[3], 'vip') || str_contains($m[3], 'scout') || str_contains($m[3], 'explosives') || str_contains($m[3], 'espionage')) {
+                if (str_contains($m[3], '/')) {
+                    $m[3] = substr($m[3], strpos($m[3], '/') + 1);
+                }
+            }
+
+            $m_type_img = vnull($m[3]);
+        }
+        debug('Image = ' . $m_type_img);
+
+        // mission amount or hack
+        $m_amount = null;
+        $m_hack = null;
+        $v_ammount = vnull($m[4] ?? null);
+        if (!is_null($m[4] ?? null)) {
+            if (is_numeric($m[4])) {
+                $m_amount = $m[4];
+            } else {
+                $m_hack = $m[4];
+            }
+        }
+        debug('Mission amount = ' . $m_amount);
+        debug('Mission hack = ' . $m_hack);
+
+        // mission location
+        $m_loc = vnull($m[5] ?? null);
+        debug('Mission Target Loc ' . $m_loc);
+
+        // mission sector and cluster
+        $m_sector = vnull($m[6] ?? null);
+        $m_cluster = null;
+        if (!is_null($m_sector)) {
+            $tc = DB::cluster(sector: $m[6]);
+            http_response(is_null($tc), ApiResponse::BADREQUEST, sprintf('cluster not found for sector: %s', $m_sector)); // exit if not found in DB
+            $m_cluster = $tc->code;
+        }
+        debug('Mission Cluster ' . $m_cluster);
+
+        // mission coordinates
+        $m_x = vnull($m[7] ?? null);
+        debug('Mission X ' . $m_x);
+        $m_y = vnull($m[8] ?? null);
+        debug('Mission Y ' . $m_y);
+
+        // mission time
+        $m_time = vnull($m[9] ?? null);
+        debug('Mission Time ' . $m_time);
+
+        // mission credits
+        $m_credits = vnull($m[10] ?? null);
+        debug('Mission Credits ' . $m_credits);
+
+        // mission war points
+        $m_war = vnull($m[11] ?? null);
+        debug('Mission War Points ' . $m_war);
+
+
+        debug('Inserting New Mission');  //Why would we do an insert and then multiple updates?  NOTED
+        $sql = "INSERT INTO %s_Test_Missions (
+                    `id`, `source_id`, `sector`, `cluster`, `loc`, `x`, `y`, `comp`, `rank`, `faction`, `type`, `type_img`, `amount`, `hack`, 
+                    `t_loc`, `t_sector`, `t_cluster`, `t_x`, `t_y`, `time`, `credits`, `war`, `spotted`
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP())
+        ";
+        $params = [
+            'iisssiiiisssissssiisis',
+            $m[0], $source_id, $s->name, 
+            $c->code, $b->name, 
+            $x, $y, $comp, $rank, $m_faction, $m_type, $m_type_img, $m_amount, $m_hack,
+            $m_loc, $m_sector, $m_cluster, $m_x, $m_y, $m_time, $m_credits, $m_war
+        ];
+
+        debug(sprintf($sql, $uni), $params);
+
+        $db->execute(sprintf($sql, $uni), $params);
+        
+        if ($m_type === "Assassination" && is_null($v_ammount)) {
+            debug('We have Coords for a NPC lets add them to the Map');
+            DB::npc_add(universe: $uni, image: $m_type_img, id: null, sector: $m_sector, x: (int)$m_x, y: (int)$m_y);
+        }
+    }
+
+    debug('Updating Dates');
+    $db->execute(sprintf('UPDATE %s_Test_Missions SET updated = UTC_TIMESTAMP() WHERE id = ?', $uni), [
+        'i', $m[0]
+    ]);
+}
+
+// Clean up any Errors
+$db->execute(sprintf('DELETE FROM %s_Test_Missions WHERE spotted IS NULL', $uni));

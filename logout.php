@@ -1,26 +1,35 @@
 <?php
-require_once('include/mysqldb.php');
-$db = new mysqldb;
+
+declare(strict_types=1);
+require_once('app/settings.php');
+
+/** @var string $base_url */
+
+use Pardusmapper\Core\MySqlDB;
+use Pardusmapper\Request;
+
+$db = new MySqlDB;
 
 // Set Univers Variable and Session Name
-if (!isset($_REQUEST['uni'])) { include('index.html'); exit; }
+$uni = Request::uni();
+if (is_null($uni)) {
+    require_once(templates('lannding'));
+    exit;
+}
 
-session_name($uni = $db->protect($_REQUEST['uni']));
-
+session_name($uni);
 session_start();
 
-$testing = Settings::TESTING;
-$debug = Settings::DEBUG;
+$name = $_SESSION['user'] ?? null;
+if (!is_null($name)) {
+    $db->execute(sprintf('UPDATE %s_Users SET logout = UTC_TIMESTAMP() WHERE username = ?', $uni), [
+        's', $name
+    ]);
+}
 
-$base_url = Settings::base_URL;
-if ($testing) { $base_url .= '/TestMap'; }
-
-
-$db->query('UPDATE ' . $uni . '_Users SET logout = UTC_TIMESTAMP() WHERE username = \'' . $name . '\'');
 $db->close();
 
 session_destroy();
 session_write_close();
 $url = $base_url . '/' . $uni . '/index.php';
 header("Location: $url");
-?>

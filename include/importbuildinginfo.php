@@ -1,45 +1,30 @@
 <?php
+declare(strict_types=1);
+require_once('../app/settings.php');
 
-if ($_SERVER['HTTP_ORIGIN'] == "https://orion.pardus.at") {
-	header('Access-Control-Allow-Origin: https://orion.pardus.at');
-} else if ($_SERVER['HTTP_ORIGIN'] == "https://artemis.pardus.at") {
-	header('Access-Control-Allow-Origin: https://artemis.pardus.at');
-} else if ($_SERVER['HTTP_ORIGIN'] == "https://pegasus.pardus.at") {
-	header('Access-Control-Allow-Origin: https://pegasus.pardus.at');
-} else if ($_SERVER['HTTP_ORIGIN'] == "http://orion.pardus.at") {
-	header('Access-Control-Allow-Origin: http://orion.pardus.at');
-} else if ($_SERVER['HTTP_ORIGIN'] == "http://artemis.pardus.at") {
-	header('Access-Control-Allow-Origin: http://artemis.pardus.at');
-} else if ($_SERVER['HTTP_ORIGIN'] == "http://pegasus.pardus.at") {
-	header('Access-Control-Allow-Origin: http://pegasus.pardus.at');
-} else {
-	die('0,Information Not coming from Pardus');
-}
+/** @var string $base_url */
 
-require_once("settings.php");
+use Pardusmapper\CORS;
 
-$site = Settings::URL;
-if (Settings::TESTING) {
-	$site .= 'TestMap/';
-}
-$site .= 'include/';
+CORS::pardus();
+
+
+$site = $base_url . '/include/';
 
 if (isset($_REQUEST['bi'])) {
-	$site .= 'importbuildingindex.php?';
+    $site .= 'importbuildingindex.php?';
 }
 if (isset($_REQUEST['building']) || isset($_REQUEST['bt'])) {
-	$site .= 'importothersbuildinginfo.php?';
+    $site .= 'importothersbuildinginfo.php?';
 }
 if (isset($_REQUEST['bts']) || isset($_REQUEST['level']) || isset($_REQUEST['bm'])) {
-	$site .= 'importownbuildinginfo.php?';
+    $site .= 'importownbuildinginfo.php?';
 }
 if (isset($_REQUEST['planet']) || isset($_REQUEST['pt'])) {
-	$site .= 'importplanetinfo.php?';
+    $site .= 'importplanetinfo.php?';
 }
 if (isset($_REQUEST['sb']) || isset($_REQUEST['sbt']) || isset($_REQUEST['squads']) || isset($_REQUEST['sbb'])) {
-	$site .= 'importstarbaseinfo.php?';
+    $site .= 'importstarbaseinfo.php?';
 }
 $site .= $_SERVER['QUERY_STRING'];
 header("Location: $site");
-
-?>
