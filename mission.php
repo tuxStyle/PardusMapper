@@ -32,12 +32,19 @@ $comp = Session::pint(key: 'comp');
 $faction = Session::pstring(key: 'faction');
 $syndicate = Session::pstring(key: 'syndicate');
 
-
 $s = null;
 $c = null;
-if (!is_null($sector)) {
+
+// do this before sector or it will mess with the template
+// TODO: fix it at some point
+if (isset($cluster)) {
+    $c = DB::cluster(code: $cluster);
+    $clusterCode = $c->code;
+}
+
+if (isset($sector)) {
     $s = DB::sector(sector: $sector);
-    $c = DB::cluster(id: $s->c_id);
+    $c = DB::cluster(sector: $sector); // needed for side bar
     $cluster = $c->code;
 }
 

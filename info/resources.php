@@ -119,24 +119,31 @@ $db->execute($query, $params);
 
 
 while ($q = $db->nextObject()) { 
-	//Calculate Ticks Passed
-	$format = '%F %T';
-	$ts = strtotime($q->stock_updated);
-	$date = new DateTime("@$ts");
-	$date->setTime(1,25,0);
-	$tick = $date->format('U');
+    // debug($q);
 
-	while ($tick < strtotime($q->stock_updated)) {
-		$tick += (60 * 60 * 6);
-	}
+    if (!$q->stock_updated) {
+        $q->tick = 0;
+        continue;
+    }
 
-	$count = 0;
-	while ($tick < strtotime($q->today)) {
-		$tick += (60*60*6);
-		$count++;
-	}
+    //Calculate Ticks Passed
+    $format = '%F %T';
+    $ts = strtotime($q->stock_updated);
+    $date = new DateTime("@$ts");
+    $date->setTime(1,25,0);
+    $tick = $date->format('U');
 
-	$q->tick = $count;
+    while ($tick < $ts) {
+        $tick += (60 * 60 * 6);
+    }
+
+    $count = 0;
+    while ($tick < strtotime($q->today)) {
+        $tick += (60*60*6);
+        $count++;
+    }
+
+    $q->tick = $count;
 
 	$buildings[$q->id] = $q;
 }	

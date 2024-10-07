@@ -15,7 +15,7 @@ use Pardusmapper\Core\Settings;
 		<meta http-equiv="Content-Style-Type" content="text/css" />
 		<meta http-equiv="Content-Script-Type" content="text/javascript" />
 		<?php if (isset($sector)) { echo '<title>' . $sector . '\'s NPC Listing</title>'; } ?>
-		<?php if (isset($clusterCode)) { echo '<title>' . $clusterCode . '\'s NPC Listing</title>'; } ?>
+		<?php if (isset($cluster)) { echo '<title>' . $cluster . '\'s NPC Listing</title>'; } ?>
 		<link rel="stylesheet" type="text/css" href="<?= $css; ?>" />
 		<link rel="stylesheet" type="text/css" href="<?= $n_css; ?>" />
 		<script type="text/javascript" src="<?= $base_url; ?>/resources/main.js"></script>

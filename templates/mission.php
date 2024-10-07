@@ -17,8 +17,8 @@ use Pardusmapper\Core\Settings;
 		<meta http-equiv="Content-Script-Type" content="text/javascript" />
 		<title>
 		<?php echo $uni; ?>
-		<?php if (isset($cluster)) { echo ' ' . $cluster; } ?>
-		<?php if (isset($s)) { echo ' ' . $s->name; } ?>
+		<?php if (isset($clusterCode)) { echo ' ' . $clusterCode; } ?>
+		<?php if (isset($sector)) { echo ' ' . $sector; } ?>
 		<?php //if ($x1 && $y1) { echo ' ' . $loc->name; } // this doesn't seem defined ?>
 		<?php echo '\'s Mission Listing'; ?>
 		</title>
@@ -147,8 +147,8 @@ use Pardusmapper\Core\Settings;
 				var mode = getCheckedValue(document.getElementById('limit').mode);
 				var url = <?php echo '"' . $base_url . '"'; ?> + "/info/missions.php";
 				var params = "uni=" + <?php echo '"' . $uni . '"'; ?> + "&sort=" + sort_var + "&order=" + sort_order + "&type=" + mission + "&faction=" + faction + "&mode=" + mode + "&pilot=" + pilot + "&pilot_s=" + pilot_s;
-				<?php if (isset($cluster)) { echo 'params += "&cluster=" + \'' . $cluster . '\';'; } ?>
-				<?php if (isset($s)) { echo 'params += "&sector=" + \'' . $s->name . '\';'; } ?>
+				<?php if (isset($clusterCode)) { echo 'params += "&cluster=" + \'' . $clusterCode . '\';'; } ?>
+				<?php if (isset($sector)) { echo 'params += "&sector=" + \'' . $sector . '\';'; } ?>
 				<?php if (isset($id)) { echo 'params += "&loc=" + \'' . $id . '\';'; } ?>
 
 

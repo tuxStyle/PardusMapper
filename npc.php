@@ -19,6 +19,9 @@ session_start();
 
 $security = Session::pint(key: 'security', default: 0);
 
+$s = null;
+$c = null;
+
 // do this before sector or it will mess with the template
 // TODO: fix it at some point
 if (isset($cluster)) {
@@ -26,10 +29,10 @@ if (isset($cluster)) {
     $clusterCode = $c->code;
 }
 
-$s = null;
 if(isset($sector)) {
     $s = DB::sector(sector: $sector);
-    $cluster = DB::cluster(sector: $sector); // needed for side bar
+    $c = DB::cluster(sector: $sector); // needed for side bar
+    $cluster = $c->code;
 }
 
 $today = date("Y-m-d");
