@@ -10,7 +10,7 @@ use Pardusmapper\Session;
 
 // Set Univers Variable and Session Name
 $uni = Request::uni();
-http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
+http_response(is_null($uni), ApiResponse::OK, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
 
 $cluster = Request::pstring(key: 'cluster');
 $sector = Request::pstring(key: 'sector');

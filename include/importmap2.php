@@ -19,7 +19,7 @@ $db = MySqlDB::instance(); // Create an instance of the Database class
 debug($_REQUEST);
 
 $mapdata = Request::pstring(key: 'mapdata');
-http_response(is_null($mapdata), ApiResponse::BADREQUEST, sprintf('mapdata query parameter is required or invalid: %s', $mapdata ?? 'null'));
+http_response(is_null($mapdata), ApiResponse::OK, sprintf('mapdata query parameter is required or invalid: %s', $mapdata ?? 'null'));
 
 if (str_contains((string) $mapdata, "sb_")) {
     $site = Settings::$BASE_URL . '/include/importstarbasemap.php?';
@@ -30,15 +30,15 @@ if (str_contains((string) $mapdata, "sb_")) {
 
 // Set Univers Variable and Session Name
 $uni = Request::uni();
-http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
+http_response(is_null($uni), ApiResponse::OK, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
 
 // Get Version
 $minVersion = 6.5;
 $version = Request::pfloat(key: 'version', default: 0);
-http_response($version < $minVersion, ApiResponse::BADREQUEST, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
+http_response($version < $minVersion, ApiResponse::OK, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
 
 $loc = Request::pint(key: 'id');
-http_response(is_null($loc), ApiResponse::BADREQUEST, sprintf('location(loc) query parameter is required or invalid: %s', $loc ?? 'null'));
+http_response(is_null($loc), ApiResponse::OK, sprintf('location(loc) query parameter is required or invalid: %s', $loc ?? 'null'));
 
 
 $cloaked = NPC::cloaked();
@@ -54,7 +54,7 @@ $sector = Request::pstring(key: 'sector');
 if (is_null($sector)) {
     $sector = Request::pstring(key: 's');
 }
-http_response(is_null($sector), ApiResponse::BADREQUEST, 'sector/s query parameter is required');
+http_response(is_null($sector), ApiResponse::OK, 'sector/s query parameter is required');
 $s = DB::sector(sector: $sector);
 $x = Coordinates::getX($loc, $s->s_id, $s->rows);
 $y = Coordinates::getY($loc, $s->s_id, $s->rows, $x);
@@ -290,7 +290,10 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
                         ]);
 
                         // Check for query errors
-                        http_response(!$result, ApiResponse::BADREQUEST, sprintf('(3) Query failed: %s', $db->getDb()->error));
+                        if (!$result) {
+                            debug(sprintf('(3) Query failed: %s', $db->getDb()->error));
+                            continue;
+                        }
 
 
                         // Counting SQL iterations per connection

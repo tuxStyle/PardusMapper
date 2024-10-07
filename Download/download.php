@@ -6,7 +6,7 @@ use Pardusmapper\Core\ApiResponse;
 use Pardusmapper\Request;
 
 $dl = Request::dl();
-http_response(is_null($dl), ApiResponse::BADREQUEST, 'invalid download type requested');
+http_response(is_null($dl), ApiResponse::OK, 'invalid download type requested');
 
 if ($dl === 0) {
 
@@ -32,7 +32,7 @@ if ($dl === 0) {
 } elseif ($dl === 1) {
     // Set Univers Variable
     $uni = Request::uni();
-    http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
+    http_response(is_null($uni), ApiResponse::OK, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
 
     // Session Name
     session_name($uni);

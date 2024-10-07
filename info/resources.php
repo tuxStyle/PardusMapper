@@ -17,8 +17,8 @@ $db = MySqlDB::instance();
 
 $uni = Post::uni();
 $sector = Post::pstring(key: 'sector');
-http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
-http_response(is_null($sector), ApiResponse::BADREQUEST, 'sector query parameter is required');
+http_response(is_null($uni), ApiResponse::OK, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
+http_response(is_null($sector), ApiResponse::OK, 'sector query parameter is required');
 
 $resource = Post::pstring(key: 'resource', default: '');
 $sort = Post::pstring(key: 'sort', default: '');

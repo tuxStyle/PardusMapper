@@ -21,17 +21,17 @@ debug($_REQUEST);
 http_response(true, ApiResponse::NOTIMPLEMENTED, sprintf('feature not implemented'));
 
 $mapdata = Request::pstring(key: 'mapdata');
-http_response(is_null($mapdata), ApiResponse::BADREQUEST, sprintf('mapdata query parameter is required or invalid: %s', $mapdata ?? 'null'));
+http_response(is_null($mapdata), ApiResponse::OK, sprintf('mapdata query parameter is required or invalid: %s', $mapdata ?? 'null'));
 
 
 // Set Univers Variable and Session Name
 $uni = Request::uni();
-http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
+http_response(is_null($uni), ApiResponse::OK, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
 
 // Get Version
 $minVersion = 5.8;
 $version = Request::pfloat(key: 'version', default: 0);
-http_response($version < $minVersion, ApiResponse::BADREQUEST, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
+http_response($version < $minVersion, ApiResponse::OK, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
 
 $x = Request::pint(key: 'x');
 $y = Request::pint(key: 'y');

@@ -19,16 +19,16 @@ debug($_REQUEST);
 
 // Set Univers Variable and Session Name
 $uni = Request::uni();
-http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
+http_response(is_null($uni), ApiResponse::OK, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
 
 // Get Version
 $minVersion = 5.8;
 $version = Request::pfloat(key: 'version', default: 0);
-http_response($version < $minVersion, ApiResponse::BADREQUEST, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
+http_response($version < $minVersion, ApiResponse::OK, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
 
 // Starbase Main Page Variables
 $loc = Request::pint(key: 'loc');
-http_response(is_null($loc), ApiResponse::BADREQUEST, sprintf('location(loc) query parameter is required or invalid: %s', $loc ?? 'null'));
+http_response(is_null($loc), ApiResponse::OK, sprintf('location(loc) query parameter is required or invalid: %s', $loc ?? 'null'));
 
 $name = Request::pstring(key: 'name');
 $image = Request::pstring(key: 'img');
@@ -61,7 +61,7 @@ if (false === $m) {
     debug("Query failed: " . MySqlDB::instance()->getDb()->error);
 }
 // Stop of map not ofund
-http_response(is_null($m), ApiResponse::BADREQUEST, sprintf('map not found for location: %s', $loc));
+http_response(is_null($m), ApiResponse::OK, sprintf('map not found for location: %s', $loc));
 
 debug('Got Map Data', $m);
 
@@ -87,10 +87,10 @@ debug('Got Building Info', $b);
 
 // Get Sector and Cluster Information from Location
 $s = DB::sector(id: $loc);
-http_response(is_null($s), ApiResponse::BADREQUEST, sprintf('sector not found for location: %s', $loc));
+http_response(is_null($s), ApiResponse::OK, sprintf('sector not found for location: %s', $loc));
 
 $c = DB::cluster(id: $s->c_id);
-http_response(is_null($s->c_id), ApiResponse::BADREQUEST, sprintf('cluster not found from sector location: %s', $s->c_id));
+http_response(is_null($s->c_id), ApiResponse::OK, sprintf('cluster not found from sector location: %s', $s->c_id));
 
 $updateBuilding = [];
 

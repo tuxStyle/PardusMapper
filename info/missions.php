@@ -19,7 +19,7 @@ debug($_POST);
 $db = MySqlDB::instance();  // Create an instance of the Database class
 
 $uni = Post::uni();
-http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
+http_response(is_null($uni), ApiResponse::OK, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
 
 $faction = Post::pstring(key: 'faction');
 $pilot = Post::pstring(key: 'pilot');

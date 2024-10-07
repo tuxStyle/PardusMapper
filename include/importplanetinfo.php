@@ -16,15 +16,15 @@ debug($_REQUEST);
 
 // Set Univers Variable
 $uni = Request::uni();
-http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
+http_response(is_null($uni), ApiResponse::OK, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
 
 // Get Version
 $minVersion = 5.8;
 $version = Request::pfloat(key: 'version', default: 0);
-http_response($version < $minVersion, ApiResponse::BADREQUEST, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
+http_response($version < $minVersion, ApiResponse::OK, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
 
 $loc = Request::pint(key: 'loc');
-http_response(is_null($loc), ApiResponse::BADREQUEST, sprintf('location(loc) query parameter is required or invalid: %s', $loc ?? 'null'));
+http_response(is_null($loc), ApiResponse::OK, sprintf('location(loc) query parameter is required or invalid: %s', $loc ?? 'null'));
 
 $faction = Request::pstring(key: 'faction');
 if (!is_null($faction)) { $faction = str_replace('64x64', '16x16', $faction); } 	// Resize Faction Image
@@ -50,7 +50,7 @@ $updateStock = [];
 // Get Map information
 $m = DB::map(id: $loc, universe: $uni);
 // Stop of map not found
-http_response(is_null($m), ApiResponse::BADREQUEST, sprintf('map not found for location: %s', $loc));
+http_response(is_null($m), ApiResponse::OK, sprintf('map not found for location: %s', $loc));
 
 $b = DB::building(id: $loc, universe: $uni);
 if ($b) {

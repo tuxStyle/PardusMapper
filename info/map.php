@@ -18,10 +18,10 @@ $dbClass = MySqlDB::instance();  // Create an instance of the Database class
 
 // Set Univers Variable and Session Name
 $uni = Post::uni();
-http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
+http_response(is_null($uni), ApiResponse::OK, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
 
 $sector = Post::pstring(key: 'sector');
-http_response(is_null($sector), ApiResponse::BADREQUEST, 'sector/s query parameter is required');
+http_response(is_null($sector), ApiResponse::OK, 'sector/s query parameter is required');
 
 $cluster = Post::pstring(key: 'cluster');
 $img_url = Post::pstring(key: 'img_url'); // this will override the settings/cookies value
@@ -31,7 +31,7 @@ $whole = Post::pbool(key: 'whole'); // below we override it from $mode based on 
 $grid = Post::pbool(key: 'grid');
 
 $loc = Post::pint(key: 'id'); //trying to figure out why $loc is missing definition
-// http_response(is_null($loc), ApiResponse::BADREQUEST, sprintf('location(loc) query parameter is required or invalid: %s', $loc ?? 'null'));
+http_response(is_null($loc), ApiResponse::OK, sprintf('location(loc) query parameter is required or invalid: %s', $loc ?? 'null'));
 
 // Start the Session
 session_name($uni);
@@ -46,7 +46,7 @@ if (in_array($sector, $coreWH)) {
 
 // Get Sector Information
 $s = DB::sector(sector: $sector);
-http_response(is_null($s), ApiResponse::BADREQUEST, sprintf('sector not found for sector name: %s', $sector)); // exit if not found in DB
+http_response(is_null($s), ApiResponse::OK, sprintf('sector not found for sector name: %s', $sector)); // exit if not found in DB
 
 // NPCs only shown to logged in users?
 $npc_list = NPC::for_logged_users();
