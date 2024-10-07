@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 require_once('app/settings.php');
 
@@ -50,7 +51,7 @@ if (isset($sector)) {
 
 $id = null;
 if (!is_null($x1) && !is_null($y1)) {
-	$id = Coordinates::getID($s->s_id,$s->rows,$x1,$y1);
+    $id = Coordinates::getID($s->s_id, $s->rows, $x1, $y1);
 }
 
 $today = date("Y-m-d");
@@ -59,7 +60,6 @@ sort($mission_list);
 
 if (isset($_SESSION['loaded']) && ((strtotime($today) - strtotime($_SESSION['loaded'])) < 172800)) {
     require_once(templates('mission'));
-} 
-else { 
+} else {
     require_once(templates('notlogged'));
 }

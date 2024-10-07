@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 use Pardusmapper\Core\ApiResponse;
@@ -23,8 +24,8 @@ session_start();
 $id = Request::pint(key: 'id');
 
 $m = DB::map(id: $id, universe: $uni);
-if (!is_null($m->fg)||!is_null($m->wormhole)) {
-	debug('Removing WH');
-	DB::wh_remove(universe: $uni, id: $id);
-	echo "<script>window.close();</script>";
+if (!is_null($m->fg) || !is_null($m->wormhole)) {
+    debug('Removing WH');
+    DB::wh_remove(universe: $uni, id: $id);
+    echo "<script>window.close();</script>";
 }

@@ -29,20 +29,20 @@ $return = '';
 $static = DB::static_locations();
 
 if (isset($sector)) {
-	$db->execute(sprintf('SELECT DISTINCT name, id FROM %s_Test_Npcs WHERE sector = ? and (deleted is null or deleted = 0) GROUP BY name', $uni), [
+    $db->execute(sprintf('SELECT DISTINCT name, id FROM %s_Test_Npcs WHERE sector = ? and (deleted is null or deleted = 0) GROUP BY name', $uni), [
         's', $sector
     ]);
 } elseif (isset($cluster)) {
-	if ($cluster != 'CORE') {
+    if ($cluster != 'CORE') {
         $c = DB::cluster(code: $cluster);
-		$db->execute(sprintf('SELECT DISTINCT name, id FROM %s_Test_Npcs WHERE cluster = ? and (deleted is null or deleted = 0) GROUP BY name', $uni), [
+        $db->execute(sprintf('SELECT DISTINCT name, id FROM %s_Test_Npcs WHERE cluster = ? and (deleted is null or deleted = 0) GROUP BY name', $uni), [
             's', $c->name
         ]);
-	} else {
-		$db->execute(sprintf('SELECT DISTINCT name, id FROM %s_Test_Npcs WHERE cluster LIKE \'Pardus%Contingent\' and (deleted is null or deleted = 0) GROUP BY name', $uni));
-	}
+    } else {
+        $db->execute(sprintf('SELECT DISTINCT name, id FROM %s_Test_Npcs WHERE cluster LIKE \'Pardus%Contingent\' and (deleted is null or deleted = 0) GROUP BY name', $uni));
+    }
 } else {
-	$db->execute(sprintf('SELECT DISTINCT name, id FROM %s_Test_Npcs Where (deleted is null or deleted = 0) GROUP BY name', $uni));
+    $db->execute(sprintf('SELECT DISTINCT name, id FROM %s_Test_Npcs Where (deleted is null or deleted = 0) GROUP BY name', $uni));
 }
 while ($n = $db->nextObject()) { if (!(in_array($n->id,$static))) { $npc_list[] = $n->name; } }
 xp($n);
@@ -50,7 +50,7 @@ if ($npc_list) {array_unshift($npc_list,'All');}
 
 $return .= '<table><tr><th>NPCs</th></tr>';
 if ($npc_list) {foreach ($npc_list as $n) {
-	$return .= '<tr><td><a href=# onclick="loadNPC(\'' . $n . '\',1);">' . $n . '</a></td></tr>';
+    $return .= '<tr><td><a href=# onclick="loadNPC(\'' . $n . '\',1);">' . $n . '</a></td></tr>';
 }}
 $return .= '</table>';
 

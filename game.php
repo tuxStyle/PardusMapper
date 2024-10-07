@@ -1,9 +1,10 @@
 <?php
+
 declare(strict_types=1);
 require_once('app/settings.php');
 
 header("Cache-Control: private, max-age=604800");
-header("Expires: ".gmdate('r', time()+604800));
+header("Expires: " . gmdate('r', time() + 604800));
 
 use Pardusmapper\Core\ApiResponse;
 use Pardusmapper\Request;
@@ -39,7 +40,7 @@ http_response(is_null($cluster), ApiResponse::BADREQUEST, sprintf('cluster not f
 $code = $cluster->code;
 
 if (!is_null($x2) && !is_null($y2)) {
-	$id = $s->s_id + ($x2 * $s->rows) + $y2;
+    $id = $s->s_id + ($x2 * $s->rows) + $y2;
 }
 
 $title = $sector . ' Sector Map';

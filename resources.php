@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 require_once('app/settings.php');
 
@@ -41,7 +42,9 @@ while ($r_single = $db->nextObject()) {
 $r_list = array_unique($r_list);
 foreach ($r_list as $r_single) {
     $u = DB::upkeep_static(name: $r_single, upkeep: 1);
-    while ($u = $db->nextObject()) { $res_list[] = $u->res; }
+    while ($u = $db->nextObject()) {
+        $res_list[] = $u->res;
+    }
 }
 
 sort($res_list); // Now $res_list will not be null

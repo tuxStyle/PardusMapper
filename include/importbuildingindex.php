@@ -51,19 +51,19 @@ debug($m);
 // Verify Building is already in DB Tables Add if Not
 $b = DB::building(id: $loc, universe: $uni);
 if ($b) {
-	// Building in DB Verify Stock is in DB
+    // Building in DB Verify Stock is in DB
     debug('Building in DB');
 
     $stocks = DB::building_stock(id: $loc, universe: $uni);
 
-	if (null === $stocks) {
+    if (null === $stocks) {
         debug('Adding Stock Info');
-		DB::building_stock_add(universe: $uni, image: $image, id: $loc);
-	}
+        DB::building_stock_add(universe: $uni, image: $image, id: $loc);
+    }
 } else {
-	// Building not in DB
+    // Building not in DB
     debug('Building not in DB Adding');
-	DB::building_add(universe: $uni, image: $image, id: $loc, sb: 0);    // it will also add building stock
+    DB::building_add(universe: $uni, image: $image, id: $loc, sb: 0);    // it will also add building stock
 
     $b = DB::building(id: $loc, universe: $uni);
     debug('Got Building Info');

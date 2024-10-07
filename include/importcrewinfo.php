@@ -39,12 +39,12 @@ $c = DB::cluster(id: $s->c_id);
 
 $data = explode('~', (string) $crew);
 for ($i = 1; $i < sizeof($data); $i++) {
-	debug($data[$i]);
+    debug($data[$i]);
 
-	$temp = explode(',', $data[$i]);
+    $temp = explode(',', $data[$i]);
     debug($temp);
 
-	// Insert New Crew into DB
+    // Insert New Crew into DB
     DB::crew_create(name: $temp[0], location: $loc, universe: $uni);
 
     $params = [];
@@ -56,29 +56,29 @@ for ($i = 1; $i < sizeof($data); $i++) {
     // Update Image
     $params['image'] = $temp[1];
 
-	// Update Type
+    // Update Type
     $params['type'] = $temp[2];
 
-	if ($temp[2] === "Legendary Crew Member") {
-		// Update Title
+    if ($temp[2] === "Legendary Crew Member") {
+        // Update Title
         $params['title'] = $temp[3];
 
-		// Update 2nd Job
+        // Update 2nd Job
         $params['job2'] = $temp[5];
-	} else {
-		// Update Level
+    } else {
+        // Update Level
         $params['level'] = (int)$temp[6];
-	}
+    }
 
-	// Update 1st Job
+    // Update 1st Job
     $params['job1'] = $temp[4];
 
-	// Update Fee
+    // Update Fee
     $params['fee'] = (int)$temp[7];
 
-	// Update pay
+    // Update pay
     $params['pay'] = (int)$temp[8];
 
-	// Update Date
-	DB::crew_update(name: $temp[0], params: $params, universe: $uni);
+    // Update Date
+    DB::crew_update(name: $temp[0], params: $params, universe: $uni);
 }

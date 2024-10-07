@@ -46,16 +46,16 @@ http_response(is_null($m), ApiResponse::BADREQUEST, sprintf('could not load map 
 // Verify Building is already in DB Tables Add if Not
 $b = DB::building(id: $loc, universe: $uni);
 if ($b) {
-	// Building in DB Verify Stock is in DB
-	debug('Got Building Infomation checking Stock');
-	$stocks = DB::stocks(id: $loc, universe: $uni);
-	if (0 === count($stocks)) {
-		DB::building_stock_add(universe: $uni, image: $m->fg, id: $loc);
-	}
+    // Building in DB Verify Stock is in DB
+    debug('Got Building Infomation checking Stock');
+    $stocks = DB::stocks(id: $loc, universe: $uni);
+    if (0 === count($stocks)) {
+        DB::building_stock_add(universe: $uni, image: $m->fg, id: $loc);
+    }
 } else {
-	// Building not in DB
-	DB::building_add(universe: $uni, image: $m->fg, id: $loc, sb: 0);
-	$b = DB::building(id: $loc, universe: $uni);
+    // Building not in DB
+    DB::building_add(universe: $uni, image: $m->fg, id: $loc, sb: 0);
+    $b = DB::building(id: $loc, universe: $uni);
 }
 
 // Get Sector and Cluster Information from Location
@@ -86,38 +86,38 @@ $updateBuilding['image'] = $image;
 
 
 if (isset($bts)) {
-	// Visited Building Trade Settings Page
-	debug('Visited Building Trade Settings Page', $name);
-	$bts = explode('~', $bts);
+    // Visited Building Trade Settings Page
+    debug('Visited Building Trade Settings Page', $name);
+    $bts = explode('~', $bts);
 
-	// Loop Through All Data
-	$building_stock_level = 0;
-	$building_stock_max = 0;
+    // Loop Through All Data
+    $building_stock_level = 0;
+    $building_stock_max = 0;
 
-	for ($i = 1; $i < sizeof($bts); $i++) {
-		$temp = explode(',', $bts[$i]);
+    for ($i = 1; $i < sizeof($bts); $i++) {
+        $temp = explode(',', $bts[$i]);
         debug('Looking up infor for ' . $temp[0], $temp);
 
-		// Calculate Stocking Level for this Resource
-		$res = DB::upkeep_static(name: $name, res: $temp[0]);
-		$stock_level = 0;
-		if ($res->upkeep) {
-			if ($temp[3]) {
-				$stock_level = round(($temp[1] / $temp[3]) * 100, 0);
-				if ($stock_level > 100) {
-					$stock_level = 100;
-				}
-			}
-			$building_stock_level += $temp[1];
-			$building_stock_max += $temp[3];
-		}
+        // Calculate Stocking Level for this Resource
+        $res = DB::upkeep_static(name: $name, res: $temp[0]);
+        $stock_level = 0;
+        if ($res->upkeep) {
+            if ($temp[3]) {
+                $stock_level = round(($temp[1] / $temp[3]) * 100, 0);
+                if ($stock_level > 100) {
+                    $stock_level = 100;
+                }
+            }
+            $building_stock_level += $temp[1];
+            $building_stock_max += $temp[3];
+        }
 
         $s = DB::building_stock(id: $loc, name: $temp[0], universe: $uni);
-		if (is_null($s)) {
+        if (is_null($s)) {
             DB::stock_create(id: $loc, name: $temp[0], universe: $uni);
-		}
+        }
 
-		debug('Stocking Level is ' . $stock_level);
+        debug('Stocking Level is ' . $stock_level);
 
         $updateStock = [];
         $updateStock['amount'] = (int)$temp[1];
@@ -130,12 +130,12 @@ if (isset($bts)) {
         DB::stock_update(id: $loc, name: $temp[0], params: $updateStock, universe: $uni);
     }
 
-	if ($building_stock_max) {
-		$building_stock_level = round(($building_stock_level / $building_stock_max) * 100, 0);
-		if ($building_stock_level > 100) {
-			$building_stock_level = 100;
-		}
-	}
+    if ($building_stock_max) {
+        $building_stock_level = round(($building_stock_level / $building_stock_max) * 100, 0);
+        if ($building_stock_level > 100) {
+            $building_stock_level = 100;
+        }
+    }
 
     debug('Stocking Stock Level is ' . $building_stock_level);
     $updateBuildingStock['stock'] = $building_stock_level;
@@ -144,49 +144,49 @@ if (isset($bts)) {
 
 if (isset($level)) {
     debug('Getting Building Level For: ' . $name);
-	$temp = explode(',', $level);
+    $temp = explode(',', $level);
     debug($temp);
 
     $u = $res = DB::upkeep_static(name: $name, res: $temp[0], upkeep: 0);
-	if ($u) {
+    if ($u) {
         debug('Found ' . $u->res);
 
-		$i = 1;
-		while (($temp[1] != production($u->amount, $i)) && ($i <= 20)) {
-			$i++;
-		}
+        $i = 1;
+        while (($temp[1] != production($u->amount, $i)) && ($i <= 20)) {
+            $i++;
+        }
 
         debug('Guessing Level ' . $i);
 
-		if ($i <= 20) {
+        if ($i <= 20) {
             DB::building_stock_update(id: $loc, params: ['level' => $i], universe: $uni);
-		}
-	}
+        }
+    }
 }
 
 if (isset($bm)) {
-	// Visited Building Management Page
-	debug('Visited Building Management Page');
+    // Visited Building Management Page
+    debug('Visited Building Management Page');
 
-	//if (!$b->x && !$b->y) {
-	$x = Coordinates::getX($loc, $s->s_id, $s->rows);
-	$y = Coordinates::getY($loc, $s->s_id, $s->rows, $x);
+    //if (!$b->x && !$b->y) {
+    $x = Coordinates::getX($loc, $s->s_id, $s->rows);
+    $y = Coordinates::getY($loc, $s->s_id, $s->rows, $x);
     $updateBuilding['x'] = $x;
     $updateBuilding['y'] = $y;
-	//}
+    //}
 
-	$cap = $fs;
-	$building_stock_level = 0;
-	$building_stock_max = $fs;
+    $cap = $fs;
+    $building_stock_level = 0;
+    $building_stock_max = $fs;
 
 
-	if ($name == "Trading Outpost") {
-		$bm = explode('~', $bm);
-		debug('Trading Outpost', $bm);
+    if ($name == "Trading Outpost") {
+        $bm = explode('~', $bm);
+        debug('Trading Outpost', $bm);
 
-		for ($i = 0; $i < sizeof($bm); $i++) {
-			$temp = explode(',', $bm[$i]);
-			$cap += $temp[1];
+        for ($i = 0; $i < sizeof($bm); $i++) {
+            $temp = explode(',', $bm[$i]);
+            $cap += $temp[1];
 
             $s = DB::building_stock(id: $loc, name: $temp[0], universe: $uni);
             if (is_null($s)) {
@@ -194,18 +194,18 @@ if (isset($bm)) {
             }
 
             DB::stock_update(id: $loc, name: $temp[0], params: ['amount' => (int)$temp[1]], universe: $uni);
-		}
-	} else {
+        }
+    } else {
 
-		debug('Not a Trading Outpost it is a ' . $name);
-		// Get list of Resources for Building
+        debug('Not a Trading Outpost it is a ' . $name);
+        // Get list of Resources for Building
         $resources = [];
         $res = DB::upkeep_static(name: $name);
-		foreach($res as $u) {$resources[] = $u;}
+        foreach($res as $u) {$resources[] = $u;}
 
-		// Loop through List
-		foreach ($resources as $u) {
-			debug('Checking ' . str_replace(" ", "_", $u->res));
+        // Loop through List
+        foreach ($resources as $u) {
+            debug('Checking ' . str_replace(" ", "_", $u->res));
 
             $q = DB::building_stock(id: $loc, name: $u->res, universe: $uni);
             if (is_null($q)) {
@@ -216,38 +216,38 @@ if (isset($bm)) {
 
             $updateStock = [];
             $res = Request::pint(key: str_replace(" ", "_", $u->res));
-			if (isset($res)) {
-				debug('We have info for ' . $u->res);
+            if (isset($res)) {
+                debug('We have info for ' . $u->res);
 
-				// We have information for this Resource Update DB
-				$cap += $res;
-				$stock = 0;
+                // We have information for this Resource Update DB
+                $cap += $res;
+                $stock = 0;
 
-				if ($q->max > 0) {
-					if ($u->upkeep) {
-						$building_stock_level += $res;
-						$building_stock_max += $q->max;
-					}
-					$stock = round(($res / $q->max) * 100, 0);
-					if ($stock > 100) {
-						$stock = 100;
-					}
-				}
+                if ($q->max > 0) {
+                    if ($u->upkeep) {
+                        $building_stock_level += $res;
+                        $building_stock_max += $q->max;
+                    }
+                    $stock = round(($res / $q->max) * 100, 0);
+                    if ($stock > 100) {
+                        $stock = 100;
+                    }
+                }
 
-				// Update `' . $uni . '_Stock with Resource Information
+                // Update `' . $uni . '_Stock with Resource Information
                 $updateStock['amount'] = $res;
                 $updateStock['stock'] = $stock;
-			} else {
-				debug('No info for ' . $u->res);
+            } else {
+                debug('No info for ' . $u->res);
 
-				// No info for this resource so set values to 0
+                // No info for this resource so set values to 0
                 $updateStock['amount'] = 0;
                 $updateStock['stock'] = 0;
-			}
+            }
 
             DB::stock_update(id: $loc, name: $u->res, params: $updateStock, universe: $uni);
-		}
-	}
+        }
+    }
 
     debug('Stocking Stock Level is ' . $building_stock_level);
     $updateBuildingStock = [];

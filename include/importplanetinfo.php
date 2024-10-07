@@ -74,17 +74,17 @@ if (is_null($b->sector)) {
 }
 
 if ($planet) {
-	// Visited Planet
+    // Visited Planet
     debug('Visited Planet');
 
-	// Collect Info
+    // Collect Info
 
-	if (!$b->x && !$b->y) {
-		$x = Coordinates::getX($loc, $s->s_id, $s->rows);
-		$y = Coordinates::getY($loc, $s->s_id, $s->rows, $x);
+    if (!$b->x && !$b->y) {
+        $x = Coordinates::getX($loc, $s->s_id, $s->rows);
+        $y = Coordinates::getY($loc, $s->s_id, $s->rows, $x);
         $updateBuilding['x'] = $x;
         $updateBuilding['y'] = $y;
-	}
+    }
 
     $updateBuilding['name'] = $name;
     $updateBuilding['image'] = $image;
@@ -92,54 +92,54 @@ if ($planet) {
     $updateBuilding['crime'] = $crime;
     $updateBuilding['faction'] = $faction;
 
-	if (isset($faction)) {
-		debug('Updating Faction');
-	} else {
+    if (isset($faction)) {
+        debug('Updating Faction');
+    } else {
         debug('Nulling Faction');
-	}
+    }
 }
 
 if (isset($pt)) {
-	// Visited Planet Trade
+    // Visited Planet Trade
     debug('Visited Planet Trade', $pt);
 
-	// Find out what type of planet
+    // Find out what type of planet
     $p = DB::building_static(image: $m->fg);
     debug($loc . ' Planet Type = ' . $p->name);
 
-	// Collect Info
-	$cap = 0;
-	$building_stock_level = 0;
-	$building_stock_max = 0;
+    // Collect Info
+    $cap = 0;
+    $building_stock_level = 0;
+    $building_stock_max = 0;
 
-	$pt = explode('~', $pt);
+    $pt = explode('~', $pt);
     debug($pt);
 
-	// Loop through all pt data
-	for ($i = 1; $i < sizeof($pt); $i++) {
-		$temp = explode(',', $pt[$i]);
+    // Loop through all pt data
+    for ($i = 1; $i < sizeof($pt); $i++) {
+        $temp = explode(',', $pt[$i]);
         debug($temp);
 
-		$cap += $temp[1];
+        $cap += $temp[1];
         $u = DB::upkeep_static(name: $p->name, res: $temp[0]);
-		if ($u && $u->upkeep) {
-			$building_stock_level += $temp[1];
-			$building_stock_max += $temp[3];
-		}
-		$stock = 0;
-		if ($temp[3]) {
-			$stock = round(($temp[1] / $temp[3]) * 100, 0);
-			if ($stock > 100) {
-				$stock = 100;
-			}
-		}
+        if ($u && $u->upkeep) {
+            $building_stock_level += $temp[1];
+            $building_stock_max += $temp[3];
+        }
+        $stock = 0;
+        if ($temp[3]) {
+            $stock = round(($temp[1] / $temp[3]) * 100, 0);
+            if ($stock > 100) {
+                $stock = 100;
+            }
+        }
 
-		debug('Stocking for ' . $temp[0] . ' = ' . $stock);
+        debug('Stocking for ' . $temp[0] . ' = ' . $stock);
 
         $stocks = DB::stocks(id: $loc, name: $temp[0], universe: $uni);
-		if (0 === count($stocks)) {
+        if (0 === count($stocks)) {
             DB::stock_create(id: $loc, name: $temp[0], universe: $uni);
-		}
+        }
 
         $updateStock['amount'] = (int)$temp[1];
         $updateStock['bal'] = (int)$temp[2];
@@ -150,17 +150,17 @@ if (isset($pt)) {
         $updateStock['stock'] = (int)$stock;
 
         DB::stock_update(id: $loc, name: $temp[0], params: $updateStock, universe: $uni);
-	}
+    }
 
-	// Set Building Stock level
-	if ($building_stock_max) {
-		$building_stock_level = round(($building_stock_level / $building_stock_max) * 100, 0);
-		if ($building_stock_level > 100) {
-			$building_stock_level = 100;
-		}
-	}
+    // Set Building Stock level
+    if ($building_stock_max) {
+        $building_stock_level = round(($building_stock_level / $building_stock_max) * 100, 0);
+        if ($building_stock_level > 100) {
+            $building_stock_level = 100;
+        }
+    }
 
-	debug('Building Stock Level ' . $building_stock_level);
+    debug('Building Stock Level ' . $building_stock_level);
     $updateBuildingStock['capacity'] = (int)$cap;
     $updateBuildingStock['credit'] = (int)$credit;
     $updateBuildingStock['stock'] = (int)$building_stock_level;

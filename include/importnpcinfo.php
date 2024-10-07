@@ -45,15 +45,15 @@ $m = $db->nextObject();
 
 if (is_null($m->npc)) {
     debug('Inserting New Info into DB');
-	DB::npc_add(universe: $uni, image: $image, id: $loc, sector: null, x: 0, y: 0, nid: $nid);
+    DB::npc_add(universe: $uni, image: $image, id: $loc, sector: null, x: 0, y: 0, nid: $nid);
 } elseif ($dead) {
-	debug('You killed it, good job...removing NPC');
-	DB::npc_remove(universe: $uni, id: $loc);
+    debug('You killed it, good job...removing NPC');
+    DB::npc_remove(universe: $uni, id: $loc);
 } elseif ($m->npc == $image) {
     debug('Updating Hull, Armor, and Shield');
-	DB::npc_update_health(universe: $uni, id: $loc, hull: $hull, armor: $armor, shield: $shield, nid: $nid);
+    DB::npc_update_health(universe: $uni, id: $loc, hull: $hull, armor: $armor, shield: $shield, nid: $nid);
 } else {
     debug($m->npc . 'Removing Old NPC adding New<br>');
-	DB::npc_remove(universe: $uni, id: $loc);
-	DB::npc_add(universe: $uni, image: $image, id: $loc, sector: null, x: 0, y: 0, nid: $nid);
+    DB::npc_remove(universe: $uni, id: $loc);
+    DB::npc_add(universe: $uni, image: $image, id: $loc, sector: null, x: 0, y: 0, nid: $nid);
 }

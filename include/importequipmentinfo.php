@@ -37,26 +37,26 @@ $c = DB::cluster(id: $s->c_id);
 
 $data = explode('~', (string) $eq);
 switch ($tab) {
-	case 'weapon':
-	case 'drive':
-	case 'armor':
-	case 'shield':
-	case 'special':
-		for ($i = 1; $i < sizeof($data); $i++) {
-			debug($data[$i]);
+    case 'weapon':
+    case 'drive':
+    case 'armor':
+    case 'shield':
+    case 'special':
+        for ($i = 1; $i < sizeof($data); $i++) {
+            debug($data[$i]);
 
-			$temp = explode(',', $data[$i]);
+            $temp = explode(',', $data[$i]);
             debug($temp);
 
-			//Verify Item is not already in the DB
+            //Verify Item is not already in the DB
             $e = DB::equipment(name: $temp[1], location: $loc, universe: $uni);
-			if (!$e) {
+            if (!$e) {
                 DB::equipment_create(name: $temp[1], location: $loc, universe: $uni);
-			}
+            }
 
             $params = [];
 
-			// Update Cluster and Sector
+            // Update Cluster and Sector
             $params['cluster'] = $c->code;
             $params['sector'] = $s->name;
 
@@ -73,8 +73,8 @@ switch ($tab) {
             $params['type'] = $tab;
 
             DB::equipment_update(name: $temp[1], location: $loc, params: $params, universe: $uni);
-		}
-		break;
+        }
+        break;
 }
 
 DB::building_equipment_update(id: $loc, params: [], universe: $uni);

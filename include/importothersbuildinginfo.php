@@ -53,40 +53,40 @@ http_response(is_null($m), ApiResponse::BADREQUEST, sprintf('could not load map 
 // Verify Building is already in DB Tables Add if Not
 $b = DB::building(id: $loc, universe: $uni);
 if ($b) {
-	// Building in DB - Verify Stock is in DB
-	if (!str_contains("sb_", $m->fg)) {  // Correct usage of strpos
-		debug('Checking Stocking Info');
+    // Building in DB - Verify Stock is in DB
+    if (!str_contains("sb_", $m->fg)) {  // Correct usage of strpos
+        debug('Checking Stocking Info');
 
         $stocks = DB::stocks(id: $loc, universe: $uni);
-		if (0 === count($stocks)) {
-			DB::building_stock_add(universe: $uni, image: $m->fg, id: $loc);
-		}
-	}
+        if (0 === count($stocks)) {
+            DB::building_stock_add(universe: $uni, image: $m->fg, id: $loc);
+        }
+    }
 } else {
-	// Building not in DB
-	DB::building_add(universe: $uni, image: $m->fg, id: $loc, sb: 0);
+    // Building not in DB
+    DB::building_add(universe: $uni, image: $m->fg, id: $loc, sb: 0);
     $b = DB::building(id: $loc, universe: $uni);
 }
 
 debug($b);
 
 if (str_contains("sb_", $m->fg)) {
-	debug('We are Flying Close to a SB');
+    debug('We are Flying Close to a SB');
 
-	$db->execute(sprintf('SELECT * FROM %s_Buildings where starbase < ? ORDER BY starbase DESC LIMIT 1', $uni), [
+    $db->execute(sprintf('SELECT * FROM %s_Buildings where starbase < ? ORDER BY starbase DESC LIMIT 1', $uni), [
         'i', $loc
     ]);
-	$q = $db->nextObject();
-	$x = Coordinates::getX($loc, $q->starbase, 13);
-	$y = Coordinates::getY($loc, $q->starbase, 13, $x);
-	$s = DB::sector(id: $q->id);
+    $q = $db->nextObject();
+    $x = Coordinates::getX($loc, $q->starbase, 13);
+    $y = Coordinates::getY($loc, $q->starbase, 13, $x);
+    $s = DB::sector(id: $q->id);
 } else {
     debug('Get location information for location: ' . $loc);
 
-	// Get Sector and Cluster Information from Location
-	$s = DB::sector(id: $loc);
-	$x = Coordinates::getX($loc, $s->s_id, $s->rows);
-	$y = Coordinates::getY($loc, $s->s_id, $s->rows, $x);
+    // Get Sector and Cluster Information from Location
+    $s = DB::sector(id: $loc);
+    $x = Coordinates::getX($loc, $s->s_id, $s->rows);
+    $y = Coordinates::getY($loc, $s->s_id, $s->rows, $x);
 }
 $c = DB::cluster(id: $s->c_id);
 
@@ -105,12 +105,12 @@ if (!$b->x && !$b->y) {
 }
 
 if (isset($_REQUEST['building'])) {
-	// Visited a Building
-	debug('Visited a Building');
+    // Visited a Building
+    debug('Visited a Building');
 
     $p = DB::building_static(image: $image);
 
-	// Collect Info
+    // Collect Info
 
     // REVIEW
     // the tampermonkey script is sending the wrong name
@@ -124,73 +124,73 @@ if (isset($_REQUEST['building'])) {
     $updateBuilding['alliance'] = $alliance;
     $updateBuilding['faction'] = $faction;
 
-	if (isset($owner)) {
-		debug('Updating owner');
-	} else {
+    if (isset($owner)) {
+        debug('Updating owner');
+    } else {
         debug('Nulling owner');
-	}
-	if (isset($alliance)) {
+    }
+    if (isset($alliance)) {
         debug('Updating alliance');
-	} else {
+    } else {
         debug('Nulling alliance');
-	}
-	if (isset($faction)) {
+    }
+    if (isset($faction)) {
         debug('Updating faction');
-	} else {
+    } else {
         debug('Nulling faction');
-	}
+    }
 
-	// If we can see the Building then there are no NPCs at this location
-	DB::npc_remove(universe: $uni, id: $loc);
+    // If we can see the Building then there are no NPCs at this location
+    DB::npc_remove(universe: $uni, id: $loc);
 }
 if (isset($bt)) {
-	// Visited Building Trade
+    // Visited Building Trade
     debug('Visited Building Trade');
 
-	// Collect Info
+    // Collect Info
     $updateBuilding['image'] = $image;
     $updateBuilding['name'] = $name;
 
-	//loc=327655&bt=~Food,48,0,66,9999,120~Energy,48,0,66,9999,50~Water,48,0,66,9999,100~Ore,108,0,132,9999,150~Metal,63,0,0,400,0&fs=55&credit=2826766
-	$cap = $fs;
+    //loc=327655&bt=~Food,48,0,66,9999,120~Energy,48,0,66,9999,50~Water,48,0,66,9999,100~Ore,108,0,132,9999,150~Metal,63,0,0,400,0&fs=55&credit=2826766
+    $cap = $fs;
 
-	//$date = getdate(strtotime($b->stock_updated));
-	//$tick = mktime(1,25,0,$date['mon'],$date['mday'],$date['year']);
-	$ts = strtotime($b->stock_updated);
-	$date = new DateTime("@$ts");
-	$date->setTime(1, 25, 0);
-	$tick = $date->format('U');
+    //$date = getdate(strtotime($b->stock_updated));
+    //$tick = mktime(1,25,0,$date['mon'],$date['mday'],$date['year']);
+    $ts = strtotime($b->stock_updated);
+    $date = new DateTime("@$ts");
+    $date->setTime(1, 25, 0);
+    $tick = $date->format('U');
 
-	while ($tick < strtotime($b->stock_updated)) {
-		$tick += (60 * 60 * 6);
-	}
-	$i = 0;
-	while ($tick < strtotime($b->stock_updated)) {
-		$tick += (60 * 60 * 6);
-		$i++;
-	}
+    while ($tick < strtotime($b->stock_updated)) {
+        $tick += (60 * 60 * 6);
+    }
+    $i = 0;
+    while ($tick < strtotime($b->stock_updated)) {
+        $tick += (60 * 60 * 6);
+        $i++;
+    }
 
-	if ($i) {
-		$i++;
-	}
+    if ($i) {
+        $i++;
+    }
 
-	$tick = $i;
+    $tick = $i;
 
-	// Get Upkeep Info
+    // Get Upkeep Info
     debug('Building is ' . $b->name);
-	for ($x = 1; $x <= 20; $x++) {
-		$level[$x] = 0;
-	}
-	//Loop through all bt data
-	$building_stock_level = 0;
-	$building_stock_max = 0;
+    for ($x = 1; $x <= 20; $x++) {
+        $level[$x] = 0;
+    }
+    //Loop through all bt data
+    $building_stock_level = 0;
+    $building_stock_max = 0;
 
-	for ($i = 1; $i < sizeof($bt); $i++) {
-		$temp = explode(',', $bt[$i]);
+    for ($i = 1; $i < sizeof($bt); $i++) {
+        $temp = explode(',', $bt[$i]);
         debug($temp);
-		debug('Capacity: ' . $cap);
-		$temp[1] = str_replace(',', '', $temp[1]); // Remove commas from the second element
-		$cap += $temp[1];
+        debug('Capacity: ' . $cap);
+        $temp[1] = str_replace(',', '', $temp[1]); // Remove commas from the second element
+        $cap += $temp[1];
 
         // REVIEW:
         //
@@ -232,49 +232,49 @@ if (isset($bt)) {
 
         $u = DB::upkeep_static(name: $name, res: $temp[0]);
         debug($u);
-		$amount = $u->amount;
-		$upkeep = $u->upkeep;
+        $amount = $u->amount;
+        $upkeep = $u->upkeep;
 
         $s = DB::building_stock(id: $loc, name: $temp[0], universe: $uni);
-		if ($tick && $s) {
+        if ($tick && $s) {
             debug('Using ' . $temp[0] . ' base amount ' . $amount);
 
-			if ($upkeep) {
-				$diff = $s['amount'] - $temp[1];
-			} else {
-				$diff = $temp[1] - $s['amount'];
-			}
-			debug('Difference is ' . $diff);
-			for ($j = 1; $j <= 20; $j++) {
-				if ($upkeep) {
-					debug('Trying Level ' . $j . ' value of ' . upkeep($amount, $j));
-					if ($diff == (upkeep($amount, $j) * $tick)) {
-						$level[$j]++;
-					}
-				} else {
-					debug('Trying Level ' . $j . ' value of ' . production($amount, $j));
-					if ($diff == (production($amount, $j) * $tick)) {
-						$level[$j]++;
-					}
-				}
-			}
-		}
-		if ($upkeep) {
-			$building_stock_level += $temp[1];
-			$building_stock_max += $temp[3];
-		}
-		$stock = 0;
-		if ($temp[3]) {
-			$stock = round(($temp[1] / $temp[3]) * 100, 0);
-			if ($stock > 100) {
-				$stock = 100;
-			}
-		}
+            if ($upkeep) {
+                $diff = $s['amount'] - $temp[1];
+            } else {
+                $diff = $temp[1] - $s['amount'];
+            }
+            debug('Difference is ' . $diff);
+            for ($j = 1; $j <= 20; $j++) {
+                if ($upkeep) {
+                    debug('Trying Level ' . $j . ' value of ' . upkeep($amount, $j));
+                    if ($diff == (upkeep($amount, $j) * $tick)) {
+                        $level[$j]++;
+                    }
+                } else {
+                    debug('Trying Level ' . $j . ' value of ' . production($amount, $j));
+                    if ($diff == (production($amount, $j) * $tick)) {
+                        $level[$j]++;
+                    }
+                }
+            }
+        }
+        if ($upkeep) {
+            $building_stock_level += $temp[1];
+            $building_stock_max += $temp[3];
+        }
+        $stock = 0;
+        if ($temp[3]) {
+            $stock = round(($temp[1] / $temp[3]) * 100, 0);
+            if ($stock > 100) {
+                $stock = 100;
+            }
+        }
 
         $s = DB::building_stock(id: $loc, name: $temp[0], universe: $uni);
-		if (is_null($s)) {
+        if (is_null($s)) {
             DB::stock_create(id: $loc, name: $temp[0], universe: $uni);
-		}
+        }
 
         $updateStock = [];
         $updateStock['amount'] = (int)$temp[1];
@@ -285,38 +285,38 @@ if (isset($bt)) {
         $updateStock['sell'] = (int)$temp[5];
         $updateStock['stock'] = (int)$stock;
         DB::stock_update(id: $loc, name: $temp[0], params: $updateStock, universe: $uni);
-	}
+    }
 
     $updateBuildingStock = [];
     $updateBuildingStock['capacity'] = $cap;
     $updateBuildingStock['freespace'] = $fs;
     $updateBuildingStock['credit'] = $credit;
 
-	// Set Building Stock level
-	if ($building_stock_max) {
-		$building_stock_level = round(($building_stock_level / $building_stock_max) * 100, 0);
-		if ($building_stock_level > 100) {
-			$building_stock_level = 100;
-		}
-	}
+    // Set Building Stock level
+    if ($building_stock_max) {
+        $building_stock_level = round(($building_stock_level / $building_stock_max) * 100, 0);
+        if ($building_stock_level > 100) {
+            $building_stock_level = 100;
+        }
+    }
 
     debug('Building Stock Level ' . $building_stock_level);
     $updateBuildingStock['stock'] = $building_stock_level;
 
     debug('Ticks: ' . $tick);
-	if ($tick) {
+    if ($tick) {
         debug($level);
-		$l = 1;
-		for ($i = 1; $i <= 20; $i++) {
-			if ($level[$i] > $l) {
-				$l = $i;
-			}
-		}
-		debug('Level estimate is ' . $l);
-		if ($l > $b->level) {
+        $l = 1;
+        for ($i = 1; $i <= 20; $i++) {
+            if ($level[$i] > $l) {
+                $l = $i;
+            }
+        }
+        debug('Level estimate is ' . $l);
+        if ($l > $b->level) {
             $updateBuildingStock['level'] = $l;
-		}
-	}
+        }
+    }
 
     DB::building_stock_update(id: $loc, params: $updateBuildingStock, universe: $uni);
 }

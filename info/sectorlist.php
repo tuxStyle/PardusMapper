@@ -31,24 +31,24 @@ $return .= '</tr>';
 
 $i = 0;
 foreach ($sector as $key => $s) {
-	//$c = $s[0];
-	//$g = $s[1];
-				
-	if ($i++ % 2 == 0) {
-		$return .= '<tr class="alternating">';
-	} else {
-		$return .= '<tr>';
-	}
-	$return .= '<td align="center">';
-		//$return .= $s->name;
-		$return .= '<a href="' . $base_url . '/' . $uni . '/' . $s->name . '">' . $s->name . '</a>';
-	$return .= '</td>';
-	$return .= '<td align="center">';
-		//$return .= $s->c_name;
-		$return .= '<a href="' . $base_url . '/' . $uni . '/' . $s->c_name . '">'. $s->c_name . '</a>';
-	$return .= '</td>';
+    //$c = $s[0];
+    //$g = $s[1];
+                
+    if ($i++ % 2 == 0) {
+        $return .= '<tr class="alternating">';
+    } else {
+        $return .= '<tr>';
+    }
+    $return .= '<td align="center">';
+        //$return .= $s->name;
+        $return .= '<a href="' . $base_url . '/' . $uni . '/' . $s->name . '">' . $s->name . '</a>';
+    $return .= '</td>';
+    $return .= '<td align="center">';
+        //$return .= $s->c_name;
+        $return .= '<a href="' . $base_url . '/' . $uni . '/' . $s->c_name . '">'. $s->c_name . '</a>';
+    $return .= '</td>';
 
-	$return .= '</tr>';
+    $return .= '</tr>';
 }
 $return .= '</table>';
 echo $return;

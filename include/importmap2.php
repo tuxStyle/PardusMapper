@@ -250,22 +250,22 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
 
         //Removing WH addition logic...just doesn't make sense while the Universes are stable - 3.17.2021 JT
         /*
-			debug($id . ' Size = ' . sizeof($temp) . '');
-			if (sizeof($temp) == 3 && !(strpos($temp[1],"ponents") !== false )) {  // this is where wormholes are updated as long as they aren't an opponent (no adding)...keeping for now NOTED
-				debug($temp[1].'---'.!(strpos($temp[1],"ponents") !== false) . 'We think this is a Wormhole');
-				if ($temp[2] != 'unknown') {
-					$db->query('UPDATE ' . $uni . '_Maps SET `wormhole` = \'' . $temp[2] . '\' WHERE id = ' . $id);
-					++$sqlcount; // Counting SQL iterations per connection
-				}
-				$db->query ('UPDATE ' . $uni . '_Maps SET `fg` = \'' . $temp[$r_fg] . '\' WHERE id = ' . $id);
-				++$sqlcount; // Counting SQL iterations per connection
-				$db->query ('UPDATE ' . $uni . '_Maps SET `npc` = NULL WHERE id = ' . $id);
-				++$sqlcount; // Counting SQL iterations per connection
-				$r->wormhole = $temp[2];
-				continue;
-			} 
-			if ($r->wormhole) { continue; }
-			*/
+            debug($id . ' Size = ' . sizeof($temp) . '');
+            if (sizeof($temp) == 3 && !(strpos($temp[1],"ponents") !== false )) {  // this is where wormholes are updated as long as they aren't an opponent (no adding)...keeping for now NOTED
+                debug($temp[1].'---'.!(strpos($temp[1],"ponents") !== false) . 'We think this is a Wormhole');
+                if ($temp[2] != 'unknown') {
+                    $db->query('UPDATE ' . $uni . '_Maps SET `wormhole` = \'' . $temp[2] . '\' WHERE id = ' . $id);
+                    ++$sqlcount; // Counting SQL iterations per connection
+                }
+                $db->query ('UPDATE ' . $uni . '_Maps SET `fg` = \'' . $temp[$r_fg] . '\' WHERE id = ' . $id);
+                ++$sqlcount; // Counting SQL iterations per connection
+                $db->query ('UPDATE ' . $uni . '_Maps SET `npc` = NULL WHERE id = ' . $id);
+                ++$sqlcount; // Counting SQL iterations per connection
+                $r->wormhole = $temp[2];
+                continue;
+            } 
+            if ($r->wormhole) { continue; }
+            */
         if ($r_fg != 0) {
             // Check to see if we have Foreground information for the current tile
             // If we do not then we need to double check for existing info and remove it.

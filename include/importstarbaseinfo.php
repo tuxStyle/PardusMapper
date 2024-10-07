@@ -124,16 +124,16 @@ if ($sb) {
         $updateBuilding['owner'] = $owner;
     }
 
-	if (isset($alliance)) {
+    if (isset($alliance)) {
         debug('Updating alliance');
-	} else {
+    } else {
         debug('Nulling alliance');
-	}
-	if (isset($faction)) {
+    }
+    if (isset($faction)) {
         debug('Updating faction');
-	} else {
+    } else {
         debug('Nulling faction');
-	}
+    }
 
     $updateBuilding['name'] = $name;
     $updateBuilding['image'] = $image;
@@ -261,16 +261,16 @@ if ($sbb) {
         $updateBuilding['owner'] = $owner;
     }
 
-	if (isset($alliance)) {
+    if (isset($alliance)) {
         debug('Updating alliance');
-	} else {
+    } else {
         debug('Nulling alliance');
-	}
-	if (isset($faction)) {
+    }
+    if (isset($faction)) {
         debug('Updating faction');
-	} else {
+    } else {
         debug('Nulling faction');
-	}
+    }
 
     DB::building_update(id: $loc, params: $updateBuilding, universe: $uni);
 }

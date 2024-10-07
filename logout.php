@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 require_once('app/settings.php');
 
@@ -11,7 +12,10 @@ $db = new MySqlDB;
 
 // Set Univers Variable and Session Name
 $uni = Request::uni();
-if (is_null($uni)) { require_once(templates('lannding')); exit; }
+if (is_null($uni)) {
+    require_once(templates('lannding'));
+    exit;
+}
 
 session_name($uni);
 session_start();

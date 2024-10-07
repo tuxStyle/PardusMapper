@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 require_once('app/settings.php');
 
@@ -28,35 +29,39 @@ $user = Session::pstring(key: 'user');
 $id = Session::pint(key: 'id');
 $pilot = Request::pstring(key: 'pilot');
 
-$s = DB::sector(sector:$sector);
+$s = DB::sector(sector: $sector);
 $c = DB::cluster(id: $s->c_id);
 $cluster = $c->code;
 
 if (!(isset($pilot) && $pilot === $user)) {
-	$url = $base_url . '/' . $uni . '/' . $sector . '/resources';
-	header("Location: $url");
+    $url = $base_url . '/' . $uni . '/' . $sector . '/resources';
+    header("Location: $url");
 }
 
 $r_list = [];
 $res_list = [];
 
 if (isset($id) && $id > 0) {
-	$db->execute(sprintf('SELECT * FROM %s_Buildings WHERE id IN (SELECT loc FROM %s_Personal_Resources WHERE id = ?)', $uni, $uni), [
+    $db->execute(sprintf('SELECT * FROM %s_Buildings WHERE id IN (SELECT loc FROM %s_Personal_Resources WHERE id = ?)', $uni, $uni), [
         'i', $id
     ]);
-	while ($r_single = $db->nextObject()) { $r_list[] = $r_single->name; }
-	$r_list = array_unique($r_list);
-	foreach ($r_list as $r_single) {
+    while ($r_single = $db->nextObject()) {
+        $r_list[] = $r_single->name;
+    }
+    $r_list = array_unique($r_list);
+    foreach ($r_list as $r_single) {
         $u = DB::upkeep_static(name: $r_single, upkeep: 1);
-        while ($u = $db->nextObject()) { $res_list[] = $u->res; }
-	}
-	if ($res_list) { 
-		sort($res_list);
-		$res_list = array_unique($res_list);
-		array_unshift($res_list,'All');
-	} else {
-		$res_list[] = 'All';
-	}
+        while ($u = $db->nextObject()) {
+            $res_list[] = $u->res;
+        }
+    }
+    if ($res_list) {
+        sort($res_list);
+        $res_list = array_unique($res_list);
+        array_unshift($res_list, 'All');
+    } else {
+        $res_list[] = 'All';
+    }
 }
 $db->close();
 

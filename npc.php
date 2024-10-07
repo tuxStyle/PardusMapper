@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 require_once('app/settings.php');
 
@@ -29,7 +30,7 @@ if (isset($cluster)) {
     $clusterCode = $c->code;
 }
 
-if(isset($sector)) {
+if (isset($sector)) {
     $s = DB::sector(sector: $sector);
     $c = DB::cluster(sector: $sector); // needed for side bar
     $cluster = $c->code;
