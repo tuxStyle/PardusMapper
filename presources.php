@@ -16,8 +16,8 @@ $db = MySqlDB::instance();  // Create an instance of the Database class
 // Set Univers Variable and Session Name
 $uni = Request::uni();
 $sector = Request::pstring(key: 'sector');
-http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
-http_response(is_null($sector), ApiResponse::BADREQUEST, 'sector query parameter is required');
+http_response(is_null($uni), ApiResponse::OK, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
+http_response(is_null($sector), ApiResponse::OK, 'sector query parameter is required');
 
 session_name($uni);
 session_start();

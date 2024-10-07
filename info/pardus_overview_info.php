@@ -15,10 +15,10 @@ debug($_REQUEST);
 
 // Set Univers Variable and Session Name
 $uni = Request::uni();
-http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
+http_response(is_null($uni), ApiResponse::OK, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
 
 $id = Request::pint(key: 'id');
-http_response(is_null($id), ApiResponse::BADREQUEST, sprintf('id query parameter is required or invalid: %s', $id ?? 'null'));
+http_response(is_null($id), ApiResponse::OK, sprintf('id query parameter is required or invalid: %s', $id ?? 'null'));
 
 $b_loc = DB::building(id: $id, universe: $uni);
 $m = DB::map(id: $id, universe: $uni);

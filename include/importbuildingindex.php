@@ -16,18 +16,18 @@ debug($_REQUEST);
 
 // Set Univers Variable
 $uni = Request::uni();
-http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
+http_response(is_null($uni), ApiResponse::OK, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
 
 // Get Version
 $minVersion = 5.7;
 $version = Request::pfloat(key: 'version', default: 0);
-http_response($version < $minVersion, ApiResponse::BADREQUEST, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
+http_response($version < $minVersion, ApiResponse::OK, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
 
 $sector = Request::pstring(key: 'sector');
-http_response(is_null($sector), ApiResponse::BADREQUEST, sprintf('sector query parameter is required or invalid: %s', $sector ?? 'null'));
+http_response(is_null($sector), ApiResponse::OK, sprintf('sector query parameter is required or invalid: %s', $sector ?? 'null'));
 
 $date = Request::pstring(key: 'date');
-http_response(is_null($date), ApiResponse::BADREQUEST, sprintf('date query parameter is required or invalid: %s', $date ?? 'null'));
+http_response(is_null($date), ApiResponse::OK, sprintf('date query parameter is required or invalid: %s', $date ?? 'null'));
 
 $x = Request::pint(key: 'x');
 $y = Request::pint(key: 'y');
@@ -72,7 +72,7 @@ if ($b) {
 // Verify Index Info is newer than DB
 debug('Index Date ' . (new DateTime($date))->format('Y-m-d H:i:s') . ' - ' . strtotime((string) $date));
 debug('Building Date ' . $b->stock_updated . ' - ' . strtotime($b->stock_updated));
-// http_response(strtotime($date) < strtotime($b->stock_updated), ApiResponse::BADREQUEST, sprintf('Index Date: %s Older the Stocking Date: %s', strtotime($date), strtotime($b->stock_updated)));
+http_response(strtotime($date) < strtotime($b->stock_updated), ApiResponse::OK, sprintf('Index Date: %s Older the Stocking Date: %s', strtotime($date), strtotime($b->stock_updated)));
 
 http_response(!isset($_REQUEST['bi']), ApiResponse::OK, sprintf('bi query parameter is required: %s', $_REQUEST['bi'] ?? 'null'));
 

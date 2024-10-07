@@ -1148,7 +1148,7 @@ class DB
         $db->execute("SELECT * FROM Pardus_Static_Locations");
 
         // Check if the query was successful
-        http_response($db->numRows() < 1, ApiResponse::BADREQUEST, 'Missing static locations');
+        http_response($db->numRows() < 1, ApiResponse::OK, 'Missing static locations');
 
         // Initialize an array to hold the results
         $static = [];

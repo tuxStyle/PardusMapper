@@ -18,16 +18,16 @@ $db = MySqlDB::instance(); // Create an instance of the Database class
 
 // Set Univers Variable and Session Name
 $uni = Request::uni();
-http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
+http_response(is_null($uni), ApiResponse::OK, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
 
 // Get Version
 $minVersion = 5.8;
 $version = Request::pfloat(key: 'version', default: 0);
-http_response($version < $minVersion, ApiResponse::BADREQUEST, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
+http_response($version < $minVersion, ApiResponse::OK, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
 
 // Set Location
 $source_id = Request::pint(key: 'loc');
-http_response(is_null($source_id), ApiResponse::BADREQUEST, sprintf('location(loc) query parameter is required or invalid: %s', $source_id ?? 'null'));
+http_response(is_null($source_id), ApiResponse::OK, sprintf('location(loc) query parameter is required or invalid: %s', $source_id ?? 'null'));
 
 $mid = Request::pint(key: 'mid');
 $comp = Request::pint(key: 'comp');
@@ -42,7 +42,7 @@ if (!is_null($mid)) {
 } 
 
 // If we don't have these two pieces of info ABORT!!!
-http_response(is_null($comp) || is_null($rank), ApiResponse::BADREQUEST, sprintf('comp(%s) and rank(%s) query parameter are required or invalid', ($comp ?? 'null'), ($rank ?? 'null')));
+http_response(is_null($comp) || is_null($rank), ApiResponse::OK, sprintf('comp(%s) and rank(%s) query parameter are required or invalid', ($comp ?? 'null'), ($rank ?? 'null')));
 
 $cstart = 0;
 if ($comp >= 2) {
@@ -135,11 +135,11 @@ for ($i = 1; $i < count($mission); $i++) {
     } else {
         // Get Sector
         $s = DB::sector(id: $source_id);
-        http_response(is_null($s), ApiResponse::BADREQUEST, sprintf('sector not found for loc: %s', $source_id)); // exit if not found in DB
+        http_response(is_null($s), ApiResponse::OK, sprintf('sector not found for loc: %s', $source_id)); // exit if not found in DB
 
         // Get Cluster Information
         $c = DB::cluster(id: $s->c_id);
-        http_response(is_null($c), ApiResponse::BADREQUEST, sprintf('cluster not found for sector: %s(%s)', $source_id, $s->c_id)); // exit if not found in DB
+        http_response(is_null($c), ApiResponse::OK, sprintf('cluster not found for sector: %s(%s)', $source_id, $s->c_id)); // exit if not found in DB
 
         // Prepare Data
 
@@ -147,7 +147,7 @@ for ($i = 1; $i < count($mission); $i++) {
         $x = Coordinates::getX($source_id, $s->s_id, $s->rows);
         $y = Coordinates::getY($source_id, $s->s_id, $s->rows, $x);
         $b = DB::building(id: $source_id, universe: $uni);
-        http_response(is_null($b), ApiResponse::BADREQUEST, sprintf('building not found for loc: %s', $source_id)); // exit if not found in DB
+        http_response(is_null($b), ApiResponse::OK, sprintf('building not found for loc: %s', $source_id)); // exit if not found in DB
 
         // mission tupe
         $m_type = null;
@@ -200,7 +200,7 @@ for ($i = 1; $i < count($mission); $i++) {
         $m_cluster = null;
         if (!is_null($m_sector)) {
             $tc = DB::cluster(sector: $m[6]);
-            http_response(is_null($tc), ApiResponse::BADREQUEST, sprintf('cluster not found for sector: %s', $m_sector)); // exit if not found in DB
+            http_response(is_null($tc), ApiResponse::OK, sprintf('cluster not found for sector: %s', $m_sector)); // exit if not found in DB
             $m_cluster = $tc->code;
         }
         debug('Mission Cluster ' . $m_cluster);

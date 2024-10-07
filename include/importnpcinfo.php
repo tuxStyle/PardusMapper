@@ -17,17 +17,17 @@ debug($_REQUEST);
 
 // Set Univers Variable
 $uni = Request::uni();
-http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
+http_response(is_null($uni), ApiResponse::OK, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
 
 // Get Version
 $minVersion = 5.8;
 $version = Request::pfloat(key: 'version', default: 0);
-http_response($version < $minVersion, ApiResponse::BADREQUEST, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
+http_response($version < $minVersion, ApiResponse::OK, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
 
 // Get Location
 // Building Main Page Variables
 $loc = Request::pint(key: 'loc');
-http_response(is_null($loc), ApiResponse::BADREQUEST, sprintf('loc query parameter is required or invalid: %s', $loc ?? 'null'));
+http_response(is_null($loc), ApiResponse::OK, sprintf('loc query parameter is required or invalid: %s', $loc ?? 'null'));
 
 $image = Request::pstring(key: 'img');
 $nid = Request::pint(key: 'nid');

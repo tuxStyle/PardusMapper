@@ -15,18 +15,18 @@ debug($_REQUEST);
 
 // Set Univers Variable
 $uni = Request::uni();
-http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
+http_response(is_null($uni), ApiResponse::OK, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
 
 // Get Version
 $minVersion = 5.8;
 $version = Request::pfloat(key: 'version', default: 0);
-http_response($version < $minVersion, ApiResponse::BADREQUEST, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
+http_response($version < $minVersion, ApiResponse::OK, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
 
 $loc = Request::pint(key: 'loc');
-http_response(is_null($loc), ApiResponse::BADREQUEST, sprintf('location(loc) query parameter is required or invalid: %s', $loc ?? 'null'));
+http_response(is_null($loc), ApiResponse::OK, sprintf('location(loc) query parameter is required or invalid: %s', $loc ?? 'null'));
 
 $tab = Request::pstring(key: 'tab');
-http_response(is_null($tab), ApiResponse::BADREQUEST, sprintf('equipment(tab) query parameter is required or invalid: %s', $tab ?? 'null'));
+http_response(is_null($tab), ApiResponse::OK, sprintf('equipment(tab) query parameter is required or invalid: %s', $tab ?? 'null'));
 
 $eq = Request::pstring(key: 'eq');
 http_response(is_null($eq), ApiResponse::OK, sprintf('equipment(eq) query parameter is required or invalid: %s', $eq ?? 'null'));

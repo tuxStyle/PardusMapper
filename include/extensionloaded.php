@@ -18,13 +18,13 @@ debug($_REQUEST);
 
 // Set Univers Variable and Session Name
 $uni = Request::uni();
-http_response(is_null($uni), ApiResponse::BADREQUEST, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
+http_response(is_null($uni), ApiResponse::OK, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
 // TODO: i think it needs session start here
 
 $id = Request::pint(key: 'id', default: 0);
 $user = Request::pstring(key: 'user', default: 'Unknown');
 $version = Request::pfloat(key: 'version', default: 0);
-// http_response(0 === $version, ApiResponse::BADREQUEST, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
+// http_response(0 === $version, ApiResponse::OK, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
 $browser = Request::pstring(key: 'browser', default: 'Unknown');
 $faction = Request::pstring(key: 'faction', default: 'Unknown');
 $syndicate = Request::pstring(key: 'syndicate', default: 'Unknown');
