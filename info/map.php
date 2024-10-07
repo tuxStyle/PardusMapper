@@ -31,7 +31,7 @@ $whole = Post::pbool(key: 'whole'); // below we override it from $mode based on 
 $grid = Post::pbool(key: 'grid');
 
 $loc = Post::pint(key: 'id'); //trying to figure out why $loc is missing definition
-http_response(is_null($loc), ApiResponse::OK, sprintf('location(loc) query parameter is required or invalid: %s', $loc ?? 'null'));
+// http_response(is_null($loc), ApiResponse::OK, sprintf('location(id) query parameter is required or invalid: %s', $loc ?? 'null'));
 
 // Start the Session
 session_name($uni);
