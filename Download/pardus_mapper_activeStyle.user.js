@@ -610,7 +610,7 @@ function starbaseInformation(doc) {
 				img = tbl[3].getElementsByTagName('img')[0].src;
 				postData += "<wbr>&faction=" + img.substring(img.lastIndexOf('/',img.lastIndexOf('/')-1)+1);
 			}
-			var node = tbl[4].nextSibling.childNodes[3].childNodes[0];
+			var node = tbl[4].parentElement.childNodes[0];
 			var pop = node.textContent;
 			postData += "<wbr>&pop=" + trim(pop.substring(pop.indexOf(':') + 2,pop.indexOf('|')).replace(",",""));
 			postData += "<wbr>&crime=" + trim(node.childNodes[1].textContent).replace(",","");
