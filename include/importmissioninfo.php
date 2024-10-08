@@ -225,11 +225,11 @@ for ($i = 1; $i < count($mission); $i++) {
 
 
         debug('Inserting New Mission');  //Why would we do an insert and then multiple updates?  NOTED
-        $sql = "INSERT INTO %s_Test_Missions (
+        $sql = sprintf("INSERT INTO %s_Test_Missions (
                     `id`, `source_id`, `sector`, `cluster`, `loc`, `x`, `y`, `comp`, `rank`, `faction`, `type`, `type_img`, `amount`, `hack`, 
                     `t_loc`, `t_sector`, `t_cluster`, `t_x`, `t_y`, `time`, `credits`, `war`, `spotted`
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP())
-        ";
+        ", $uni);
         $params = [
             'iisssiiiisssissssiisis',
             $m[0], $source_id, $s->name, 
@@ -238,9 +238,9 @@ for ($i = 1; $i < count($mission); $i++) {
             $m_loc, $m_sector, $m_cluster, $m_x, $m_y, $m_time, $m_credits, $m_war
         ];
 
-        debug(sprintf($sql, $uni), $params);
+        debug($sql, $params);
 
-        $db->execute(sprintf($sql, $uni), $params);
+        $db->execute($sql, $params);
         
         if ($m_type === "Assassination" && is_null($v_ammount)) {
             debug('We have Coords for a NPC lets add them to the Map');

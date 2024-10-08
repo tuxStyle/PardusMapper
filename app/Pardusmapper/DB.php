@@ -851,9 +851,10 @@ class DB
      *
      * @param string $universe
      * @param integer $id
+     * @param bool $deleteMissions
      * @return boolean
      */
-    public static function npc_remove(string $universe, int $id): bool
+    public static function npc_remove(string $universe, int $id, bool $deleteMissions = false): bool
     {
         debug(__METHOD__, func_get_args());
 
@@ -866,6 +867,17 @@ class DB
         $db->execute(sprintf('UPDATE %s_Test_Npcs SET `deleted` = 1, `cloaked` = null, `updated` = UTC_TIMESTAMP() WHERE id = ?', $universe), [
             'i', $id
         ]);
+        
+        // REVIEW
+        // i think we need to remove any assasination missions for this NPC when the NPC is killed
+        // also, i'm not sure how cloaked works
+        // while testing, a NPC cloaked and in DB was marked as deleted
+        // i added a deleteMissions parameter passed as true only from importnpcinfo.php 
+        // when kill a NPC only then remove the mission/s
+        if ($deleteMissions) {
+            debug(__METHOD__, 'NPC Killed, remove missions as well');
+            self::mission_remove(universe: $universe, source_id: $id);
+        }
 
         return true;
     }
@@ -887,16 +899,18 @@ class DB
 
         $db = MySqlDB::instance();
 
-        $query = "UPDATE %s_Test_Npcs
+        $query = sprintf("UPDATE %s_Test_Npcs
                     SET `nid` = ?,
                         `hull` = ?, `armor` = ?, `shield` = ?, `updated` = UTC_TIMESTAMP()
                 WHERE id = ?
-        ";
+        ", $universe);
         $params = [
-            'iiii', $nid, $hull, $armor, $shield, $id
+            'iiiii', $nid, $hull, $armor, $shield, $id
         ];
+
+        debug($query, $params);
+
         $db->execute($query, $params);
-        
         $db->execute(sprintf('UPDATE %s_Maps SET `npc_updated` = UTC_TIMESTAMP() WHERE id = ?', $universe), [
             'i', $id
         ]);
@@ -1398,10 +1412,11 @@ class DB
      * Remove mission
      *
      * @param string $universe
-     * @param integer $id
+     * @param integer|bool $id
+     * @param integer|bool $source_id
      * @return boolean
      */
-    public static function mission_remove(string $universe, int $id): bool
+    public static function mission_remove(string $universe, ?int $id = null, ?int $source_id = null): bool
     {
         debug(__METHOD__, func_get_args());
 
@@ -1421,9 +1436,15 @@ class DB
 
         $db = MySqlDB::instance();
 
-        $db->execute(sprintf('DELETE FROM %s_Test_Missions WHERE id = ?', $universe), [
-            'i', $id
-        ]);
+        if (!is_null($id)) {
+            $db->execute(sprintf('DELETE FROM %s_Test_Missions WHERE id = ?', $universe), [
+                'i', $id
+            ]);
+        } elseif (!is_null($source_id)) {
+            $db->execute(sprintf('DELETE FROM %s_Test_Missions WHERE source_id = ?', $universe), [
+                'i', $id
+            ]);
+        }
 
         return true;
     }

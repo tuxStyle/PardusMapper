@@ -14,6 +14,11 @@ require_once('../app/settings.php');
 
 CORS::pardus();
 
+/**
+ * all DB::npc_remove here will only remove the NPC 
+ * they will not remove missions as cloaky NPCs can be cloaked 
+ */
+
 $db = MySqlDB::instance(); // Create an instance of the Database class
 
 debug($_REQUEST);
