@@ -18,3 +18,7 @@ npm-debug.log
 settings.json
 vendor
 .env
+php.ini
+user.ini
+error_log
+.user.ini
