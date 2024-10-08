@@ -11,11 +11,12 @@
 // @author	Tightwad@Orion.Pardus.at
 // @author	Spednthrift@Artemis.Pardus.at
 // @grant	none
-// @version	6.9
+// @version	6.10
 // ==/UserScript==
 
 // == Notes ==
 //
+// Version 6.10 Fixed the javascript error on own building trade settings page
 // Version 6.9 More work around detecting the NPC is dead if you kill it as well as debug process updates.
 // Version 6.8 Updated Nav Data to check that new data was different from previous data to avoid DDOSing the mapper on nav spamming etc, also corrected Ambush mode to actually not send.
 // Version 6.7 Updated to collect NPC ID's, as well as to account for non-blocking NPC collection (Orbiter or BOP-X usage)
@@ -123,7 +124,7 @@ var hidePegasusMilitaryBuildings = false;
 
 var debug = false;
 var testing = false;
-var currentversion = 6.9
+var currentversion = 6.10
 
 /*global window: false, opera: false */
 var sendDebug = '';
@@ -495,8 +496,8 @@ function buildingInformation(doc,hideIllegalBuildings,hideMilitaryBuildings) {
 			
 		var tbl = doc.getElementsByTagName('table')[2];
 		// Get Building Name
-		var name = tbl.getElementsByTagName('b')[0].textContent;
-		postData += "&name=" + name;
+		var name = tbl.getElementsByTagName('h1')[0].textContent;
+		postData += "&name=" + trim(name);
 		if (hideIllegalBuildings && (name.match('Drug Station') || name.match('Slave Camp') || name.match('Dark Dome'))) { return; }
 		if (hideMilitaryBuildings && (name.match('Military Outpost') || name.match('Alliance Command'))) { return; }
 		// Get Building Image
@@ -606,7 +607,7 @@ function starbaseInformation(doc) {
 				img = tbl[3].getElementsByTagName('img')[0].src;
 				postData += "<wbr>&faction=" + img.substring(img.lastIndexOf('/',img.lastIndexOf('/')-1)+1);
 			}
-			var node = tbl[4].nextSibling.childNodes[3].childNodes[0];
+			var node = tbl[4].parentElement.childNodes[0];
 			var pop = node.textContent;
 			postData += "<wbr>&pop=" + trim(pop.substring(pop.indexOf(':') + 2,pop.indexOf('|')).replace(",",""));
 			postData += "<wbr>&crime=" + trim(node.childNodes[1].textContent).replace(",","");
@@ -625,8 +626,8 @@ function buildingTrade(doc,hideIllegalBuildings,hideMilitaryBuildings) {
 		if (doc.getElementsByName('building_trade')[0] === undefined) { return; }
 		var tbl = doc.getElementsByTagName('table')[2];
 		// Get Building Name
-		var name = tbl.getElementsByTagName('a')[0].textContent;
-		postData += "&name=" + tbl.getElementsByTagName('a')[0].textContent;
+		var name = tbl.getElementsByTagName('h1')[0].textContent;
+		postData += "&name=" + trim(name);
 		if (hideIllegalBuildings && (name.match('Drug Station') || name.match('Slave Camp') || name.match('Dark Dome'))) { return; }
 		if (hideMilitaryBuildings && (name.match('Military Outpost') || name.match('Alliance Command'))) { return; }
 		// Get Building Image
@@ -754,8 +755,8 @@ function buildingManagement(doc,hideIllegalBuildings,hideMilitaryBuildings) {
 		var postData = "version=" + readCookie('currentVersion') + "&loc=" + readCookie('userloc');
 		var img = tbl[2].getElementsByTagName('img')[0].src;
 		postData += "&img=" + img.substring(img.lastIndexOf('/',img.lastIndexOf('/')-1)+1);
-		var name = tbl[2].getElementsByTagName('b')[0].textContent;
-		postData += "&name=" + name;
+		var name = tbl[2].getElementsByTagName('h1')[0].textContent;
+		postData += "&name=" + trim(name);
 
 		if (hideIllegalBuildings && (name.match('Drug Station') || name.match('Slave Camp') || name.match('Dark Dome'))) { return; }
 		if (hideMilitaryBuildings && (name.match('Military Outpost') || name.match('Alliance Command'))) { return; }
@@ -818,7 +819,6 @@ function buildingManagement(doc,hideIllegalBuildings,hideMilitaryBuildings) {
 function buildingTradeSettings(doc,hideIllegalBuildings,hideMilitaryBuildings) {
 	try {
 		var postData = "version=" + readCookie('currentVersion') + "&loc=";
-		var tbl = doc.getElementsByTagName('table')[3];
 		// If we are viewing this remotely we do not want to collect data
 		if (doc.getElementsByName('remotedestructionform')[0] !== undefined) {
 			var loc = doc.getElementsByName('tradesettings')[0].action;
@@ -828,11 +828,15 @@ function buildingTradeSettings(doc,hideIllegalBuildings,hideMilitaryBuildings) {
 			//var postData = "version=" + readCookie('currentVersion') + "&x=" + readCookie('x') + "&y=" + readCookie('y') + "&loc=" + readCookie('userloc');
 			postData += readCookie('userloc');
 		}
-		var name = doc.getElementsByTagName('b')[0].textContent;
+		var tblHeader = doc.getElementsByTagName('table')[2];
+		var img = tblHeader.getElementsByTagName('img')[0].src;
+		postData += "&img=" + img.substring(img.lastIndexOf('/',img.lastIndexOf('/')-1)+1);
+		var name = tblHeader.getElementsByTagName('a')[0].textContent
 		postData += "&name=" + name + "&bts=";
 		if (hideIllegalBuildings && (name.match('Drug Station') || name.match('Slave Camp') || name.match('Dark Dome'))) { return; }
 		if (hideMilitaryBuildings && (name.match('Military Outpost') || name.match('Alliance Command'))) { return; }
 
+		var tbl = doc.getElementsByTagName('table')[3];
 		for (var i = 5;i < tbl.getElementsByTagName('tr').length;i++) {
 			var bts = tbl.getElementsByTagName('tr')[i].getElementsByTagName('td');
 			if (bts.length == 7) {
@@ -845,7 +849,7 @@ function buildingTradeSettings(doc,hideIllegalBuildings,hideMilitaryBuildings) {
 				// Max
 				postData += "," + bts[4].childNodes[0].defaultValue;
 				// Trader Buys
-				postData += "," + bts[7].childNodes[0].defaultValue;
+				postData += "," + bts[6].childNodes[0].defaultValue;
 				// Trader Sells
 				postData += "," + bts[5].childNodes[0].defaultValue;
 			}
