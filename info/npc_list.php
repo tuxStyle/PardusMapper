@@ -1,34 +1,56 @@
 <?php
-require_once('../include/mysqldb.php');
-$db = new mysqldb;
+declare(strict_types=1);
+require_once('../app/settings.php');
 
-$uni = $db->protect($_POST['uni']);
+use Pardusmapper\Core\MySqlDB;
+use Pardusmapper\Core\ApiResponse;
+use Pardusmapper\Post;
+use Pardusmapper\CORS;
+use Pardusmapper\DB;
 
+CORS::mapper();
+
+debug($_POST);
+
+$db = MySqlDB::instance();  // Create an instance of the Database class
+
+$uni = Post::uni();
+http_response(is_null($uni), ApiResponse::OK, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
+
+$sector = Post::pstring(key: 'sector');
+$cluster = Post::pstring(key: 'cluster');
+
+// TODO: sesion start needed?
+
+$npc_list = [];
 $return = '';
 
-$db->query("SELECT * FROM Pardus_Static_Locations ");
-while ($c = $db->nextObject()) { $static[] = $c->id; }
+// Initialize an array to hold the results
+$static = DB::static_locations();
 
-if (isset($_POST['sector'])) {
-	$db->query('SELECT DISTINCT name, id FROM ' . $uni . '_Test_Npcs WHERE sector = \'' . $db->protect($_POST['sector']) . '\' and (deleted is null or deleted = 0) GROUP BY name');
-} elseif (isset($_POST['cluster'])) {
-	if ($_POST['cluster'] != 'CORE') {
-		$db->query('SELECT * FROM Pardus_Clusters WHERE code = \'' . $db->protect($_POST['cluster']) . '\'');
-		$c = $db->nextObject();
-		$db->query('SELECT DISTINCT name, id FROM ' . $uni . '_Test_Npcs WHERE cluster = \'' . $c->name . '\' and (deleted is null or deleted = 0) GROUP BY name');
-	} else {
-		$db->query('SELECT DISTINCT name, id FROM ' . $uni . '_Test_Npcs WHERE cluster LIKE \'Pardus%Contingent\' and (deleted is null or deleted = 0) GROUP BY name');
-	}
+if (isset($sector)) {
+    $db->execute(sprintf('SELECT DISTINCT name, id FROM %s_Test_Npcs WHERE sector = ? and (deleted is null or deleted = 0) GROUP BY name', $uni), [
+        's', $sector
+    ]);
+} elseif (isset($cluster)) {
+    if ($cluster != 'CORE') {
+        $c = DB::cluster(code: $cluster);
+        $db->execute(sprintf('SELECT DISTINCT name, id FROM %s_Test_Npcs WHERE cluster = ? and (deleted is null or deleted = 0) GROUP BY name', $uni), [
+            's', $c->name
+        ]);
+    } else {
+        $db->execute(sprintf('SELECT DISTINCT name, id FROM %s_Test_Npcs WHERE cluster LIKE \'Pardus%Contingent\' and (deleted is null or deleted = 0) GROUP BY name', $uni));
+    }
 } else {
-	$db->query('SELECT DISTINCT name, id FROM ' . $uni . '_Test_Npcs Where (deleted is null or deleted = 0) GROUP BY name');
+    $db->execute(sprintf('SELECT DISTINCT name, id FROM %s_Test_Npcs Where (deleted is null or deleted = 0) GROUP BY name', $uni));
 }
 while ($n = $db->nextObject()) { if (!(in_array($n->id,$static))) { $npc_list[] = $n->name; } }
-
+xp($n);
 if ($npc_list) {array_unshift($npc_list,'All');}
 
 $return .= '<table><tr><th>NPCs</th></tr>';
 if ($npc_list) {foreach ($npc_list as $n) {
-	$return .= '<tr><td><a href=# onclick="loadNPC(\'' . $n . '\',1);">' . $n . '</a></td></tr>';
+    $return .= '<tr><td><a href=# onclick="loadNPC(\'' . $n . '\',1);">' . $n . '</a></td></tr>';
 }}
 $return .= '</table>';
 
@@ -36,4 +58,3 @@ echo $return;
 
 $db->close();
 $db = null;
-?>

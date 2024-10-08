@@ -1,26 +1,38 @@
-<?php
+<?php 
+declare(strict_types=1);
+require_once('../app/settings.php');
 
-require_once('../include/mysqldb.php');
-$db = new mysqldb;
+use Pardusmapper\Core\ApiResponse;
+use Pardusmapper\Core\MySqlDB;
+use Pardusmapper\CORS;
+use Pardusmapper\Post;
+use Pardusmapper\Session;
 
-$testing = Settings::TESTING;
-$debug = Settings::DEBUG;
+CORS::mapper();
 
-if ($testing || $debug) { 
-	error_reporting(E_STRICT | E_ALL | E_NOTICE);
-}
+$db = MySqlDB::instance();
 
-$uni = $db->protect($_POST['uni']);
-$id = $db->protect($_POST['id']);
-$loc = $db->protect($_POST['loc']);
+// Set Univers Variable and Session Name
+$uni = Post::uni();
+http_response(is_null($uni), ApiResponse::OK, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
 
 session_name($uni);
-
 session_start();
 
-if ($id != $_SESSION['id']) { return; }
+$sessId = Session::pint(key: 'id');
+$id = Post::pint(key: 'id');
+$loc = Post::pint(key: 'loc');
 
-if (isset($_POST['add'])) { $db->query('INSERT INTO ' . $uni . '_Personal_Resources (id,loc) VALUES (' . $id . ',' . $loc . ')'); }
-else { $db->query('DELETE FROM ' . $uni . '_Personal_Resources WHERE id = ' . $id . ' AND loc = ' . $loc); }
 
-?>
+if ($id !== $sessId) { return; }
+
+if (isset($_POST['add'])) { 
+    $db->execute(sprintf('INSERT INTO %s_Personal_Resources (id,loc) VALUES (?, ?)', $uni), [
+        'ii', $id, $loc
+    ]); 
+}
+else {
+    $db->execute(sprintf('DELETE FROM %s_Personal_Resources WHERE id = ? AND loc = ?', $uni), [
+        'ii', $id, $loc
+    ]);
+}

@@ -1,359 +1,324 @@
 <?php
+declare(strict_types=1);
 
-if ($_SERVER['HTTP_ORIGIN'] == "https://orion.pardus.at") {
-	header('Access-Control-Allow-Origin: https://orion.pardus.at');
-} else if ($_SERVER['HTTP_ORIGIN'] == "https://artemis.pardus.at") {
-	header('Access-Control-Allow-Origin: https://artemis.pardus.at');
-} else if ($_SERVER['HTTP_ORIGIN'] == "https://pegasus.pardus.at") {
-	header('Access-Control-Allow-Origin: https://pegasus.pardus.at');
-} else if ($_SERVER['HTTP_ORIGIN'] == "http://orion.pardus.at") {
-	header('Access-Control-Allow-Origin: http://orion.pardus.at');
-} else if ($_SERVER['HTTP_ORIGIN'] == "http://artemis.pardus.at") {
-	header('Access-Control-Allow-Origin: http://artemis.pardus.at');
-} else if ($_SERVER['HTTP_ORIGIN'] == "http://pegasus.pardus.at") {
-	header('Access-Control-Allow-Origin: http://pegasus.pardus.at');
-} else {
-	die('0,Information Not coming from Pardus');
-}
+use Pardusmapper\Coordinates;
+use Pardusmapper\Core\ApiResponse;
+use Pardusmapper\Core\MySqlDB;
+use Pardusmapper\CORS;
+use Pardusmapper\DB;
+use Pardusmapper\Request;
 
-require_once("mysqldb.php");
-$db = new mysqldb();  // Create an instance of the Database class//not clear as to why sometimes ChatGPT suggests a dbClass at this point
+require_once('../app/settings.php');
 
-$debug = true;
-//if (!isset($_REQUEST['debug'])) {$debug = false;}
+CORS::pardus();
 
-// Set Univers Variable and Session Name
-if (!isset($_REQUEST['uni'])) {
-	exit;
-}
+$db = MySqlDB::instance(); // Create an instance of the Database class
 
-$uni = $db->real_escape_string($_REQUEST['uni']);
+debug($_REQUEST);
 
-if ($debug) {
-	echo 'Universe = ' . $uni . '<br>';
-}
+// Set Univers Variable
+$uni = Request::uni();
+http_response(is_null($uni), ApiResponse::OK, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
 
 // Get Version
-$version = 0;
-if (isset($_REQUEST['version'])) {
-	$version = $db->real_escape_string($_REQUEST['version']);
-}
+$minVersion = 5.8;
+$version = Request::pfloat(key: 'version', default: 0);
+http_response($version < $minVersion, ApiResponse::OK, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
 
-if ($version < 5.8) {
-	exit;
-}
-
-if ($debug) {
-	print_r($_REQUEST);
-	echo '<br>';
-}
 
 // Building Main Page Variables
-if (isset($_REQUEST['loc'])) {
-	$loc = $db->real_escape_string($_REQUEST['loc']);
-} else {
-	exit;
-}
-if (isset($_REQUEST['faction'])) {
-	$faction = $db->real_escape_string($_REQUEST['faction']);
-}
-if (isset($_REQUEST['img'])) {
-	$image = $db->real_escape_string($_REQUEST['img']);
-}
-if (isset($_REQUEST['name'])) {
-	$name = $db->real_escape_string($_REQUEST['name']);
-}
-if (isset($_REQUEST['condition'])) {
-	$condition = $db->real_escape_string($_REQUEST['condition']);
-}
-if (isset($_REQUEST['owner'])) {
-	$owner = $db->real_escape_string($_REQUEST['owner']);
-}
+$loc = Request::pint(key: 'loc');
+http_response(is_null($loc), ApiResponse::OK, sprintf('loc query parameter is required or invalid: %s', $loc ?? 'null'));
 
+$faction = Request::pstring(key: 'faction');
+$alliance = Request::pstring(key: 'alliance');
+$image = Request::pstring(key: 'img');
+$name = Request::pstring(key: 'name');
+$condition = Request::pint(key: 'condition');
+$owner = Request::pstring(key: 'owner');
 
 // Building Trade Variables
-if (isset($_REQUEST['fs'])) {
-	$fs = $db->real_escape_string($_REQUEST['fs']);
-	$fs = str_replace(',', '', $fs);
-}
-if (isset($_REQUEST['credit'])) {
-	$credit = $db->real_escape_string($_REQUEST['credit']);
-}
+$fs = Request::pstring(key: 'fs');
+if (!is_null($fs)) { $fs = str_replace(',', '', $fs); }
+$credit = Request::pint(key: 'credit');
 
-if ($debug) {
-	echo 'Location : ' . $loc . '<br>';
-}
+// Extra
+$bt = Request::pstring(key: 'bt');
+if (!is_null($bt)) {$bt = explode('~', $bt); }
 
 // Get Map information
-$result = $db->query('SELECT * FROM ' . $uni . '_Maps WHERE id = ' . $loc);
-if ($result) {
-    $m = $result->fetch_object();
-} else {
-    // Handle query error
-    echo "Query failed: " . $db->error;
-}
+$m = DB::map(id: $loc, universe: $uni);
+http_response(is_null($m), ApiResponse::OK, sprintf('could not load map for location: %s', $loc ?? 'null'));
 
 // Verify Building is already in DB Tables Add if Not
-$db->query('SELECT * FROM ' . $uni . '_Buildings WHERE id = ' . $loc);
-if ($b = $db->fetchObject()) {  // Use fetchObject() instead of nextObject()
-	// Building in DB - Verify Stock is in DB
-	if (strpos("sb_", $m->fg) === false) {  // Correct usage of strpos
-		if ($debug) {
-			echo 'Checking Stocking Info<br>';
-		}
-		$db->query('SELECT * FROM ' . $uni . '_New_Stock WHERE id = ' . $loc);
-		if ($db->numRows() < 1) {
-			$db->addBuildingStock($uni, $m->fg, $loc);
-		}
-	}
+$b = DB::building(id: $loc, universe: $uni);
+if ($b) {
+    // Building in DB - Verify Stock is in DB
+    if (!str_contains("sb_", $m->fg)) {  // Correct usage of strpos
+        debug('Checking Stocking Info');
+
+        $stocks = DB::stocks(id: $loc, universe: $uni);
+        if (0 === count($stocks)) {
+            DB::building_stock_add(universe: $uni, image: $m->fg, id: $loc);
+        }
+    }
 } else {
-	// Building not in DB
-	$db->addBuilding($uni, $m->fg, $loc, 0);
-	$db->query('SELECT * FROM ' . $uni . '_Buildings WHERE id = ' . $loc);
-	$b = $db->fetchObject();  // Use fetchObject() again here
+    // Building not in DB
+    DB::building_add(universe: $uni, image: $m->fg, id: $loc, sb: 0);
+    $b = DB::building(id: $loc, universe: $uni);
 }
 
+debug($b);
 
-if ($debug) {
-	print_r($b);
-	echo '<br>';
-}
+if (str_contains("sb_", $m->fg)) {
+    debug('We are Flying Close to a SB');
 
-if (strpos("sb_", $m->fg) !== false) {
-	if ($debug) {
-		echo 'We are Flying Close to a SB<br>';
-	}
-	$db->query('SELECT * FROM Pardus_Buildings where starbase < ' . $loc . ' ORDER BY starbase DESC LIMIT 1');
-	$q = $db->nextObject();
-	$x = $db->getX($loc, $q->starbase, 13);
-	$y = $db->getY($loc, $q->starbase, 13, $x);
-	$s = $db->getSector($q->id, "");
+    $db->execute(sprintf('SELECT * FROM %s_Buildings where starbase < ? ORDER BY starbase DESC LIMIT 1', $uni), [
+        'i', $loc
+    ]);
+    $q = $db->nextObject();
+    $x = Coordinates::getX($loc, $q->starbase, 13);
+    $y = Coordinates::getY($loc, $q->starbase, 13, $x);
+    $s = DB::sector(id: $q->id);
 } else {
-	// Get Sector and Cluster Information from Location
-	$db->query('SELECT * FROM Pardus_Sectors WHERE s_id < ' . $loc . ' ORDER BY s_id DESC LIMIT 1');
-	$s = $db->getSector($loc, "");
-	$x = $db->getX($loc, $s->s_id, $s->rows);
-	$y = $db->getY($loc, $s->s_id, $s->rows, $x);
+    debug('Get location information for location: ' . $loc);
+
+    // Get Sector and Cluster Information from Location
+    $s = DB::sector(id: $loc);
+    $x = Coordinates::getX($loc, $s->s_id, $s->rows);
+    $y = Coordinates::getY($loc, $s->s_id, $s->rows, $x);
 }
-$c = $db->getCluster($s->c_id, "");
+$c = DB::cluster(id: $s->c_id);
+
+$updateBuilding = [];
 
 // Double Check that Cluster and Sector have been Set for the Building
 if (is_null($b->cluster)) {
-	$db->query('UPDATE ' . $uni . '_Buildings SET cluster = \'' . $c->name . '\' WHERE id = ' . $loc);
+    $updateBuilding['cluster'] = $c->name;
 }
 if (is_null($b->sector)) {
-	$db->query('UPDATE ' . $uni . '_Buildings SET sector = \'' . $s->name . '\' WHERE id = ' . $loc);
+    $updateBuilding['sector'] = $s->name;
 }
-
 if (!$b->x && !$b->y) {
-	$db->query('UPDATE `' . $uni . '_Buildings` SET `x` = ' . $x . ', `y`= ' . $y . ' WHERE id = ' . $loc);
+    $updateBuilding['x'] = $x;
+    $updateBuilding['y'] = $y;
 }
 
 if (isset($_REQUEST['building'])) {
-	// Visited a Building
-	if ($debug) {
-		echo 'Visited a Building<br>';
-	}
-	if ($debug) {
-		print_r($_REQUEST);
-	}
-	if ($debug) {
-		echo '<br>';
-	}
-	// Collect Info
+    // Visited a Building
+    debug('Visited a Building');
 
-	$db->query('UPDATE ' . $uni . '_Buildings SET `image`= \'' . $image . '\', `name`= \'' . $name . '\', `condition`= ' . $condition . ' WHERE id = ' . $loc);
-	if (isset($_REQUEST['owner'])) {
-		if ($debug) {
-			echo 'Updating owner<br>';
-		}
-		$db->query('UPDATE ' . $uni . '_Buildings SET `owner`= \'' . $owner . '\' WHERE id = ' . $loc);
-	} else {
-		if ($debug) {
-			echo 'Nulling owner<br>';
-		}
-		$db->query('UPDATE ' . $uni . '_Buildings SET `owner`= NULL WHERE id = ' . $loc);
-	}
-	if (isset($_REQUEST['alliance'])) {
-		if ($debug) {
-			echo 'Updating alliance<br>';
-		}
-		$db->query('UPDATE ' . $uni . '_Buildings SET `alliance`= \'' . $alliance . '\' WHERE id = ' . $loc);
-	} else {
-		if ($debug) {
-			echo 'Nulling alliance<br>';
-		}
-		$db->query('UPDATE ' . $uni . '_Buildings SET `alliance`= NULL WHERE id = ' . $loc);
-	}
-	if (isset($_REQUEST['faction'])) {
-		if ($debug) {
-			echo 'Updating faction<br>';
-		}
-		$db->query('UPDATE ' . $uni . '_Buildings SET `faction`= \'' . $faction . '\' WHERE id = ' . $loc);
-	} else {
-		if ($debug) {
-			echo 'Nulling Faction<br>';
-		}
-		$db->query('UPDATE ' . $uni . '_Buildings SET `faction`= NULL WHERE id = ' . $loc);
-	}
-	$db->query('UPDATE ' . $uni . '_Buildings SET `updated` = UTC_TIMESTAMP() WHERE id = ' . $loc);
+    $p = DB::building_static(image: $image);
 
-	// If we can see the Building then there are no NPCs at this location
-	$db->removeNPC($uni, $loc);
+    // Collect Info
+
+    // REVIEW
+    // the tampermonkey script is sending the wrong name
+    // we receive the owner name in both name and owner fields
+    // attempt to get the building name by building image
+    $name = !is_null($p) ? $p->name: $name;
+    $updateBuilding['name'] = $name;
+    $updateBuilding['image'] = $image;
+    $updateBuilding['condition'] = (int)$condition;
+    $updateBuilding['owner'] = $owner;
+    $updateBuilding['alliance'] = $alliance;
+    $updateBuilding['faction'] = $faction;
+
+    if (isset($owner)) {
+        debug('Updating owner');
+    } else {
+        debug('Nulling owner');
+    }
+    if (isset($alliance)) {
+        debug('Updating alliance');
+    } else {
+        debug('Nulling alliance');
+    }
+    if (isset($faction)) {
+        debug('Updating faction');
+    } else {
+        debug('Nulling faction');
+    }
+
+    // If we can see the Building then there are no NPCs at this location
+    DB::npc_remove(universe: $uni, id: $loc);
 }
-if (isset($_REQUEST['bt'])) {
-	// Visited Building Trade
-	if ($debug) {
-		echo 'Visited Building Trade<br>';
-	}
-	// Collect Info
-	$db->query('UPDATE ' . $uni . '_Buildings SET `image`= \'' . $image . '\', `name`= \'' . $name . '\'  WHERE id = ' . $loc);
+if (isset($bt)) {
+    // Visited Building Trade
+    debug('Visited Building Trade');
 
-	//loc=327655&bt=~Food,48,0,66,9999,120~Energy,48,0,66,9999,50~Water,48,0,66,9999,100~Ore,108,0,132,9999,150~Metal,63,0,0,400,0&fs=55&credit=2826766
-	$cap = $fs;
-	$bt = explode('~', $db->real_escape_string($_REQUEST['bt']));
+    // Collect Info
+    $updateBuilding['image'] = $image;
+    $updateBuilding['name'] = $name;
 
-	date_default_timezone_set('UTC');
+    //loc=327655&bt=~Food,48,0,66,9999,120~Energy,48,0,66,9999,50~Water,48,0,66,9999,100~Ore,108,0,132,9999,150~Metal,63,0,0,400,0&fs=55&credit=2826766
+    $cap = $fs;
 
-	//$date = getdate(strtotime($b->stock_updated));
-	//$tick = mktime(1,25,0,$date['mon'],$date['mday'],$date['year']);
-	$ts = strtotime($b->stock_updated);
-	$date = new DateTime("@$ts");
-	$date->setTime(1, 25, 0);
-	$tick = $date->format('U');
+    //$date = getdate(strtotime($b->stock_updated));
+    //$tick = mktime(1,25,0,$date['mon'],$date['mday'],$date['year']);
+    $ts = strtotime($b->stock_updated);
+    $date = new DateTime("@$ts");
+    $date->setTime(1, 25, 0);
+    $tick = $date->format('U');
 
-	while ($tick < strtotime($b->stock_updated)) {
-		$tick += (60 * 60 * 6);
-	}
-	$i = 0;
-	while ($tick < strtotime($b->stock_updated)) {
-		$tick += (60 * 60 * 6);
-		$i++;
-	}
+    while ($tick < strtotime($b->stock_updated)) {
+        $tick += (60 * 60 * 6);
+    }
+    $i = 0;
+    while ($tick < strtotime($b->stock_updated)) {
+        $tick += (60 * 60 * 6);
+        $i++;
+    }
 
-	if ($i) {
-		$i++;
-	}
+    if ($i) {
+        $i++;
+    }
 
-	$tick = $i;
+    $tick = $i;
 
-	// Get Upkeep Info
-	if ($debug) {
-		echo 'Building is ' . $b->name . '<br>';
-	}
-	for ($x = 1; $x <= 20; $x++) {
-		$level[$x] = 0;
-	}
-	//Loop through all bt data
-	$building_stock_level = 0;
-	$building_stock_max = 0;
+    // Get Upkeep Info
+    debug('Building is ' . $b->name);
+    for ($x = 1; $x <= 20; $x++) {
+        $level[$x] = 0;
+    }
+    //Loop through all bt data
+    $building_stock_level = 0;
+    $building_stock_max = 0;
 
-	for ($i = 1; $i < sizeof($bt); $i++) {
-		$temp = explode(',', $db->real_escape_string($bt[$i]));
-		if ($debug) {
-			print_r($temp);
-		}
-		if ($debug) {
-			echo '<br>';
-		}
-		print_r($cap);
-		$temp[1] = str_replace(',', '', $temp[1]); // Remove commas from the second element
-		$cap += $temp[1];
-		$db->query('SELECT * FROM Pardus_Upkeep_Data WHERE name = \'' . $b->name . '\' AND res = \'' . $temp[0] . '\'');
-		$u = $db->nextObject();
-		$amount = $u->amount;
-		$upkeep = $u->upkeep;
-		$db->query('SELECT * FROM ' . $uni . '_New_Stock WHERE name = \'' . $temp[0] . '\' AND id = ' . $loc);
-		if ($tick && $s = $db->nextObject()) {
-			if ($debug) {
-				echo ' Using ' . $temp[0] . ' base amount ' . $amount . '<br>';
-			}
+    for ($i = 1; $i < sizeof($bt); $i++) {
+        $temp = explode(',', $bt[$i]);
+        debug($temp);
+        debug('Capacity: ' . $cap);
+        $temp[1] = str_replace(',', '', $temp[1]); // Remove commas from the second element
+        $cap += $temp[1];
 
-			if ($upkeep) {
-				$diff = $s['amount'] - $temp[1];
-			} else {
-				$diff = $temp[1] - $s['amount'];
-			}
-			if ($debug) {
-				echo 'Difference is ' . $diff . '<br>';
-			}
-			for ($j = 1; $j <= 20; $j++) {
-				if ($upkeep) {
-					if ($debug) {
-						echo 'Trying Level ' . $j . ' value of ' . upkeep($amount, $j) . '<br>';
-					}
-					if ($diff == (upkeep($amount, $j) * $tick)) {
-						$level[$j]++;
-					}
-				} else {
-					if ($debug) {
-						echo 'Trying Level ' . $j . ' value of ' . production($amount, $j) . '<br>';
-					}
-					if ($diff == (production($amount, $j) * $tick)) {
-						$level[$j]++;
-					}
-				}
-			}
-		}
-		if ($upkeep) {
-			$building_stock_level += $temp[1];
-			$building_stock_max += $temp[3];
-		}
-		$stock = 0;
-		if ($temp[3]) {
-			$stock = round(($temp[1] / $temp[3]) * 100, 0);
-			if ($stock > 100) {
-				$stock = 100;
-			}
-		}
-		$db->query('SELECT * FROM `' . $uni . '_New_Stock` WHERE name = \'' . $temp[0] . '\' AND id = ' . $loc);
-		if ($db->numRows() < 1) {
-			$db->query('INSERT INTO ' . $uni . '_New_Stock (id,name) VALUES (' . $loc . ',\'' . $temp[0] . '\')');
-		}
-		$db->query('UPDATE ' . $uni . '_New_Stock SET `amount` = ' . $temp[1] . ' WHERE name = \'' . $temp[0] . '\' AND id = ' . $loc);
-		$db->query('UPDATE ' . $uni . '_New_Stock SET `bal` = 0 WHERE name = \'' . $temp[0] . '\' AND id = ' . $loc);
-		$db->query('UPDATE ' . $uni . '_New_Stock SET `min` = ' . $temp[2] . ' WHERE name = \'' . $temp[0] . '\' AND id = ' . $loc);
-		$db->query('UPDATE ' . $uni . '_New_Stock SET `max` = ' . $temp[3] . ' WHERE name = \'' . $temp[0] . '\' AND id = ' . $loc);
-		$db->query('UPDATE ' . $uni . '_New_Stock SET `buy` = ' . $temp[4] . ' WHERE name = \'' . $temp[0] . '\' AND id = ' . $loc);
-		$db->query('UPDATE ' . $uni . '_New_Stock SET `sell` = ' . $temp[5] . ' WHERE name = \'' . $temp[0] . '\' AND id = ' . $loc);
-		$db->query('UPDATE ' . $uni . '_New_Stock SET `stock` = ' . $stock . ' WHERE name = \'' . $temp[0] . '\' AND id = ' . $loc);
-		//$db->query('UPDATE ' . $uni . '_New_Stock SET `stock_updated`= UTC_TIMESTAMP() where id = ' . $loc);
-	}
-	$db->query('UPDATE ' . $uni . '_Buildings SET `capacity`= ' . $cap . ', `freespace`= ' . $fs . ', `credit`= ' . $credit . ', `stock_updated`= UTC_TIMESTAMP() WHERE id = ' . $loc);
+        // REVIEW:
+        //
+        // Original query was using the name of the building from database
+        //		$db->query('SELECT * FROM Pardus_Upkeep_Data WHERE name = \'' . $b->name . '\' AND res = \'' . $temp[0] . '\'');
+        //
+        // The upkeep table uses building type Space Farm for example not the owner of the of the building
+        // so, this query was not returning anything
+        //
+        // The building visited request sends name same as the owner name so, this is saved in database
+        // and $b->name contais the owner name instead of building type
+        // Array
+        //     (
+        //         [uni] => Pegasus
+        //         [version] => 6.9
+        //         [loc] => 148874
+        //         [building] => 1
+        //         [name] => Wight Dread Viserion
+        //         [img] => foregrounds/space_farm.png
+        //         [owner] => Wight Dread Viserion
+        //         [faction] => factions/sign_uni_16x16.png
+        //         [alliance] => The Ebidium Dagger
+        //         [condition] => 100
+        //     )
+        //
+        // The trade request sends name as Space Farm so, using name from here
+        // Array
+        //     (
+        //         [uni] => Pegasus
+        //         [version] => 6.9
+        //         [loc] => 148874
+        //         [name] => Space Farm
+        //         [img] => foregrounds/space_farm.png
+        //         [bt] => ~Food,231,0,0,150,0~Energy,150,105,210,200,50~Water,56,0,0,80,0~Animal embryos,10,133,266,200,30~Bio-waste,31,0,0,40,0
+        //         [fs] => 218
+        //         [credit] => 0
+        //     )
 
 
-	// Set Building Stock level
-	if ($building_stock_max) {
-		$building_stock_level = round(($building_stock_level / $building_stock_max) * 100, 0);
-		if ($building_stock_level > 100) {
-			$building_stock_level = 100;
-		}
-	}
+        $u = DB::upkeep_static(name: $name, res: $temp[0]);
+        debug($u);
+        $amount = $u->amount;
+        $upkeep = $u->upkeep;
 
-	if ($debug) {
-		echo 'Building Stock Level ' . $building_stock_level . '<br>';
-	}
+        $s = DB::building_stock(id: $loc, name: $temp[0], universe: $uni);
+        if ($tick && $s) {
+            debug('Using ' . $temp[0] . ' base amount ' . $amount);
 
-	$db->query('UPDATE ' . $uni . '_Buildings SET stock = ' . $building_stock_level . ' WHERE id = ' . $loc);
+            if ($upkeep) {
+                $diff = $s['amount'] - $temp[1];
+            } else {
+                $diff = $temp[1] - $s['amount'];
+            }
+            debug('Difference is ' . $diff);
+            for ($j = 1; $j <= 20; $j++) {
+                if ($upkeep) {
+                    debug('Trying Level ' . $j . ' value of ' . upkeep($amount, $j));
+                    if ($diff == (upkeep($amount, $j) * $tick)) {
+                        $level[$j]++;
+                    }
+                } else {
+                    debug('Trying Level ' . $j . ' value of ' . production($amount, $j));
+                    if ($diff == (production($amount, $j) * $tick)) {
+                        $level[$j]++;
+                    }
+                }
+            }
+        }
+        if ($upkeep) {
+            $building_stock_level += $temp[1];
+            $building_stock_max += $temp[3];
+        }
+        $stock = 0;
+        if ($temp[3]) {
+            $stock = round(($temp[1] / $temp[3]) * 100, 0);
+            if ($stock > 100) {
+                $stock = 100;
+            }
+        }
 
-	// End Test Stock Table
-	if ($tick) {
-		print_r($level);
-		echo '<br>';
-		$l = 1;
-		for ($i = 1; $i <= 20; $i++) {
-			if ($level[$i] > $l) {
-				$l = $i;
-			}
-		}
-		if ($debug) {
-			echo 'Level estimate is ' . $l . ' - <br>';
-		}
-		if ($l > $b->level) {
-			$db->query('UPDATE ' . $uni . '_Buildings SET `level` = ' . $l . ' WHERE id = ' . $loc);
-		}
-	}
+        $s = DB::building_stock(id: $loc, name: $temp[0], universe: $uni);
+        if (is_null($s)) {
+            DB::stock_create(id: $loc, name: $temp[0], universe: $uni);
+        }
+
+        $updateStock = [];
+        $updateStock['amount'] = (int)$temp[1];
+        $updateStock['bal'] = 0;
+        $updateStock['min'] = (int)$temp[2];
+        $updateStock['max'] = (int)$temp[3];
+        $updateStock['buy'] = (int)$temp[4];
+        $updateStock['sell'] = (int)$temp[5];
+        $updateStock['stock'] = (int)$stock;
+        DB::stock_update(id: $loc, name: $temp[0], params: $updateStock, universe: $uni);
+    }
+
+    $updateBuildingStock = [];
+    $updateBuildingStock['capacity'] = $cap;
+    $updateBuildingStock['freespace'] = $fs;
+    $updateBuildingStock['credit'] = $credit;
+
+    // Set Building Stock level
+    if ($building_stock_max) {
+        $building_stock_level = round(($building_stock_level / $building_stock_max) * 100, 0);
+        if ($building_stock_level > 100) {
+            $building_stock_level = 100;
+        }
+    }
+
+    debug('Building Stock Level ' . $building_stock_level);
+    $updateBuildingStock['stock'] = $building_stock_level;
+
+    debug('Ticks: ' . $tick);
+    if ($tick) {
+        debug($level);
+        $l = 1;
+        for ($i = 1; $i <= 20; $i++) {
+            if ($level[$i] > $l) {
+                $l = $i;
+            }
+        }
+        debug('Level estimate is ' . $l);
+        if ($l > $b->level) {
+            $updateBuildingStock['level'] = $l;
+        }
+    }
+
+    DB::building_stock_update(id: $loc, params: $updateBuildingStock, universe: $uni);
 }
 
-$db->close();
-?>
+DB::building_update(id: $loc, params: $updateBuilding, universe: $uni);

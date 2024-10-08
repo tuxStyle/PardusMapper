@@ -1,119 +1,59 @@
 <?php
+declare(strict_types=1);
 
-if ($_SERVER['HTTP_ORIGIN'] == "https://orion.pardus.at") {
-	header('Access-Control-Allow-Origin: https://orion.pardus.at');
-} elseif ($_SERVER['HTTP_ORIGIN'] == "https://artemis.pardus.at") {
-	header('Access-Control-Allow-Origin: https://artemis.pardus.at');
-} elseif ($_SERVER['HTTP_ORIGIN'] == "https://pegasus.pardus.at") {
-	header('Access-Control-Allow-Origin: https://pegasus.pardus.at');
-} elseif ($_SERVER['HTTP_ORIGIN'] == "http://orion.pardus.at") {
-	header('Access-Control-Allow-Origin: http://orion.pardus.at');
-} elseif ($_SERVER['HTTP_ORIGIN'] == "http://artemis.pardus.at") {
-	header('Access-Control-Allow-Origin: http://artemis.pardus.at');
-} elseif ($_SERVER['HTTP_ORIGIN'] == "http://pegasus.pardus.at") {
-	header('Access-Control-Allow-Origin: http://pegasus.pardus.at');
-} else {
-	die('0,Information Not coming from Pardus');
-}
+use Pardusmapper\Core\ApiResponse;
+use Pardusmapper\Core\MySqlDB;
+use Pardusmapper\CORS;
+use Pardusmapper\DB;
+use Pardusmapper\Request;
 
-require_once("mysqldb.php");
-$db = new mysqldb;
-$debug = true;
-if (!isset($_REQUEST['debug'])) {
-	$debug = false;
-}
+require_once('../app/settings.php');
 
-if ($debug) {
-	print_r($_REQUEST);
-}
-if ($debug) {
-	echo '<br>';
-}
+CORS::pardus();
 
-// Set Univers Variable and Session Name
-if (!isset($_REQUEST['uni'])) {
-	exit;
-}
+$db = MySqlDB::instance(); // Create an instance of the Database class
 
-$uni = $db->protect($_REQUEST['uni']);
+debug($_REQUEST);
+
+// Set Univers Variable
+$uni = Request::uni();
+http_response(is_null($uni), ApiResponse::OK, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
+
 // Get Version
-$version = 0;
-if (isset($_REQUEST['version'])) {
-	$version = $db->protect($_REQUEST['version']);
-}
-
-if ($debug) {
-	echo 'Version = ' . $version . '<br>';
-}
-if ($version < 5.8) {
-	exit;
-}
+$minVersion = 5.8;
+$version = Request::pfloat(key: 'version', default: 0);
+http_response($version < $minVersion, ApiResponse::OK, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
 
 // Get Location
-$loc = 0;
-if (isset($_REQUEST['loc'])) {
-	$loc = $db->protect($_REQUEST['loc']);
-}
+// Building Main Page Variables
+$loc = Request::pint(key: 'loc');
+http_response(is_null($loc), ApiResponse::OK, sprintf('loc query parameter is required or invalid: %s', $loc ?? 'null'));
 
-$image = "";
-if (isset($_REQUEST['img'])) {
-	$image = $db->protect($_REQUEST['img']);
-}
+$image = Request::pstring(key: 'img');
+$nid = Request::pint(key: 'nid');
+$dead = Request::pbool('dead');
 
-$nid = "";
-if (isset($_REQUEST['nid'])) {
-	$nid = $db->protect($_REQUEST['nid']);
-}
-if ($debug) {
-	echo $nid;
-}
-
-$dead = "";
-if (isset($_REQUEST['dead'])) {
-	$dead = $db->protect($_REQUEST['dead']);
-}
-if ($debug) {
-	echo $dead;
-}
 // Set Hull, Armor, Shield Levels
-$hull = 0;
-if (isset($_REQUEST['hull'])) {
-	$hull = $db->protect($_REQUEST['hull']);
-}
-$armor = 0;
-if (isset($_REQUEST['armor'])) {
-	$armor = $db->protect($_REQUEST['armor']);
-}
-$shield = 0;
-if (isset($_REQUEST['shield'])) {
-	$shield = $db->protect($_REQUEST['shield']);
-}
+$hull = Request::pint(key: 'hull', default: 0);
+$armor = Request::pint(key: 'armor', default: 0);
+$shield = Request::pint(key: 'shield', default: 0);
 
-$db->query('SELECT * FROM `' . $uni . '_Maps` M inner join `' . $uni . '_Test_Npcs` TN on M.id = TN.id and TN.deleted is null where M.id = ' . $loc);
+$db->execute(sprintf('SELECT * FROM %s_Maps M inner join %s_Test_Npcs TN on M.id = TN.id and TN.deleted is null where M.id = ?', $uni, $uni), [
+    'i', $loc
+]);
 $m = $db->nextObject();
-if (is_null($m->npc)) {
-	if ($debug) {
-		echo 'Inserting New Info into DB<br>';
-	}
-	$db->addNPC($uni, $image, $loc, "", 0, 0, $nid);
-} elseif ($dead == 1) {
-	if ($debug) {
-		echo 'You killed it, good job...removing NPC<br>';
-	}
-	$db->removeNPC($uni, $loc);
-} elseif ($m->npc == $image) {
-	if ($debug) {
-		echo 'Updating Hull, Armor, and Shield<br>';
-	}
-	$db->updateNPCHealth($uni, $loc, $hull, $armor, $shield, $nid);
-} else {
-	if ($debug) {
-		echo ($m->npc . 'Removing Old NPC adding New<br>');
-	}
-	$db->removeNPC($uni, $loc);
-	$db->addNPC($uni, $image, $loc, "", 0, 0, $nid);
-}
 
-$db->close();
-$db = null;
-?>
+if (is_null($m->npc)) {
+    debug('Inserting New Info into DB');
+    DB::npc_add(universe: $uni, image: $image, id: $loc, sector: null, x: 0, y: 0, nid: $nid);
+} elseif ($dead) {
+    debug('You killed it, good job...removing NPC');
+    DB::npc_remove(universe: $uni, id: $loc, deleteMissions: true);
+} elseif ($m->npc == $image) {
+    debug('Updating Hull, Armor, and Shield');
+    DB::npc_update_health(universe: $uni, id: $loc, hull: $hull, armor: $armor, shield: $shield, nid: $nid);
+} else {
+    debug($m->npc . 'Removing Old NPC adding New<br>');
+    DB::npc_remove(universe: $uni, id: $loc);
+    DB::npc_add(universe: $uni, image: $image, id: $loc, sector: null, x: 0, y: 0, nid: $nid);
+}

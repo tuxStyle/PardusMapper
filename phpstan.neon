@@ -1,0 +1,32 @@
+parameters:
+    level: 1
+
+    bootstrapFiles:
+        - .phpstan/bootstrap.php
+
+    excludePaths:
+        - vendor/*
+
+    paths:
+        - ./game.php
+        - ./index.php
+        - ./login.php
+        - ./logout.php
+        - ./mission.php
+        - ./npc.php
+        - ./options.php
+        - ./presources.php
+        - ./resources.php
+        - ./signup.php
+        - app
+        - include
+        - info
+        - templates
+
+    scanDirectories:
+        - app
+
+    parallel:
+        jobSize: 20
+        maximumNumberOfProcesses: 4
+        minimumNumberOfJobsPerProcess: 2

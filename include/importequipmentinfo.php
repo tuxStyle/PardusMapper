@@ -1,100 +1,80 @@
 <?php
+declare(strict_types=1);
 
-if ($_SERVER['HTTP_ORIGIN'] == "https://orion.pardus.at") {
-	header('Access-Control-Allow-Origin: https://orion.pardus.at');
-} else if ($_SERVER['HTTP_ORIGIN'] == "https://artemis.pardus.at") {
-	header('Access-Control-Allow-Origin: https://artemis.pardus.at');
-} else if ($_SERVER['HTTP_ORIGIN'] == "https://pegasus.pardus.at") {
-	header('Access-Control-Allow-Origin: https://pegasus.pardus.at');
-} else if ($_SERVER['HTTP_ORIGIN'] == "http://orion.pardus.at") {
-	header('Access-Control-Allow-Origin: http://orion.pardus.at');
-} else if ($_SERVER['HTTP_ORIGIN'] == "http://artemis.pardus.at") {
-	header('Access-Control-Allow-Origin: http://artemis.pardus.at');
-} else if ($_SERVER['HTTP_ORIGIN'] == "http://pegasus.pardus.at") {
-	header('Access-Control-Allow-Origin: http://pegasus.pardus.at');
-} else {
-	die('0,Information Not coming from Pardus');
-}
+use Pardusmapper\Core\ApiResponse;
+use Pardusmapper\Core\MySqlDB;
+use Pardusmapper\CORS;
+use Pardusmapper\DB;
+use Pardusmapper\Request;
 
-require_once("mysqldb.php");
-$db = new mysqldb;
-$debug = true;
-//if (!isset($_REQUEST['debug'])) {$debug = false;}
+require_once('../app/settings.php');
 
-// Set Univers Variable and Session Name
-if (!isset($_REQUEST['uni'])) {
-	exit;
-}
+CORS::pardus();
 
-$uni = $db->protect($_REQUEST['uni']);
+debug($_REQUEST);
 
-if ($debug) {
-	echo 'Universe = ' . $uni . '<br>';
-}
+// Set Univers Variable
+$uni = Request::uni();
+http_response(is_null($uni), ApiResponse::OK, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
 
 // Get Version
-$version = 0;
-if (isset($_REQUEST['version'])) {
-	$version = $db->protect($_REQUEST['version']);
-}
+$minVersion = 5.8;
+$version = Request::pfloat(key: 'version', default: 0);
+http_response($version < $minVersion, ApiResponse::OK, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
 
-if ($version < 5.8) {
-	exit;
-}
+$loc = Request::pint(key: 'loc');
+http_response(is_null($loc), ApiResponse::OK, sprintf('location(loc) query parameter is required or invalid: %s', $loc ?? 'null'));
 
-if ($debug) {
-	print_r($_REQUEST);
-	echo '<br>';
-}
+$tab = Request::pstring(key: 'tab');
+http_response(is_null($tab), ApiResponse::OK, sprintf('equipment(tab) query parameter is required or invalid: %s', $tab ?? 'null'));
 
-$loc = 0;
-$loc = $db->protect($_REQUEST['loc']);
-if ($debug) {
-	echo 'Location = ' . $loc . '<br>';
-}
+$eq = Request::pstring(key: 'eq');
+http_response(is_null($eq), ApiResponse::OK, sprintf('equipment(eq) query parameter is required or invalid: %s', $eq ?? 'null'));
 
-$tab = $db->protect($_REQUEST['tab']);
-if ($debug) {
-	echo 'Tab = ' . $tab . '<br>';
-}
+// Get Sector And Cluster Info
+$s = DB::sector(id:$loc);
+$c = DB::cluster(id: $s->c_id);
 
-$s = $db->getSector($loc, "");
-$c = $db->getCluster($s->c_id, "");
-
-$data = explode('~', $db->protect($_REQUEST['eq']));
+$data = explode('~', (string) $eq);
 switch ($tab) {
-	case 'weapon':
-	case 'drive':
-	case 'armor':
-	case 'shield':
-	case 'special':
-		for ($i = 1; $i < sizeof($data); $i++) {
-			if ($debug) {
-				echo $data[$i] . '<br>';
-			}
-			$temp = explode(',', $data[$i]);
-			//Verify Item is not already in the DB
-			$db->query('SELECT * FROM ' . $uni . '_Equipment WHERE loc = ' . $loc . ' AND name = \'' . $temp[1] . '\'');
-			if (!$e = $db->nextObject()) {
-				$db->query('INSERT INTO ' . $uni . '_Equipment (name,loc) VALUES (\'' . $temp[1] . '\',' . $loc . ')');
-			}
-			// Update Cluster
-			$db->query('UPDATE ' . $uni . '_Equipment SET cluster = \'' . $c->code . '\' WHERE loc = ' . $loc . ' AND name = \'' . $temp[1] . '\'');
-			// Update Sector
-			$db->query('UPDATE ' . $uni . '_Equipment SET sector = \'' . $s->name . '\' WHERE loc = ' . $loc . ' AND name = \'' . $temp[1] . '\'');
-			// Update Image
-			$db->query('UPDATE ' . $uni . '_Equipment SET image = \'' . $temp[0] . '\' WHERE loc = ' . $loc . ' AND name = \'' . $temp[1] . '\'');
-			// Update Price
-			$db->query('UPDATE ' . $uni . '_Equipment SET price = ' . $temp[2] . ' WHERE loc = ' . $loc . ' AND name = \'' . $temp[1] . '\'');
-			// Update Amount
-			$db->query('UPDATE ' . $uni . '_Equipment SET amount = ' . $temp[3] . ' WHERE loc = ' . $loc . ' AND name = \'' . $temp[1] . '\'');
-			// Update Type
-			$db->query('UPDATE ' . $uni . '_Equipment SET type = \'' . $tab . '\' WHERE loc = ' . $loc . ' AND name = \'' . $temp[1] . '\'');
-		}
-		break;
+    case 'weapon':
+    case 'drive':
+    case 'armor':
+    case 'shield':
+    case 'special':
+        for ($i = 1; $i < sizeof($data); $i++) {
+            debug($data[$i]);
+
+            $temp = explode(',', $data[$i]);
+            debug($temp);
+
+            //Verify Item is not already in the DB
+            $e = DB::equipment(name: $temp[1], location: $loc, universe: $uni);
+            if (!$e) {
+                DB::equipment_create(name: $temp[1], location: $loc, universe: $uni);
+            }
+
+            $params = [];
+
+            // Update Cluster and Sector
+            $params['cluster'] = $c->code;
+            $params['sector'] = $s->name;
+
+            // Update Image
+            $params['image'] = $temp[0];
+
+            // Update Price
+            $params['price'] = (int)$temp[2];
+
+            // Update Amount
+            $params['amount'] = (int)$temp[3];
+
+            // Update Type
+            $params['type'] = $tab;
+
+            DB::equipment_update(name: $temp[1], location: $loc, params: $params, universe: $uni);
+        }
+        break;
 }
 
-$db->query('UPDATE ' . $uni . '_Buildings set eq_updated = UTC_TIMESTAMP() WHERE id = ' . $loc);
-
-$db->close();
-?>
+DB::building_equipment_update(id: $loc, params: [], universe: $uni);

@@ -1,201 +1,166 @@
 <?php
-//header('Access-Control-Allow-Origin: https://*.pardus.at');
-if ($_SERVER['HTTP_ORIGIN'] == "https://orion.pardus.at") {
-	header('Access-Control-Allow-Origin: https://orion.pardus.at');
-}
-if ($_SERVER['HTTP_ORIGIN'] == "https://artemis.pardus.at") {
-	header('Access-Control-Allow-Origin: https://artemis.pardus.at');
-}
-if ($_SERVER['HTTP_ORIGIN'] == "https://pegasus.pardus.at") {
-	header('Access-Control-Allow-Origin: https://pegasus.pardus.at');
-} elseif ($_SERVER['HTTP_ORIGIN'] == "http://orion.pardus.at") {
-	header('Access-Control-Allow-Origin: http://orion.pardus.at');
-} elseif ($_SERVER['HTTP_ORIGIN'] == "http://artemis.pardus.at") {
-	header('Access-Control-Allow-Origin: http://artemis.pardus.at');
-} elseif ($_SERVER['HTTP_ORIGIN'] == "http://pegasus.pardus.at") {
-	header('Access-Control-Allow-Origin: http://pegasus.pardus.at');
-}
+declare(strict_types=1);
+define('REQUEST_SOURCE', 'pardus');
 
-require_once("mysqldb.php");
-$db = new mysqldb;
-$debug = true;
+use Pardusmapper\Core\MySqlDB;
+use Pardusmapper\Core\ApiResponse;
+use Pardusmapper\Request;
+use Pardusmapper\DB;
+use Pardusmapper\CORS;
 
-if ($debug) {
-	print_r($_REQUEST);
-	echo '<br>';
-}
+require_once('../app/settings.php');
+
+CORS::pardus();
+
+$db = MySqlDB::instance(); // Create an instance of the Database class
+
+debug($_REQUEST);
 
 // Set Univers Variable and Session Name
-if (!isset($_REQUEST['uni'])) {
-	exit;
-}
+$uni = Request::uni();
+http_response(is_null($uni), ApiResponse::OK, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
+// TODO: i think it needs session start here
 
-$uni = $db->protect($_REQUEST['uni']);
-
-// Set User ID
-$id = 0;
-if (isset($_REQUEST['id'])) {
-	$id = $db->protect($_REQUEST['id']);
-}
-if ($debug) {
-	echo 'User ID = ' . $id .  '<br>';
-}
-
-// Set User Name
-$user = "Unknown";
-if (isset($_REQUEST['user'])) {
-	$user = $db->protect($_REQUEST['user']);
-}
-if ($debug) {
-	echo 'User Name = ' . $user .  '<br>';
-}
-
-// Set Version
-$version = 0;
-if (isset($_REQUEST['version'])) {
-	$version = $db->protect($_REQUEST['version']);
-}
-if ($debug) {
-	echo 'Version = ' . $version .  '<br>';
-}
-
-// Set Browser
-$browser = "Unknown";
-if (isset($_REQUEST['browser'])) {
-	$browser = $db->protect($_REQUEST['browser']);
-}
-if ($debug) {
-	echo 'Browser = ' . $browser .  '<br>';
-}
-
-// Set Faction
-$faction = "Unknown";
-if (isset($_REQUEST['faction'])) {
-	$faction = $db->protect($_REQUEST['faction']);
-}
-if ($debug) {
-	echo 'Faction = ' . $faction .  '<br>';
-}
-
-// Set Syndicate
-$syndicate = "Unknown";
-if (isset($_REQUEST['syndicate'])) {
-	$syndicate = $db->protect($_REQUEST['syndicate']);
-}
-if ($debug) {
-	echo 'Syndicate = ' . $syndicate .  '<br>';
-}
-
-// Set Compentency
-$comp = "Unknown";
-if (isset($_REQUEST['comp'])) {
-	$comp = $db->protect($_REQUEST['comp']);
-}
-if ($debug) {
-	echo 'Compentency = ' . $comp .  '<br>';
-}
-
-// Set Rank
-$rank = "Unknown";
-if (isset($_REQUEST['rank'])) {
-	$rank = $db->protect($_REQUEST['rank']);
-}
-if ($debug) {
-	echo 'Rank = ' . $rank .  '<br>';
-}
-
-// Set IP
+$id = Request::pint(key: 'id', default: 0);
+$user = Request::pstring(key: 'user', default: 'Unknown');
+$version = Request::pfloat(key: 'version', default: 0);
+// http_response(0 === $version, ApiResponse::OK, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
+$browser = Request::pstring(key: 'browser', default: 'Unknown');
+$faction = Request::pstring(key: 'faction', default: 'Unknown');
+$syndicate = Request::pstring(key: 'syndicate', default: 'Unknown');
+$comp = Request::pint(key: 'comp');
+$rank = Request::pint(key: 'rank');
 $ip = $_SERVER['REMOTE_ADDR'];
 
 if (isset($_REQUEST['el'])) {
-	if ($id) {
-		if ($debug) {
-			echo 'Looking up user by ' . $id . '<br>';
-		}
-		$db->query('SELECT * FROM ' . $uni . '_Users WHERE id = ' . $id);
-		if ($u = $db->nextObject()) {
-			if ($debug) {
-				echo $id . ' For ' . $user . ' Already in DB Updating<br>';
-				print_r($u);
-				echo '<br>';
-			}
-			$db->query('UPDATE `' . $uni . '_Users` SET `loaded` = UTC_TIMESTAMP(), `version` = \'' . $version . '\', `browser` = \'' . $browser . '\', username = \'' . $user . '\', `ip` = \'' . $ip . '\' WHERE id = ' . $id);
-		} else {
-			if ($debug) {
-				echo $id . ' For ' . $user . ' Not in DB Trying Name<br>';
-			}
-			$db->query('SELECT * FROM `' . $uni . '_Users` WHERE username = \'' . $user . '\'');
-			if ($u = $db->nextObject()) {
-				if ($debug) {
-					echo $user . ' Already in DB Updating<br>';
-					print_r($u);
-					echo '<br>';
-				}
-				$db->query('UPDATE `' . $uni . '_Users` SET `loaded` = UTC_TIMESTAMP(), `version` = \'' . $version . '\', `browser` = \'' . $browser . '\',id = ' . $id . ', `ip` = \'' . $ip . '\' WHERE username = \'' . $user . '\'');
-			} else {
-				if ($debug) {
-					echo 'New user Inserting ' . $user . '<br>';
-				}
-				$db->query('INSERT INTO `' . $uni . '_Users` (`user_id`,`id`,`username`,`password`,`security`,`loaded`,`version`,`browser`,`ip`) VALUES (NULL,' . $id . ',\'' . $user . '\',\'' . sha1("n0p2ssword") . '\',0,UTC_TIMESTAMP(), \'' . $version . '\', \'' . $browser . '\', \'' . $ip . '\')');
-				$db->query('SELECT * FROM `' . $uni . '_Users` WHERE username = \'' . $user . '\'');
-				if ($u = $db->nextObject()) {
-					if ($debug) {
-						echo $user . ' Added To DB<br>';
-						print_r($u);
-						echo '<br>';
-					}
-				}
-			}
-		}
-	} else {
-		if ($debug) {
-			echo $user . ' Trying User Name<br>';
-		}
-		$db->query('SELECT * FROM `' . $uni . '_Users` WHERE username = \'' . $user . '\'');
-		if ($u = $db->nextObject()) {
-			if ($debug) {
-				echo $user . ' Already in DB Updating<br>';
-				print_r($u);
-				echo '<br>';
-			}
-			$db->query('UPDATE `' . $uni . '_Users` SET `loaded` = UTC_TIMESTAMP(), `version` = \'' . $version . '\', `browser` = \'' . $browser . '\', `ip` = \'' . $ip . '\' WHERE username = \'' . $user . '\'');
-		} else {
-			if ($debug) {
-				echo 'New user Inserting ' . $user . '<br>';
-			}
-			$db->query('INSERT INTO `' . $uni . '_Users` (`user_id`,`username`,`password`,`security`,`loaded`,`version`,`browser`,`ip`) VALUES (NULL,\'' . $user . '\',\'' . sha1("n0p2ssword") . '\',0,UTC_TIMESTAMP(), \'' . $version . '\', \'' . $browser . '\', \'' . $ip . '\')');
-			$db->query('SELECT * FROM `' . $uni . '_Users` WHERE username = \'' . $user . '\'');
-			if ($u = $db->nextObject()) {
-				if ($debug) {
-					echo $user . ' Added To DB<br>';
-					print_r($u);
-					echo '<br>';
-				}
-			}
-		}
-	}
+    if ($id) {
+        debug('Looking up user by ' . $id);
+
+        $u = DB::user(id: $id, universe: $uni);
+
+        if ($u) {
+            debug($id . ' For ' . $user . ' (1) Already in DB Updating');
+            debug($u);
+
+            $db->execute(sprintf('UPDATE %s_Users SET loaded = UTC_TIMESTAMP(), version = ?, browser = ?, username = ?, ip = ? WHERE id = ?', $uni), [
+                'dsssi', $version, $browser, $user, $ip, $id
+            ]);
+        } else {
+            debug($id . ' For ' . $user . ' Not in DB Trying Name');
+
+            $u = DB::user(username: $user, universe: $uni);
+
+            if ($u) {
+                debug($user . ' (2) Already in DB Updating');
+                debug($u);
+
+                $db->execute(sprintf('UPDATE %s_Users SET loaded = UTC_TIMESTAMP(), version = ?, browser = ?, id = ?, ip = ? WHERE username = ?', $uni), [
+                    'dsiss', $version, $browser, $id, $ip, $user
+                ]);
+            } else {
+                debug('New user Inserting ' . $user);
+
+                $db->execute(sprintf('INSERT INTO %s_Users (user_id, id, username, password, security, loaded, version, browser, ip) VALUES (NULL, ?, ?, ?, 0, UTC_TIMESTAMP(), ?, ?, ?)', $uni), [
+                    'issdss', $id, $user, sha1("n0p2ssword"), $version, $browser, $ip
+                ]);
+                
+                $db->execute(sprintf('SELECT * FROM %s_Users WHERE username = ?', $uni), [
+                    's', $user
+                ]);
+                
+                if ($u = $db->nextObject()) {
+                    debug($user . ' Added To DB');
+                    debug($u);
+                }
+            }
+        }
+    } else {
+        debug($user . ' Trying User Name');
+
+        $db->execute(sprintf('SELECT * FROM %s_Users WHERE username = ?', $uni), [
+            's', $user
+        ]);
+
+        if ($u = $db->nextObject()) {
+            debug($user . ' Already in DB Updating');
+            debug($u);
+
+            $db->execute(sprintf('UPDATE %s_Users SET loaded = UTC_TIMESTAMP(), version = ?, browser = ?, ip = ? WHERE username = ?', $uni), [
+                'dsss', $version, $browser, $ip, $user
+            ]);
+        } else {
+            debug('New user Inserting ' . $user);
+
+            $db->execute(sprintf('INSERT INTO %s_Users (user_id, username, password, security, loaded, version, browser, ip) VALUES (NULL, ?, ?, 0, UTC_TIMESTAMP(), ?, ?, ?)', $uni), [
+                'ssidss', $user, sha1("n0p2ssword"), $version, $browser, $ip
+            ]);
+            
+            $db->execute(sprintf('SELECT * FROM %s_Users WHERE username = ?', $uni), [
+                's', $user
+            ]);
+
+            if ($u = $db->nextObject()) {
+                debug($user . ' Added To DB');
+                debug($u);
+            }
+        }
+    }
 }
 if (isset($_REQUEST['lud'])) {
-	$db->query('SELECT * FROM `' . $uni . '_Users` WHERE username = \'' . $user . '\'');
-	if ($u = $db->nextObject()) {
-		if ($faction == 'null' || $faction == 'Unknown') {
-			$db->query('UPDATE `' . $uni . '_Users` SET `loaded` = UTC_TIMESTAMP(), `faction` = NULL WHERE username = \'' . $user . '\'');
-		} else {
-			$db->query('UPDATE `' . $uni . '_Users` SET `loaded` = UTC_TIMESTAMP(), `faction` = \'' . $faction . '\' WHERE username = \'' . $user . '\'');
-		}
-		if ($syndicate == 'null' || $syndicate == 'Unknown') {
-			$db->query('UPDATE `' . $uni . '_Users` SET `loaded` = UTC_TIMESTAMP(), `syndicate` = NULL WHERE username = \'' . $user . '\'');
-		} else {
-			$db->query('UPDATE `' . $uni . '_Users` SET `loaded` = UTC_TIMESTAMP(), `syndicate` = \'' . $syndicate . '\' WHERE username = \'' . $user . '\'');
-		}
-		if ($rank == 'null' || $rank == 'Unknown') {
-			$db->query('UPDATE `' . $uni . '_Users` SET `loaded` = UTC_TIMESTAMP(), `comp` = \'' . $comp . '\', `rank` = NULL WHERE username = \'' . $user . '\'');
-		} else {
-			$db->query('UPDATE `' . $uni . '_Users` SET `loaded` = UTC_TIMESTAMP(), `comp` = \'' . $comp . '\', `rank` = \'' . $rank . '\' WHERE username = \'' . $user . '\'');
-		}
-		$db->query("UPDATE ${uni}_Users SET ip = '$ip' WHERE username = '$user'");
-	}
-}
+    $db->execute(sprintf('SELECT * FROM %s_Users WHERE username = ?', $uni), [
+        's', $user
+    ]);
+    if ($u = $db->nextObject()) {
+        debug($user . ' Already in DB Updating');
+        debug($u);
 
-$db->close();
-?>
+        if (is_null($faction) || $faction == 'Unknown') {
+            debug(sprintf('User: %s no faction, set to null', $user));
+
+            $db->execute(sprintf('UPDATE %s_Users SET loaded = UTC_TIMESTAMP(), faction = NULL WHERE username = ?', $uni), [
+                's', $user
+            ]);
+        } else {
+            debug(sprintf('User: %s save faction: %s', $user, $faction));
+
+            $db->execute(sprintf('UPDATE %s_Users SET loaded = UTC_TIMESTAMP(), faction = ? WHERE username = ?', $uni), [
+                'ss', $faction, $user
+            ]);
+        }
+
+        if (is_null($syndicate) || $syndicate == 'Unknown') {
+            debug(sprintf('User: %s no syndicate, set to null', $user));
+
+            $db->execute(sprintf('UPDATE %s_Users SET loaded = UTC_TIMESTAMP(), syndicate = NULL WHERE username = ?', $uni), [
+                's', $user
+            ]);
+        } else {
+            debug(sprintf('User: %s save syndicate: %s', $user, $syndicate));
+
+            $db->execute(sprintf('UPDATE %s_Users SET loaded = UTC_TIMESTAMP(), syndicate = ? WHERE username = ?', $uni), [
+                'ss', $syndicate, $user
+            ]);
+        }
+        if (is_null($rank)) {
+            debug(sprintf('User: %s no rank, set to null, save competency', $user));
+
+            $db->execute(sprintf('UPDATE %s_Users SET loaded = UTC_TIMESTAMP(), comp = ?, rank = NULL WHERE username = ?', $uni), [
+                'is', $comp, $user
+            ]);
+        } else {
+            debug(sprintf('User: %s save competency: %s and rank: %s', $user, $comp, $rank));
+
+            $db->execute(sprintf('UPDATE %s_Users SET loaded = UTC_TIMESTAMP(), comp = ?, rank = ? WHERE username = ?', $uni), [
+                'iis', $comp, $rank, $user
+            ]);
+        }
+
+        debug(sprintf('User: %s save IP: %s', $user, $ip));
+
+        $db->execute(sprintf("UPDATE %s_Users SET ip = ? WHERE username = ?", $uni), [
+            'ss', $ip, $user
+        ]);
+    } else {
+        debug($user . ' Not found, cannot update');
+    }
+}

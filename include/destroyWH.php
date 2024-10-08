@@ -1,30 +1,31 @@
 <?php
-header('Access-Control-Allow-Origin: https://pardusmapper.com');
 
-require_once("mysqldb.php");
-$db = new mysqldb;
-$debug = true;
+declare(strict_types=1);
 
-if ($debug) print_r($_REQUEST);
-if ($debug) echo '<br>';
+use Pardusmapper\Core\ApiResponse;
+use Pardusmapper\CORS;
+use Pardusmapper\DB;
+use Pardusmapper\Request;
 
-// Set Univers Variable and Session Name
-if (!isset($_REQUEST['uni'])) { exit; }
+require_once('../app/settings.php');
 
-$uni = $db->protect($_REQUEST['uni']);
+CORS::mapper();
+
+debug($_REQUEST);
+
+// Set Univers Variable
+$uni = Request::uni();
+http_response(is_null($uni), ApiResponse::OK, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
+
+session_name($uni);
+session_start();
 
 // Get Location
-$id = 0;
-if (isset($_REQUEST['id'])) { $id = $db->protect($_REQUEST['id']); }
+$id = Request::pint(key: 'id');
 
-
-$db->query('SELECT * FROM `' . $uni . '_Maps` where id = ' . $id);
-$m = $db->nextObject();
-if (!is_null($m->fg)||!is_null($m->wormhole)) {
-	if ($debug) echo 'Removing WH<br>';
-	$db->removeWH($uni,$id);
-	echo "<script>window.close();</script>";
+$m = DB::map(id: $id, universe: $uni);
+if (!is_null($m->fg) || !is_null($m->wormhole)) {
+    debug('Removing WH');
+    DB::wh_remove(universe: $uni, id: $id);
+    echo "<script>window.close();</script>";
 }
-
-$db->close();
-?>
