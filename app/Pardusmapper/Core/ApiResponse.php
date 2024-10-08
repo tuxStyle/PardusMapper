@@ -5,32 +5,31 @@ namespace Pardusmapper\Core;
 
 class ApiResponse
 {
-
     /**
-     * HTTP response code constant
+     * HTTP response code constants
      */
-    final public const int OK            = 200,
-        CREATED                      = 201,
-        NOCONTENT                    = 204,
-        MOVEDPERMANENTLY             = 301,
-        FOUND                        = 302,
-        SEEOTHER                     = 303,
-        NOTMODIFIED                  = 304,
-        TEMPORARYREDIRECT            = 307,
-        BADREQUEST                   = 400,
-        UNAUTHORIZED                 = 401,
-        FORBIDDEN                    = 403,
-        NOTFOUND                     = 404,
-        METHODNOTALLOWED             = 405,
-        NOTACCEPTABLE                = 406,
-        GONE                         = 410,
-        LENGTHREQUIRED               = 411,
-        PRECONDITIONFAILED           = 412,
-        REQUESTENTITYTOOLARGE        = 413,
-        REQUESTEDRANGENOTSATISFIABLE = 416,
-        UNSUPPORTEDMEDIATYPE         = 415,
-        INTERNALSERVERERROR          = 500,
-        NOTIMPLEMENTED               = 501,
-        SERVICE_UNAVAILABLE          = 503,
-        GATEWAY_TIMEDOUT             = 504;
+    public const OK                        = 200;
+    public const CREATED                   = 201;
+    public const NOCONTENT                 = 204;
+    public const MOVEDPERMANENTLY          = 301;
+    public const FOUND                     = 302;
+    public const SEEOTHER                  = 303;
+    public const NOTMODIFIED               = 304;
+    public const TEMPORARYREDIRECT         = 307;
+    public const BADREQUEST                = 400;
+    public const UNAUTHORIZED              = 401;
+    public const FORBIDDEN                 = 403;
+    public const NOTFOUND                  = 404;
+    public const METHODNOTALLOWED          = 405;
+    public const NOTACCEPTABLE             = 406;
+    public const GONE                      = 410;
+    public const LENGTHREQUIRED            = 411;
+    public const PRECONDITIONFAILED        = 412;
+    public const REQUESTENTITYTOOLARGE     = 413;
+    public const REQUESTEDRANGENOTSATISFIABLE = 416;
+    public const UNSUPPORTEDMEDIATYPE      = 415;
+    public const INTERNALSERVERERROR       = 500;
+    public const NOTIMPLEMENTED            = 501;
+    public const SERVICE_UNAVAILABLE       = 503;
+    public const GATEWAY_TIMEDOUT          = 504;
 }
