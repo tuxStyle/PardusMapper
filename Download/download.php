@@ -5,8 +5,10 @@ declare(strict_types=1);
 use Pardusmapper\Core\ApiResponse;
 use Pardusmapper\Request;
 
-$dl = Request::dl();
-http_response(is_null($dl), ApiResponse::OK, 'invalid download type requested');
+require_once('../app/settings.php');
+
+$dl = Request::pint(key: 'dl');
+http_response(is_null($dl) || !in_array($dl, [0, 1]), ApiResponse::OK, 'invalid download type requested');
 
 if ($dl === 0) {
 

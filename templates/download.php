@@ -10,7 +10,7 @@ use Pardusmapper\Core\Settings;
 	</head>
 	<body>
 		<div id="header_side"><?php require_once(templates('header_side')); ?></div>
-		<div id="footer"><?php require_once(templates('footer.php')); ?></div>
+		<div id="footer"><?php require_once(templates('footer')); ?></div>
 		<div id="body">
 		<h1>*** Note Greasemonkey 4 and Firefox 57 have caused myscript to stop working ***</h1>
 		<ul>
