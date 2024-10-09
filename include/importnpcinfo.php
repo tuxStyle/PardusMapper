@@ -43,6 +43,10 @@ $db->execute(sprintf('SELECT * FROM %s_Maps M inner join %s_Test_Npcs TN on M.id
 ]);
 $m = $db->nextObject();
 
+// REVIEW
+// i think there is a bug here
+// when we do not have the NPC in DB but we land on it, $m is null so, we should check is_null($m)
+// i'm pretty sure this happens when we land on a cloaked NPC
 if (is_null($m->npc)) {
     debug('Inserting New Info into DB');
     DB::npc_add(universe: $uni, image: $image, id: $loc, sector: null, x: 0, y: 0, nid: $nid);
