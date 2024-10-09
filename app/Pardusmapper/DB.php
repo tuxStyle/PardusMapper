@@ -110,6 +110,8 @@ class DB
      */
     public static function map_add(string $universe, string $image, int $id, int $sb = 0): bool
     {
+        debug(__METHOD__, func_get_args());
+
         $db = MySqlDB::instance();
 
         // if (preg_match('/^\d+$/', $image)) {
@@ -128,7 +130,7 @@ class DB
         $params = [];
 
         if ($sb) {
-            debug(__METHOD__, __LINE__, 'we have building');
+            debug(__METHOD__, 'we have building');
 
             $b = self::building(universe: $universe, id: $sb);
             $x = Coordinates::getX($id,$b->starbase,13);

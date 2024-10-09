@@ -9,7 +9,7 @@ use Pardusmapper\Request;
 
 require_once('../app/settings.php');
 
-CORS::pardus();
+// CORS::pardus();
 
 debug($_REQUEST);
 
@@ -18,7 +18,7 @@ debug($_REQUEST);
 // all those checks for Critter, Xmas...
 // the map array elements only contail two items instead of 3
 // disable this endpoint
-http_response(true, ApiResponse::NOTIMPLEMENTED, sprintf('feature not implemented'));
+// http_response(true, ApiResponse::NOTIMPLEMENTED, sprintf('feature not implemented'));
 
 $mapdata = Request::pstring(key: 'mapdata');
 http_response(is_null($mapdata), ApiResponse::OK, sprintf('mapdata query parameter is required or invalid: %s', $mapdata ?? 'null'));
@@ -36,9 +36,12 @@ http_response($version < $minVersion, ApiResponse::OK, sprintf('version query pa
 $x = Request::pint(key: 'x');
 $y = Request::pint(key: 'y');
 $id = Request::pint(key: 'id');
+$user = Request::pstring(key: 'user');
 
 $starbase = Request::pstring(key: 's');
 $sb = DB::building(name: $starbase, universe: $uni);
+debug('Starbase', $sb);
+// debug($sb);
 
 if (is_null($sb->starbase)) {
     $sb_loc = $id - ($x * 13) - $y;
@@ -46,8 +49,6 @@ if (is_null($sb->starbase)) {
     $sb->starbase = $sb_loc;
     DB::building_update(id: $sb->id, params: ['starbase' => (int)$sb_loc], universe: $uni);
 }
-
-debug($sb);
 
 $maparray = explode('~', (string) $mapdata);
 debug($maparray);
@@ -57,49 +58,40 @@ for ($i = 1; $i < sizeof($maparray); $i++) {
     debug($temp);
 
     $tid = preg_match('/^\d+$/', $temp[0]) ? (int)$temp[0] : null;
+    debug('TID: ' . $tid);
 
     // Check to see if we got good data
-    if (!strpos($temp[2], "nodata.png") && !is_null($id)) {
+    if (!strpos($temp[1], "nodata.png") && !is_null($id)) {
         debug($tid . ' Does Not Contain "nodata.png"');
 
+        $r_bg = null;
+        $r_fg = null;
+        $r_npc = null;
+
         // Check to see if we got Building Info
-        if (str_contains($temp[2], "foregrounds")) {
+        if (str_contains($temp[1], "foregrounds")) {
             debug($tid . ' Contains "Foreground" Info');
-
-            $r_bg = 1;
-            $r_fg = 2;
-            $r_npc = 0;
+            $r_fg = 1;
             // Check to see if we got Background Info
-        } elseif (str_contains($temp[2], "backgrounds")) {
+        } elseif (str_contains($temp[1], "backgrounds")) {
             debug($tid . ' Contains "Background" Info Only');
-
-            $r_bg = 2;
-            $r_fg = 0;
-            $r_npc = 0;
+            $r_bg = 1;
             // Check to see if we got Critter info
-        } elseif (str_contains($temp[2], "opponents")) {
+        } elseif (str_contains($temp[1], "ponents")) {
             debug($tid . ' Contains "Critter" Info');
 
             $r_bg = 1;
-            $r_fg = 0;
             $r_npc = 2;
             // Must be a Ship or something I don't want
-        } elseif (str_contains($temp[2], "xmas-star")) {
+        } elseif (str_contains($temp[1], "xmas-star")) {
             debug($tid . ' Contains "Xmas" Info');
-
-            $r_bg = 1;
-            $r_fg = 2;
-            $r_npc = 0;
+            $r_fg = 1;
         } else {
             debug($tid . ' Do not care what it contain');
-
-            $r_bg = 1;
-            $r_fg = 0;
-            $r_npc = 0;
         }
 
         // Ignore any tile that is energymax.png
-        if (str_contains($temp[$r_bg], "background") && strpos($temp[$r_bg], "energymax") != true) {
+        if (strpos($temp[1], "energymax") != true) {
             // Check to see if we have Info for the current tile
             // Insert new data if there is not current info
             // Do Nothing if there is current info
@@ -109,73 +101,46 @@ for ($i = 1; $i < sizeof($maparray); $i++) {
                 // There is no existing information for the current tile
                 debug($tid . ' New Information Inserting into DB');
 
-                DB::map_add(universe: $uni, image: $temp[$r_bg], id: $tid, sb: $sb->id);
+                // REVIEW
+                // when we only have foreground, there is no background sent by the user script so, use empty string for now
+                DB::map_add(universe: $uni, image: '', id: $tid, sb: $sb->id);
                 $r = DB::map(id: $tid, universe: $uni);
             }
 
-            debug($r);
+            debug('Map ', $r);
 
-            if (str_contains($temp[$r_bg], "\\")) {
-                $temp[$r_bg] = substr($temp[$r_bg], 0, strpos($temp[$r_bg], "\\"));
-            }
-            debug($temp[$r_bg]);
-
-            if ($temp[$r_bg] != $r->bg) {
-                debug($tid . ' Updating BG Info');
-                DB::map_update_bg(universe: $uni, image: $temp[$r_bg], id: $tid);
-            } else {
-                debug($tid . ' Not Updating BG Info');
-            }
-
-            // Check to see if we have Foreground information for the current tile
-            // If we do not then we need to double check for existing info and remove it.
             if ($r_fg != 0) {
+                // Check to see if we have Foreground information for the current tile
+                // If we do not then we need to double check for existing info and remove it.
                 debug($tid . ' Building information exists for current location');
 
                 // Check to See if the DB is NULL
                 if (is_null($r->fg)) {
                     // DB is NULL Just Add new Info
-                    debug($tid . ' Adding BG Info');
-
+                    debug($tid . ' Adding Building');
                     DB::building_add(universe: $uni, image: $temp[$r_fg], id: $tid, sb: $sb->id);
-                } else {
-                    $updateBuilding = [];
-
+                } else if (sizeof($temp) != 3) { // this isn't an NPC record from the non-blocking window
                     //Test to See if Map and DB match
-                    if (preg_replace('/[_]tradeoff/', "", $temp[$r_fg]) != preg_replace('/[_]tradeoff/', "", $r->fg)) {
-                        debug($tid . ' Foreground info Does Not Matches DB');
-                        debug($tid . ' Deleting Old Building');
-
-                        // See if we have a Gem merchant
-                        DB::building_remove(universe: $uni, id: $tid, sb: 0);
-
+                    debug($tid . ' Testing New FG - ' . str_replace("_tradeoff", "", $temp[$r_fg]));
+                    debug($tid . ' Testing DB FG - ' . str_replace("_tradeoff", "", $r->fg));
+                    if (str_replace("_tradeoff", "", $temp[$r_fg]) != str_replace("_tradeoff", "", $r->fg)) {
+                        debug($tid . ' Foreground info Does Not Matches DB', $id . ' Deleting Old Building');
+    
+                        DB::building_remove(universe: $uni, id: $tid, sb: $sb->id);
+    
                         debug($tid . ' Inserting New Building');
-
+    
                         DB::building_add(universe: $uni, image: $temp[$r_fg], id: $tid, sb: $sb->id);
-                        $updateBuilding['starbase'] = 1;
+
                     } else {
                         debug($tid . ' Foreground info Matches DB');
-
                         DB::map_update_fg(universe: $uni, image: $temp[$r_fg], id: $tid);
 
-                        $x = floor(($tid - $sb->starbase) / 13);
-                        $y = ($tid - ($sb->starbase + ($x * 13)));
-
-                        $updateBuilding['cluster'] = $sb->cluster;
-                        $updateBuilding['sector'] = $sb->sector;
-                        $updateBuilding['x'] = $x;
-                        $updateBuilding['y'] = $y;
+                        if ($temp[$r_fg] != $r->fg) {
+                            debug($tid . ' Foreground Image Changed');
+                            DB::building_update(id: $tid, params: ['image' => $temp[$r_fg]], universe: $uni);
+                        }
                     }
-
-                    DB::building_update(id: $tid, params: $updateBuilding, universe: $uni);
-                }
-            } elseif (!(is_null($r->fg))) {
-                debug($tid . ' Deleting Foreground info from DB');
-
-                if (strpos($r->fg, "starbase")) {
-                    DB::building_remove(universe: $uni, id: $tid, sb: 1);
-                } else {
-                    DB::building_remove(universe: $uni, id: $tid, sb: 0);
                 }
             } else {
                 debug($tid . ' No Foreground info to worry about');
@@ -184,4 +149,6 @@ for ($i = 1; $i < sizeof($maparray); $i++) {
             debug($tid . ' Energy Max');
         }
     }
+
+    die();
 }
