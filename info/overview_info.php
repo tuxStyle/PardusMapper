@@ -46,7 +46,11 @@ if ($b_loc) {
     // the original code used war status to filter stocks but, i'm missing data in the War_Status table so, disable this for now
     // TODO: check later
     $stocks = DB::stocks(id: $id, universe: $uni, warStatus: false);
-    foreach($stocks as $q) { $stock[$res_id[$q->name]] = $q; }
+    foreach($stocks as $q) { 
+        if (array_key_exists($q->name, $res_id)) {
+            $stock[$res_id[$q->name]] = $q; 
+        }
+    }
 
     // Make sure the Stock is in the correct order
     if ($stock) { ksort($stock,SORT_NUMERIC); }
@@ -148,7 +152,11 @@ if ($b_loc) {
     if ($stock) {
         foreach ($stock as $s) {
             $return .=  ($i++ % 2 != 0) ? '<tr class="alternating">' : '<tr>';
-            $return .= '<td><img src="' . $img_url . $res_img[$s->name] . '" height="8" width="8" alt=""></td>';
+            if (array_key_exists($s->name, $res_img)) {
+                $return .= '<td><img src="' . $img_url . $res_img[$s->name] . '" height="8" width="8" alt=""></td>';
+            } else {
+                $return .= '<td>&nbsp;</td>';
+            }
             $return .= '<td><font color="#009900"><strong>' . $s->name . '</strong></td>';
             if (strpos($loc->image,"starbase")) {
                 $amount = $s->amount - $s->min;
