@@ -19,9 +19,9 @@ $uni = Request::uni();
 http_response(is_null($uni), ApiResponse::OK, sprintf('uni query parameter is required or invalid: %s', $uni ?? 'null'));
 
 // Get Version
-$minVersion = 5.8;
-$version = Request::pfloat(key: 'version', default: 0);
-http_response($version < $minVersion, ApiResponse::OK, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
+$minVersion = '5.8';
+$version = Request::pstring(key: 'version', default: '0.0');
+http_response(version_compare($version, $minVersion, '<'), ApiResponse::OK, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
 
 $loc = Request::pint(key: 'loc');
 http_response(is_null($loc), ApiResponse::OK, sprintf('location(loc) query parameter is required or invalid: %s', $loc ?? 'null'));

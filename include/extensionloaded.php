@@ -23,8 +23,7 @@ http_response(is_null($uni), ApiResponse::OK, sprintf('uni query parameter is re
 
 $id = Request::pint(key: 'id', default: 0);
 $user = Request::pstring(key: 'user', default: 'Unknown');
-$version = Request::pfloat(key: 'version', default: 0);
-// http_response(0 === $version, ApiResponse::OK, sprintf('version query parameter is required or invalid: %s ... minumum version: %s', ($uni ?? 'null'), $minVersion));
+$version = Request::pstring(key: 'version', default: '0.0');
 $browser = Request::pstring(key: 'browser', default: 'Unknown');
 $faction = Request::pstring(key: 'faction', default: 'Unknown');
 $syndicate = Request::pstring(key: 'syndicate', default: 'Unknown');
