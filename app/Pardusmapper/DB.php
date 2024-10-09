@@ -796,9 +796,11 @@ class DB
         if (!$n) {
             debug(__METHOD__, 'NPC not found, adding');
 
-            $db->execute(sprintf('INSERT INTO %s_Test_Npcs (`id`) VALUES (?)', $universe), [
+            $query = sprintf('INSERT INTO %s_Test_Npcs (`id`) VALUES (?)', $universe);
+            $params = [
                 'i', $id
-            ]);
+            ];
+            $db->execute($query, $params);
 
             // REVIEW this doesn't make sense
             // we udpate NID for a newly added NPC so, deleted is already null
@@ -821,12 +823,18 @@ class DB
                 $npc->name, $image, 
                 $npc->hull, $npc->armor, $npc->shield, $id
             ];
+
+            debug($query, $params);
             $db->execute($query, $params);
 
             // Update map tile
-            $db->execute(sprintf('UPDATE %s_Maps SET `npc` = ? , `npc_cloaked` = null, `npc_spotted` = UTC_TIMESTAMP() WHERE id = ?', $universe), [
+            $query = sprintf('UPDATE %s_Maps SET `npc` = ? , `npc_cloaked` = null, `npc_spotted` = UTC_TIMESTAMP() WHERE id = ?', $universe);
+            $params = [
                 'si', $image, $id
-            ]);
+            ];
+
+            debug($query, $params);
+            $db->execute($query, $params);
 
         } else {
             debug(__METHOD__, 'NPC exists', $n->image, $image);
@@ -840,9 +848,15 @@ class DB
             }
         }
 
-        $db->execute(sprintf('UPDATE %s_Test_Npcs SET `nid` = ?, `updated` = UTC_TIMESTAMP() WHERE (deleted is null or deleted = 0) and id = ?', $universe), [
-            'ii', $nid, $id
-        ]);
+        if(!is_null($nid)) {
+            $db->execute(sprintf('UPDATE %s_Test_Npcs SET `nid` = ?, `updated` = UTC_TIMESTAMP() WHERE (deleted is null or deleted = 0) and id = ?', $universe), [
+                'ii', $nid, $id
+            ]);
+        } else {
+            $db->execute(sprintf('UPDATE %s_Test_Npcs SET `updated` = UTC_TIMESTAMP() WHERE (deleted is null or deleted = 0) and id = ?', $universe), [
+                'i', $id
+            ]);
+        }
 
         // Update map tile
         $db->execute(sprintf('UPDATE %s_Maps SET `npc_updated` = UTC_TIMESTAMP() WHERE id = ?', $universe), [

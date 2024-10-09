@@ -449,10 +449,10 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
                     ++$sqlcount; // Counting SQL iterations per connection
                 } else {
                     if ((in_array($r->npc, $cloaked)) && !(in_array($r->npc, $mobile))) {
-                        debug('NPC has cloaked');
+                        debug('NPC has cloaked', $r->npc, $temp[$r_npc]);
                         $nid = isset($temp[2]) ? (int)$temp[2] : null;
                         if (is_null($r->npc_cloaked)) {
-                            DB::map_update_npc(universe: $uni, image: $temp[$r_npc], id: $id, cloaked: 1, nid: $nid);
+                            DB::map_update_npc(universe: $uni, image: $r->npc, id: $id, cloaked: 1, nid: $nid);
                             ++$sqlcount; // Counting SQL iterations per connection
                         } else {
                             $show = strtotime($r->today) - strtotime($r->npc_updated);

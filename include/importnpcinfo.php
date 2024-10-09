@@ -42,9 +42,10 @@ $db->execute(sprintf('SELECT * FROM %s_Maps M inner join %s_Test_Npcs TN on M.id
     'i', $loc
 ]);
 $m = $db->nextObject();
+debug('Map', $m);
 
-if (is_null($m->npc)) {
-    debug('Inserting New Info into DB');
+if (is_null($m)) {
+    debug('NPC not found on the tile, Inserting New Info into DB');
     DB::npc_add(universe: $uni, image: $image, id: $loc, sector: null, x: 0, y: 0, nid: $nid);
 } elseif ($dead) {
     debug('You killed it, good job...removing NPC');

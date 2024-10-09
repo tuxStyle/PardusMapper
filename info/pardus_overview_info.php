@@ -33,7 +33,7 @@ $return = '';
 
 if ($b_loc) {
     $loc = $b_loc;
-    debug($loc);
+    debug('Building: ' . $id);
 
     $stock = [];
 
@@ -156,7 +156,7 @@ if ($b_loc) {
 if ($npc_loc) {
     $row = 3;
     $loc = $npc_loc;
-    debug($loc);
+    debug('Npc: ' . $id);
 
     $npc = DB::npc_static(name: $loc->name);
     debug($npc);
