@@ -123,9 +123,10 @@ var hidePegasusMilitaryBuildings = false;
 var cookiePrefix = 'as_';
 // == End User Options ==
 
+var version = 6.10;
 var debug = false;
 var testing = false;
-var currentversion = 6.10
+var currentversion = (version).toFixed(2);
 
 /*global window: false, opera: false */
 var sendDebug = '';
