@@ -124,7 +124,7 @@ var hidePegasusMilitaryBuildings = false;
 
 var debug = false;
 var testing = false;
-var currentversion = 6.10;
+var currentversion = '6.10';
 
 /*global window: false, opera: false */
 var sendDebug = '';
