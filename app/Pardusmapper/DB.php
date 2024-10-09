@@ -253,10 +253,16 @@ class DB
             'sii', $image, $npc_cloacked, $id
         ]);
 
-        $db->execute(sprintf('UPDATE %s_Test_Npcs SET `nid` = ? , `cloaked` = ?, `updated` = UTC_TIMESTAMP() WHERE (deleted IS NULL OR deleted = 0) AND id = ?', $universe), [
-            'iii', $nid, $npc_cloacked, $id
+        $db->execute(sprintf('UPDATE %s_Test_Npcs SET `cloaked` = ?, `updated` = UTC_TIMESTAMP() WHERE (deleted IS NULL OR deleted = 0) AND id = ?', $universe), [
+            'ii', $npc_cloacked, $id
         ]);
         
+        if (!is_null($nid)) {
+            $db->execute(sprintf('UPDATE %s_Test_Npcs SET `nid` = ?, `updated` = UTC_TIMESTAMP() WHERE (deleted IS NULL OR deleted = 0) AND id = ?', $universe), [
+                'ii', $nid, $id
+            ]);
+        }
+
         return true;
     }
 
