@@ -22,3 +22,4 @@ php.ini
 user.ini
 error_log
 .user.ini
+_tests

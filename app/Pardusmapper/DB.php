@@ -878,6 +878,8 @@ class DB
     {
         debug(__METHOD__, func_get_args());
 
+        $npc = self::npc(universe: $universe, id: $id);
+
         $db = MySqlDB::instance();
 
         // Combine the updates into one query
@@ -896,7 +898,7 @@ class DB
         // when kill a NPC only then remove the mission/s
         if ($deleteMissions) {
             debug(__METHOD__, 'NPC Killed, remove missions as well');
-            self::mission_remove(universe: $universe, source_id: $id);
+            self::mission_remove(universe: $universe, sector: $npc->sector, x: $npc->x, y: $npc->y);
         }
 
         return true;
@@ -1433,10 +1435,12 @@ class DB
      *
      * @param string $universe
      * @param integer|bool $id
-     * @param integer|bool $source_id
+     * @param string|null $sector
+     * @param integer|null $x
+     * @param integer|null $y
      * @return boolean
      */
-    public static function mission_remove(string $universe, ?int $id = null, ?int $source_id = null): bool
+    public static function mission_remove(string $universe, ?int $id = null, ?string $sector = null, ?int $x = null, ?int $y = null): bool
     {
         debug(__METHOD__, func_get_args());
 
@@ -1460,10 +1464,14 @@ class DB
             $db->execute(sprintf('DELETE FROM %s_Test_Missions WHERE id = ?', $universe), [
                 'i', $id
             ]);
-        } elseif (!is_null($source_id)) {
-            $db->execute(sprintf('DELETE FROM %s_Test_Missions WHERE source_id = ?', $universe), [
-                'i', $id
-            ]);
+        } elseif (!is_null($sector) && !is_null($x) && !is_null($y)) {
+            $query = sprintf('DELETE FROM %s_Test_Missions WHERE t_sector = ? AND t_x = ? AND t_y = ?', $universe);
+            $params = [
+                'sii', $sector, $x, $y
+            ];
+
+            debug($query, $params);
+            $db->execute($query, $params);
         }
 
         return true;
