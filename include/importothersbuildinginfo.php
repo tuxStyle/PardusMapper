@@ -141,7 +141,7 @@ if (isset($_REQUEST['building'])) {
     }
 
     // If we can see the Building then there are no NPCs at this location
-    DB::npc_remove(universe: $uni, id: $loc);
+    DB::npc_remove(universe: $uni, id: $loc, deleteMissions: true);
 }
 if (isset($bt)) {
     // Visited Building Trade

@@ -842,7 +842,7 @@ class DB
             if ($n->image != $image) {
                 debug(__METHOD__, 'it is a different NPC, remove and add');
     
-                self::npc_remove(universe: $universe, id: $id);
+                self::npc_remove(universe: $universe, id: $id, deleteMissions: true);
                 self::npc_add(universe: $universe, image: $image, id: $id, sector: $sector, x: $x, y: $y, nid: $nid); // Adding $nid
                 return true;
             }
