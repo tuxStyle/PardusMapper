@@ -667,7 +667,7 @@ function buildingTrade(doc,hideIllegalBuildings,hideMilitaryBuildings) {
 				//Trader Buys
 				postData += td[5].textContent.replace(",","") + ",";
 				//Trader Sells
-				postData += std[2].textContent.replace(",","");
+				postData += std[3].textContent.replace(",","");
             }
 		}
 		var fs = traderows[traderows.length-2].getElementsByTagName('td')[1].textContent;
