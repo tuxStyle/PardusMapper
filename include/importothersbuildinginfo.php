@@ -230,7 +230,7 @@ if (isset($bt)) {
         //     )
 
 
-        $u = DB::upkeep_static(name: $name, res: $temp[0]);
+        $u = DB::upkeep_static(fg: $image, res: $temp[0]);
         debug($u);
         $amount = $u->amount;
         $upkeep = $u->upkeep;

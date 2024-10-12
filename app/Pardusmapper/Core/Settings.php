@@ -20,6 +20,7 @@ class Settings
     
     public static ?int $TESTING = 0;
     public static ?int $DEBUG = 0;
+    public static ?int $DEBUG_SQL = 0;
     public static ?int $SHOW_EXCEPTIONS = 0;
 
     public static ?string $DB_SERVER = null;
@@ -40,6 +41,7 @@ class Settings
     {
         self::$TESTING = (int)env('TESTING');
         self::$DEBUG = (int)env('DEBUG');
+        self::$DEBUG_SQL = (int)env('DEBUG_SQL');
         self::$SHOW_EXCEPTIONS = (int)env('SHOW_EXCEPTIONS');
 
         self::$DB_SERVER = env('DB_SERVER');

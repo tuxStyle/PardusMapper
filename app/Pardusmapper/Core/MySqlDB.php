@@ -45,6 +45,7 @@ class MySqlDB
 
     public function connect(): \mysqli
     {
+        // debug(__METHOD__, debug_backtrace());
         $dbRandy = Settings::$DB_USER;
         $dbRandy .= random_int(1, Settings::$DB_TOTAL_USERS); // Randomly append 1 or 2 to the DB_USER (or as many as you create), this was done when there was a limit to the number of queries the single user could perform
 
@@ -167,7 +168,7 @@ class MySqlDB
 
     public function close(): void
     {
-        // debug_print_backtrace();
+        // debug(__METHOD__, debug_backtrace());
         if (!$this->isClosed && $this->db) {
             $this->db->close(); // Close the database connection
             $this->isClosed = true;
@@ -252,6 +253,10 @@ class MySqlDB
 
         $this->free();
         
+        if (Settings::$DEBUG_SQL) {
+            debug(self::extractTrace(backtrace: debug_backtrace()));
+        }
+
         // prepare query
         $stmt = $this->prepare($sql);
         
@@ -287,5 +292,17 @@ class MySqlDB
             // For INSERT, UPDATE, DELETE queries
             return ($this->db->affected_rows > 0); // Return true if rows were affected, false otherwise
         }
+    }
+
+    private function extractTrace(array $backtrace) {
+        $debugTrace = [];
+
+        $prefix = '';
+        foreach($backtrace as $trace) {
+            $debugTrace[] = sprintf('%s::%s %s(%s)', $trace['class'], $trace['function'], $trace['file'], $trace['line']);
+        }
+        $debugTrace[] = $backtrace[0]['args'];
+
+        return $debugTrace;
     }
 }

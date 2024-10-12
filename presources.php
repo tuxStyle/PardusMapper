@@ -46,11 +46,11 @@ if (isset($id) && $id > 0) {
         'i', $id
     ]);
     while ($r_single = $db->nextObject()) {
-        $r_list[] = $r_single->name;
+        $r_list[] = $r_single->image;
     }
     $r_list = array_unique($r_list);
     foreach ($r_list as $r_single) {
-        $u = DB::upkeep_static(name: $r_single, upkeep: 1);
+        $u = DB::upkeep_static(fg: $r_single, upkeep: 1);
         while ($u = $db->nextObject()) {
             $res_list[] = $u->res;
         }

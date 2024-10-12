@@ -96,10 +96,12 @@ if (isset($bts)) {
 
     for ($i = 1; $i < sizeof($bts); $i++) {
         $temp = explode(',', $bts[$i]);
-        debug('Looking up infor for ' . $temp[0], $temp);
+        debug('Looking up info for ' . $temp[0], $temp);
 
         // Calculate Stocking Level for this Resource
-        $res = DB::upkeep_static(name: $name, res: $temp[0]);
+        $res = DB::upkeep_static(fg: $image, res: $temp[0]);
+        debug('Loaded static resources: ', $res);
+
         $stock_level = 0;
         if ($res->upkeep) {
             if ($temp[3]) {
@@ -147,7 +149,7 @@ if (isset($level)) {
     $temp = explode(',', $level);
     debug($temp);
 
-    $u = $res = DB::upkeep_static(name: $name, res: $temp[0], upkeep: 0);
+    $u = DB::upkeep_static(fg: $image, res: $temp[0], upkeep: 0);
     if ($u) {
         debug('Found ' . $u->res);
 
@@ -200,7 +202,7 @@ if (isset($bm)) {
         debug('Not a Trading Outpost it is a ' . $name);
         // Get list of Resources for Building
         $resources = [];
-        $res = DB::upkeep_static(name: $name);
+        $res = DB::upkeep_static(fg: $image);
         foreach($res as $u) {$resources[] = $u;}
 
         // Loop through List

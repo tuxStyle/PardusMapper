@@ -10,6 +10,7 @@ use Pardusmapper\Core\MySqlDB;
 use Pardusmapper\CORS;
 use Pardusmapper\Post;
 use Pardusmapper\Session;
+use Pardusmapper\DB;
 
 CORS::mapper();
 
@@ -27,6 +28,8 @@ $pilot = Post::pstring(key: 'pilot');
 
 session_name($uni);
 session_start();
+
+debug($_SESSION);
 
 $security = Session::pint(key: 'security', default: 0);
 $user = Session::pstring(key: 'user');
@@ -88,7 +91,7 @@ if (isset($pilot) && $pilot === $user) {
                     , (SELECT max FROM %s_New_Stock s WHERE b.id = s.id AND name = ?) "max"
                 FROM %s_Buildings b 
                 WHERE id IN (SELECT loc FROM %s_Personal_Resources WHERE id = ?)
-                AND b.name IN (SELECT name from Pardus_Upkeep_Data WHERE res = ? AND upkeep = 1)';
+                AND b.image IN (SELECT name from Pardus_Upkeep_Data WHERE res = ? AND upkeep = 1)';
         $query = sprintf($sql, $uni, $uni, $uni, $uni, $uni);
         $params = ['sssis', $resource, $resource, $resource, $id, $resource];
     } else {
@@ -104,7 +107,7 @@ if (isset($pilot) && $pilot === $user) {
                     , (SELECT max FROM %s_New_Stock s WHERE b.id = s.id AND name = ?) "max" 
                 FROM %s_Buildings b 
                 WHERE sector = ?
-                AND b.name IN (SELECT name from Pardus_Upkeep_Data WHERE res = ?AND upkeep = 1)';
+                AND b.image IN (SELECT name from Pardus_Upkeep_Data WHERE res = ?AND upkeep = 1)';
         $query = sprintf($sql, $uni, $uni, $uni, $uni);
         $params = ['sssss', $resource, $resource, $resource, $sector, $resource];
     } else {
@@ -119,8 +122,6 @@ $db->execute($query, $params);
 
 
 while ($q = $db->nextObject()) { 
-    // debug($q);
-
     if (!$q->stock_updated) {
         $q->tick = 0;
         continue;
@@ -156,7 +157,6 @@ if (isset($id) && $id > 0) {
     while ($a = $db->nextObject()) { $checked[] = $a->loc; }
     if ($checked) { sort($checked); }
 }
-$db->close();
 
 $i = 0;
 
@@ -236,10 +236,16 @@ foreach ($buildings as $b) {
     }
     $return .= '<td align="center">[' . $b->x . ',' . $b->y . ']</td>';
     $return .= '<td align="center">';
+
+    $display_name = $b->name;
+    if (empty($display_name)) {
+        $bs = DB::building_static(image: $b->image);
+        $display_name = $bs->name;
+    }
     if ($b->x) {
-        $return .= '<a href="#" onClick="loadDetail(\'' . $base_url . '\',\'' . $uni . '\',' . $b->id . ');return false;">' . $b->name . '</a></td>';
+        $return .= '<a href="#" onClick="loadDetail(\'' . $base_url . '\',\'' . $uni . '\',' . $b->id . ');return false;">' . $display_name . '</a></td>';
     } else {
-        $return .= $b->name . '</td>';
+        $return .= $display_name . '</td>';
     }
     if ($security == 1 || $security == 100) {
         $return .= '<td align="left">';

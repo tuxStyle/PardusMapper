@@ -177,8 +177,6 @@ class DB
         $query = sprintf('UPDATE %s_Maps SET %s WHERE id = ?', $universe, implode(', ', $fields));
 
         $db = MySqlDB::instance();
-
-        debug(__METHOD__, $query, $binds);
         $db->execute($query, $binds);
 
         return true;
@@ -194,12 +192,10 @@ class DB
      */
     public static function map_update_fg(string $universe, string $image, int $id): bool
     {
-        $db = MySqlDB::instance();
-
         $query = sprintf('UPDATE %s_Maps SET `fg` = ? , `fg_updated` = UTC_TIMESTAMP() WHERE id = ?', $universe);
         $params = ['si', $image, $id];
 
-        debug(__METHOD__, $query, $params);
+        $db = MySqlDB::instance();
         $db->execute($query, $params);
     
         return true;
@@ -215,12 +211,10 @@ class DB
      */
     public static function map_update_bg(string $universe, string $image, ?int $id): bool
     {
-        $db = MySqlDB::instance();
-
         $query = sprintf('UPDATE %s_Maps SET `bg` = ? WHERE id = ?', $universe);
         $params = ['si', $image, $id];
 
-        debug(__METHOD__, $query, $params);
+        $db = MySqlDB::instance();
         $db->execute($query, $params);
         
         return true;
@@ -319,6 +313,8 @@ class DB
      */
     public static function building_update(string $universe, int $id, array $params): bool
     {
+        debug(__METHOD__, func_get_args());
+
         if (0 === count($params)) {
             return false;
         }
@@ -444,27 +440,22 @@ class DB
 
         // empty map tile content
         $query = sprintf('UPDATE %s_Maps SET `fg` = NULL , `fg_spotted` = UTC_TIMESTAMP(), `fg_updated` = UTC_TIMESTAMP() WHERE id = ?', $universe);
-        // debug(__METHOD__, $query, $params);
         $db->execute($query, $params);
 
         // remove the building
         $query = sprintf('DELETE FROM %s_Buildings WHERE id = ?', $universe);
-        // debug(__METHOD__, $query, $params);
         $db->execute($query, $params);
 
         // remove the stocks
         $query = sprintf('DELETE FROM %s_New_Stock WHERE id = ?', $universe);
-        // debug(__METHOD__, $query, $params);
         $db->execute($query, $params);
 
         // if it's a SB, remove the missions, squads and equiment as well
         if ($sb) {
             $query = sprintf('DELETE FROM %s_Test_Missions WHERE source_id = ?', $universe);
-            // debug(__METHOD__, $query, $params);
             $db->execute($query, $params);
 
             $query = sprintf('DELETE FROM %s_Squadrons WHERE id = ?', $universe);
-            // debug(__METHOD__, $query, $params);
             $db->execute($query, $params);
 
             // REVIEW
@@ -473,7 +464,6 @@ class DB
             // remove equipment as well
             // TODO: double check this again
             $query = sprintf('DELETE FROM %s_Equipment WHERE id = ?', $universe);
-            // debug(__METHOD__, $query, $params);
             $db->execute($query, $params);
         }
 
@@ -530,7 +520,6 @@ class DB
             , (count($fields) === 0 ? '' : ', ' . implode(', ', $fields))
         );
 
-        debug($query, $binds);
         $db = MySqlDB::instance();
         $db->execute($query, $binds);
 
@@ -551,8 +540,7 @@ class DB
             return false;
         }
 
-        debug('Updating building equipment fields');
-        debug($id, $params);
+        debug('Updating building equipment fields', func_get_args());
 
         $bindType = [];
         $bindValues = [];
@@ -592,7 +580,6 @@ class DB
             , (count($fields) === 0 ? '' : ', ' . implode(', ', $fields))
         );
 
-        debug($query, $binds);
         $db = MySqlDB::instance();
         $db->execute($query, $binds);
 
@@ -656,16 +643,17 @@ class DB
     /**
      * Get static upkeep data
      *
-     * @param string|null $name
+     * @param string|null $fg
      * @param string|null $res
      * @param int|null $upkeep
      * @return object|array|null
      */
-    public static function upkeep_static(?string $name = null, ?string $res = null, ?int $upkeep = null): object|array|null
+    public static function upkeep_static(?string $fg = null, ?string $res = null, ?int $upkeep = null): object|array|null
     {
+        debug(__METHOD__, func_get_args());
         $db = MySqlDB::instance();
 
-        if (is_null($name) && is_null($res) && is_null($upkeep)) {
+        if (is_null($fg) && is_null($res) && is_null($upkeep)) {
             return null;
         }
         
@@ -674,10 +662,10 @@ class DB
         $bindType = [];
         $bindValues = [];
 
-        if (!empty($name)) {
-            $conditions[] = 'name = ?';
+        if (!empty($fg)) {
+            $conditions[] = 'name = (SELECT name FROM Pardus_Buildings_Data WHERE image = ?)';
             $bindType[] = 's';
-            $bindValues[] = $name;
+            $bindValues[] = $fg;
         }
 
         if (!empty($res)) {
@@ -824,7 +812,6 @@ class DB
                 $npc->hull, $npc->armor, $npc->shield, $id
             ];
 
-            debug($query, $params);
             $db->execute($query, $params);
 
             // Update map tile
@@ -833,7 +820,6 @@ class DB
                 'si', $image, $id
             ];
 
-            debug($query, $params);
             $db->execute($query, $params);
 
         } else {
@@ -878,8 +864,6 @@ class DB
     {
         debug(__METHOD__, func_get_args());
 
-        $npc = self::npc(universe: $universe, id: $id);
-
         $db = MySqlDB::instance();
 
         // Combine the updates into one query
@@ -896,8 +880,9 @@ class DB
         // while testing, a NPC cloaked and in DB was marked as deleted
         // i added a deleteMissions parameter passed as true only from importnpcinfo.php 
         // when kill a NPC only then remove the mission/s
-        if ($deleteMissions) {
-            debug(__METHOD__, 'NPC Killed, remove missions as well');
+        $npc = self::npc(universe: $universe, id: $id);
+        if ($npc && $deleteMissions) {
+            debug(__METHOD__, 'NPC Killed or replaced by building, remove missions as well');
             self::mission_remove(universe: $universe, sector: $npc->sector, x: $npc->x, y: $npc->y);
         }
 
@@ -929,8 +914,6 @@ class DB
         $params = [
             'iiiii', $nid, $hull, $armor, $shield, $id
         ];
-
-        debug($query, $params);
 
         $db->execute($query, $params);
         $db->execute(sprintf('UPDATE %s_Maps SET `npc_updated` = UTC_TIMESTAMP() WHERE id = ?', $universe), [
@@ -1032,12 +1015,11 @@ class DB
     public static function stock_create(string $universe, int $id, string $name): bool
     {
         debug('Create stock', func_get_args());
-        $db = MySqlDB::instance();
 
         $query = sprintf('INSERT INTO %s_New_Stock (id, name) VALUES (?, ?)', $universe);
         $params = ['is', $id, $name];
 
-        debug($query, $params);
+        $db = MySqlDB::instance();
         $db->execute($query, $params);
 
         return true;
@@ -1082,8 +1064,6 @@ class DB
         $query = sprintf('UPDATE %s_New_Stock SET %s WHERE id = ? AND name = ?', $universe, implode(', ', $fields));
 
         $db = MySqlDB::instance();
-
-        debug($query, $binds);
         $db->execute($query, $binds);
 
         return true;
@@ -1124,12 +1104,10 @@ class DB
     {
         debug(__METHOD__, func_get_args());
 
-        $db = MySqlDB::instance();
-
         $query = 'SELECT res,upkeep FROM Pardus_Buildings_Data b, Pardus_Upkeep_Data u WHERE b.name = u.name AND b.image = ?';
         $params = ['s', $image];
 
-        // debug(__METHOD__, $query, $params);
+        $db = MySqlDB::instance();
         $db->execute($query, $params);
 
         $res = [];
@@ -1161,11 +1139,10 @@ class DB
     {
         debug(__METHOD__, func_get_args());
 
-        $db = MySqlDB::instance();
-
         $query = sprintf('DELETE FROM %s_New_Stock WHERE id = ?', $universe);
         $params = ['i', $id];
-        // debug(__METHOD__, $query, $params);
+
+        $db = MySqlDB::instance();
         $db->execute($query, $params);
         
         return true;
@@ -1261,8 +1238,7 @@ class DB
      */
     public static function crew_update(string $universe, string $name, array $params): bool
     {
-        debug('Updating crew fields');
-        debug($name, $params);
+        debug('Updating crew fields', func_get_args());
 
         $bindType = [];
         $bindValues = [];
@@ -1287,8 +1263,6 @@ class DB
         $binds = array_merge($binds, $bindValues);
 
         $db = MySqlDB::instance();
-
-        debug(sprintf('UPDATE %s_Crew SET updated = UTC_TIMESTAMP(), %s WHERE name = ?', $universe, implode(', ', $fields)), $binds);
         $db->execute(sprintf('UPDATE %s_Crew SET updated = UTC_TIMESTAMP(), %s WHERE name = ?', $universe, implode(', ', $fields)), $binds);
 
         return true;
@@ -1304,14 +1278,12 @@ class DB
      */
     public static function crew_create(string $universe, string $name, int $location): bool
     {
-        debug('Create crew');
-        debug(func_get_args());
-
-        $db = MySqlDB::instance();
+        debug('Create crew', func_get_args());
 
         $query = sprintf('INSERT INTO %s_Crew (name,loc) VALUES (?, ?)', $universe);
         $params = ['si', $name, $location];
-        debug($query, $params);
+
+        $db = MySqlDB::instance();
         $db->execute($query, $params);
 
         return true;
@@ -1328,11 +1300,10 @@ class DB
     {
         debug(__METHOD__, func_get_args());
 
-        $db = MySqlDB::instance();
-
         $query = sprintf('DELETE FROM %s_Crew WHERE loc = ?', $universe);
         $params = ['i', $location];
-        // debug(__METHOD__, $query, $params);
+
+        $db = MySqlDB::instance();
         $db->execute($query, $params);
         
         return true;
@@ -1373,12 +1344,11 @@ class DB
     public static function equipment_create(string $universe, string $name, int $location): bool
     {
         debug('Create equpment', func_get_args());
-        $db = MySqlDB::instance();
 
         $query = sprintf('INSERT INTO %s_Equipment (name,loc) VALUES (?, ?)', $universe);
         $params = ['si', $name, $location];
 
-        debug($query, $params);
+        $db = MySqlDB::instance();
         $db->execute($query, $params);
 
         return true;
@@ -1423,8 +1393,6 @@ class DB
         $query = sprintf('UPDATE %s_Equipment SET %s WHERE loc = ? AND name = ?', $universe, implode(', ', $fields));
 
         $db = MySqlDB::instance();
-
-        debug($query, $binds);
         $db->execute($query, $binds);
 
         return true;
@@ -1470,7 +1438,6 @@ class DB
                 'sii', $sector, $x, $y
             ];
 
-            debug($query, $params);
             $db->execute($query, $params);
         }
 

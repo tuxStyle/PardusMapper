@@ -121,7 +121,7 @@ if (isset($pt)) {
         debug($temp);
 
         $cap += $temp[1];
-        $u = DB::upkeep_static(name: $p->name, res: $temp[0]);
+        $u = DB::upkeep_static(fg: $p->image, res: $temp[0]);
         if ($u && $u->upkeep) {
             $building_stock_level += $temp[1];
             $building_stock_max += $temp[3];

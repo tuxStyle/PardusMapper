@@ -11,11 +11,12 @@
 // @author	Tightwad@Orion.Pardus.at
 // @author	Spednthrift@Artemis.Pardus.at
 // @grant	none
-// @version	6.10
+// @version	6.11
 // ==/UserScript==
 
 // == Notes ==
 //
+// Version 6.11 Fixed trading outpost trade sync
 // Version 6.10 Fixed the javascript error on own building trade settings page
 // Version 6.9 More work around detecting the NPC is dead if you kill it as well as debug process updates.
 // Version 6.8 Updated Nav Data to check that new data was different from previous data to avoid DDOSing the mapper on nav spamming etc, also corrected Ambush mode to actually not send.
@@ -125,7 +126,7 @@ var cookiePrefix = 'as_';
 
 var debug = false;
 var testing = false;
-var currentversion = 6.10;
+var currentversion = '6.11';
 
 /*global window: false, opera: false */
 var sendDebug = '';
@@ -657,6 +658,19 @@ function buildingTrade(doc,hideIllegalBuildings,hideMilitaryBuildings) {
 				postData += td[6].textContent.replace(",","") + ",";
 				//Trader Sells
 				postData += std[3].textContent.replace(",","");
+			} else if (td.length == 7) { // Trading Outposts
+                //Resource
+				postData += "<wbr>~" + td[1].textContent.replace(",","") + ",";
+				//Amount
+				postData += td[2].textContent.replace(",","") + ",";
+				//Min
+				postData += td[3].textContent.replace(",","") + ",";
+				//Max
+				postData += td[4].textContent.replace(",","") + ",";
+				//Trader Buys
+				postData += td[5].textContent.replace(",","") + ",";
+				//Trader Sells
+				postData += std[2].textContent.replace(",","");
 			}
 		}
 		var fs = traderows[traderows.length-2].getElementsByTagName('td')[1].textContent;

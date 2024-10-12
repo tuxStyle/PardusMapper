@@ -31,6 +31,7 @@ $return = '';
 
 if ($b_loc) {
     $loc = $b_loc;
+    // debug(__FILE__, __LINE__, $loc);
 
     //Get Resource Data
     [$res_img, $res_id] = DB::res_data_static();
@@ -41,10 +42,10 @@ if ($b_loc) {
     // REVIEW:
     // the original code used war status to filter stocks but, i'm missing data in the War_Status table so, disable this for now
     // TODO: check later
-    $stocks = DB::stocks(id: $id, universe: $uni, warStatus: false);
-    foreach($stocks as $q) { $stock[$res_id[$q->name]] = $q; }
+    $bldgStocks = DB::stocks(id: $id, universe: $uni, warStatus: false);
+    foreach($bldgStocks as $q) { $stock[$res_id[$q->name]] = $q; }
 
-    $u = DB::upkeep_static(name: $loc->name);
+    $u = DB::upkeep_static(fg: $loc->image);
     foreach($u as $q) {$upkeep[$q->res] = $q;}
 
     // Make sure the Stock is in the correct order
@@ -52,14 +53,17 @@ if ($b_loc) {
 
     //Calculate Ticks Passed
     $format = '%F %T';
-    $ts = strtotime($loc->stock_updated);
-    $date = new DateTime("@$ts");
-    $date->setTime(1,25,0);
-    $tick = $date->format('U');
+    $tick = 0;
+    if ($loc->stock_updated) {
+        $ts = strtotime($loc->stock_updated);
+        $date = new DateTime("@$ts");
+        $date->setTime(1,25,0);
+        $tick = $date->format('U');
 
-    
-    while ($tick < strtotime($loc->stock_updated)) {
-        $tick += (60 * 60 * 6);
+        
+        while ($tick < strtotime($loc->stock_updated)) {
+            $tick += (60 * 60 * 6);
+        }
     }
     $count = 0;
     while ($tick < strtotime($loc->today)) {
@@ -80,11 +84,14 @@ if ($b_loc) {
     $viewed = floor($diff['days']) . 'd ' . floor($diff['hours']) . 'h ' . floor($diff['min']) . 'm';
     
     // Calculate Days/Hours/Mins Since last Stock Update
-    $diff['sec'] = strtotime($loc->today) - strtotime($loc->stock_updated);
-    $diff['days'] = $diff['sec']/60/60/24;
-    $diff['hours'] = ($diff['days'] - floor($diff['days'])) * 24;
-    $diff['min'] = ($diff['hours'] - floor($diff['hours'])) * 60;
-    $diff['string'] = floor($diff['days']) . 'd ' . floor($diff['hours']) . 'h ' . floor($diff['min']) . 'm';
+    $diff['string'] = 'NEVER';
+    if ($loc->stock_updated) {
+        $diff['sec'] = strtotime($loc->today) - strtotime($loc->stock_updated);
+        $diff['days'] = $diff['sec']/60/60/24;
+        $diff['hours'] = ($diff['days'] - floor($diff['days'])) * 24;
+        $diff['min'] = ($diff['hours'] - floor($diff['hours'])) * 60;
+        $diff['string'] = floor($diff['days']) . 'd ' . floor($diff['hours']) . 'h ' . floor($diff['min']) . 'm';
+    }
 
     $return .= '<table>';
         $colspan = 1;
@@ -168,7 +175,7 @@ if ($b_loc) {
                     $return .= '</tr>';
                     $i = 1;
                     if ($stock) {
-                        foreach ($stocks as $s) {
+                        foreach ($bldgStocks as $s) {
                             if ($upkeep[$s->name]->upkeep == 1) {
                                 if ($i == 1) { $return .= '<tr>'; }
                                 $return .= '<td align="center">';
@@ -188,7 +195,7 @@ if ($b_loc) {
                     $return .= '</tr>';
                     $i = 1;
                     if ($stock) {
-                        foreach ($stocks as $s) {
+                        foreach ($bldgStocks as $s) {
                             if ($upkeep[$s->name]->upkeep == 0) {
                                 if ($i == 1) { $return .= '<tr>'; }
                                 $return .= '<td align="center">';

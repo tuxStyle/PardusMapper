@@ -48,7 +48,10 @@ if (isset($_REQUEST['login'])) {
                 session_regenerate_id(true);
                 $_SESSION['user'] = $u->username;
                 if ($u->user_id) {
-                    $_SESSION['id'] = $u->user_id;
+                    $_SESSION['user_id'] = $u->user_id;
+                }
+                if ($u->id) {
+                    $_SESSION['id'] = $u->id;
                 }
                 if ($u->security) {
                     $_SESSION['security'] = $u->security;

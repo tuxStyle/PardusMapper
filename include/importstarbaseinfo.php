@@ -168,11 +168,10 @@ if (count($sbt) > 0) {
 
         $temp[1] = str_replace(',', '', $temp[1]); // Remove commas from the second element
         $cap += $temp[1];
-        $name = 'starbase';
         $res = $temp[0];
         
         // Execute the query
-        $u = DB::upkeep_static(name: $name, res: $res);
+        $u = DB::upkeep_static(fg: 'foregrounds/starbase_f0_s1.png', res: $res); // any SB image
 
         if ($u !== null && isset($u->upkeep)) {
             if ($u->upkeep) {

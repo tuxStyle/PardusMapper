@@ -101,11 +101,14 @@ if ($b_loc) {
     $visited = floor($diff['days']) . 'd ' . floor($diff['hours']) . 'h ' . floor($diff['min']) . 'm';
     
     // Calculate Days/Hours/Mins Since last Stock Update
-    $diff['sec'] = $loc->stock_updated ? strtotime($loc->today) - strtotime($loc->stock_updated) : 0;
-    $diff['days'] = $diff['sec']/60/60/24;
-    $diff['hours'] = ($diff['days'] - floor($diff['days'])) * 24;
-    $diff['min'] = ($diff['hours'] - floor($diff['hours'])) * 60;
-    $diff['string'] = floor($diff['days']) . 'd ' . floor($diff['hours']) . 'h ' . floor($diff['min']) . 'm';
+    $diff['string'] = 'NEVER';
+    if ($loc->stock_updated) {
+        $diff['sec'] = strtotime($loc->today) - strtotime($loc->stock_updated);
+        $diff['days'] = $diff['sec']/60/60/24;
+        $diff['hours'] = ($diff['days'] - floor($diff['days'])) * 24;
+        $diff['min'] = ($diff['hours'] - floor($diff['hours'])) * 60;
+        $diff['string'] = floor($diff['days']) . 'd ' . floor($diff['hours']) . 'h ' . floor($diff['min']) . 'm';
+    }
 
     $row = 8;
     $i = 0;

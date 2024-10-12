@@ -274,7 +274,6 @@ $params = array_merge($params, $bindValues);
 
 if (strlen($sort_by)) { $query .= $sort_by; }
 
-debug($query, $params);
 $db->execute($query, $params);
 
 $delete = [];

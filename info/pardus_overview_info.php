@@ -56,14 +56,18 @@ if ($b_loc) {
     //Calculate Ticks Passed
     $format = '%F %T';
     
-    $ts = strtotime($loc->stock_updated);
-    $date = new DateTime("@$ts");
-    $date->setTime(1,25,0);
-    $tick = $date->format('U');
-    
-    while ($tick < strtotime($loc->stock_updated)) {
-        $tick += (60 * 60 * 6);
+    $tick = 0;
+    if ($loc->stock_updated) {
+        $ts = strtotime($loc->stock_updated);
+        $date = new DateTime("@$ts");
+        $date->setTime(1,25,0);
+        $tick = $date->format('U');
+        
+        while ($tick < strtotime($loc->stock_updated)) {
+            $tick += (60 * 60 * 6);
+        }
     }
+
     $count = 0;
     while ($tick < strtotime($loc->today)) {
         $tick += (60*60*6);
@@ -76,11 +80,14 @@ if ($b_loc) {
     $ticks_used = 100;
 
     // Calculate Days/Hours/Mins Since last Stock Update
-    $diff['sec'] = strtotime($loc->today) - strtotime($loc->stock_updated);
-    $diff['days'] = $diff['sec']/60/60/24;
-    $diff['hours'] = ($diff['days'] - floor($diff['days'])) * 24;
-    $diff['min'] = ($diff['hours'] - floor($diff['hours'])) * 60;
-    $diff['string'] = floor($diff['days']) . 'd ' . floor($diff['hours']) . 'h ' . floor($diff['min']) . 'm';
+    $diff['string'] = 'NEVER';
+    if ($loc->stock_updated) {
+        $diff['sec'] = strtotime($loc->today) - strtotime($loc->stock_updated);
+        $diff['days'] = $diff['sec']/60/60/24;
+        $diff['hours'] = ($diff['days'] - floor($diff['days'])) * 24;
+        $diff['min'] = ($diff['hours'] - floor($diff['hours'])) * 60;
+        $diff['string'] = floor($diff['days']) . 'd ' . floor($diff['hours']) . 'h ' . floor($diff['min']) . 'm';
+    }
 
     $row = 8;
     $i = 0;
@@ -215,13 +222,17 @@ if ($npc_loc) {
     $return .= '</table>';
 }
 
-if (!($b_loc || $npc_loc)) {
+if (!($b_loc || $npc_loc) && $m) {
+    debug('Not NPC or Building: ' . $id);
     // Calculate Days/Hours/Mins Since Last viewed on Nav
-    $diff['sec'] = strtotime($m->today) - strtotime($m->fg_updated);
-    $diff['days'] = $diff['sec']/60/60/24;
-    $diff['hours'] = ($diff['days'] - floor($diff['days'])) * 24;
-    $diff['min'] = ($diff['hours'] - floor($diff['hours'])) * 60;
-    $map = floor($diff['days']) . 'd ' . floor($diff['hours']) . 'h ' . floor($diff['min']) . 'm';
+    $map = '-d -h -m';
+    if ($m->fg_updated) {
+        $diff['sec'] = strtotime($m->today) - strtotime($m->fg_updated);
+        $diff['days'] = $diff['sec']/60/60/24;
+        $diff['hours'] = ($diff['days'] - floor($diff['days'])) * 24;
+        $diff['min'] = ($diff['hours'] - floor($diff['hours'])) * 60;
+        $map = floor($diff['days']) . 'd ' . floor($diff['hours']) . 'h ' . floor($diff['min']) . 'm';
+    }
 
     $return .= '<table class="messagestyle" width="210">';
     $return .= '<tr style="background-color:#003040;">';
