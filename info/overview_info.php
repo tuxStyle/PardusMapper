@@ -113,6 +113,8 @@ if ($b_loc) {
     $row = 8;
     $i = 0;
 
+    $loc_image = $loc->image;
+
     $return .= '<table id="overviewTable">';
     $return .= '<tr style="background-color:#003040;"><td colspan="' . $row . '" align="center">' . $loc->name . ' [' . $loc->x . ',' . $loc->y . ']</td></tr>';
     $return .= '<tr style="background-color:#003040;">';
@@ -129,10 +131,10 @@ if ($b_loc) {
     $return .= '</tr>';
     $return .= '<tr>';
     $return .= '<th colspan="2" style="background-color:#500000; color:#BBBBDD;">Resource</th>';
-    if (strpos($loc->image,"starbase")) { $return .= '<th style="background-color:#330033; color:#BBBBDD;">Amount<br>Available</th>'; }
+    if ($loc_image && strpos($loc_image,"starbase")) { $return .= '<th style="background-color:#330033; color:#BBBBDD;">Amount<br>Available</th>'; }
     else { 
         $return .= '<th style="background-color:#330033; color:#BBBBDD;">Amount</th>'; 
-        if (strpos($loc->image,"planet")) {
+        if ($loc_image && strpos($loc_image,"planet")) {
         $return .= '<th style="background-color:#000000; color:#BBBBDD;">Bal</th>';
             if ($loc->owner) {
                 $return .= '<th style="background-color:#000000; color:#BBBBDD;">Min</th>';
@@ -142,14 +144,14 @@ if ($b_loc) {
         }
     }
 
-    if (strpos($loc->image,"starbase")) {
+    if ($loc_image && strpos($loc_image,"starbase")) {
         $return .= '<th style="background-color:#000000; color:#BBBBDD;">Bal</th>';
     }
-    if (strpos($loc->image,"starbase")) { $return .= '<th style="background-color:#000000; color:#BBBBDD;">Amount<br>Needed</th>'; }
+    if ($loc_image && strpos($loc_image,"starbase")) { $return .= '<th style="background-color:#000000; color:#BBBBDD;">Amount<br>Needed</th>'; }
     else { $return .= '<th style="background-color:#000000; color:#BBBBDD;">Max</th>'; }
     $return .= '<th style="background-color:#505000; color:#BBBBDD;">Price&nbsp;(Buy)</th>';
     $return .= '<th style="background-color:#505000; color:#BBBBDD;">Price&nbsp;(Sell)</th>';
-    //if (!(strpos($loc->image,"planet") || strpos($loc->image,"starbase"))) { $return .= '<th style="background-color:#330033; color:#BBBBDD;">Needed</th>'; }
+    //if (!($loc_image && strpos($loc_image,"planet") || $loc_image && strpos($loc_image,"starbase"))) { $return .= '<th style="background-color:#330033; color:#BBBBDD;">Needed</th>'; }
     $return .= '</tr>';
 
     if ($stock) {
@@ -161,13 +163,13 @@ if ($b_loc) {
                 $return .= '<td>&nbsp;</td>';
             }
             $return .= '<td><font color="#009900"><strong>' . $s->name . '</strong></td>';
-            if (strpos($loc->image,"starbase")) {
+            if ($loc_image && strpos($loc_image,"starbase")) {
                 $amount = $s->amount - $s->min;
                 if ($amount < 0) $amount = 0;
                 $return .= '<td align="right">' . number_format((int)$amount) .'</td>';
             } else { 
                 $return .= '<td align="right">' . number_format((int)$s->amount) .'</td>'; 
-                if (strpos($loc->image,"planet")) {
+                if ($loc_image && strpos($loc_image,"planet")) {
                     $return .= '<td align="right">';
                     if($s->bal != 0) {
                         if ($s->bal > 0) { $return .= '<font color="#009900"><strong>+' . number_format((int)$s->bal) . '</strong></font>'; }
@@ -180,7 +182,7 @@ if ($b_loc) {
                 }
             }
         
-            if (strpos($loc->image,"starbase")) {
+            if ($loc_image && strpos($loc_image,"starbase")) {
                 $return .= '<td align="right">';
                 if($s->bal != 0) {
                     if ($s->bal > 0) { $return .= '<font color="#009900"><strong>+' . number_format((int)$s->bal) . '</strong></font>'; }
@@ -188,14 +190,14 @@ if ($b_loc) {
                 } else { $return .= number_format((int)$s->bal); }
                 $return .= '</td>';
             }
-            if (strpos($loc->image,"starbase")) {
+            if ($loc_image && strpos($loc_image,"starbase")) {
                 $amount = $s->max - $s->amount;
                 if ($amount < 0) $amount = 0;
                 $return .= '<td align="right">' . number_format((int)$amount) . '</td>';
             } else { $return .= '<td align="right">' . number_format((int)$s->max) . '</td>'; }
             $return .= '<td align="right">' . number_format((int)$s->buy) . '</td>';
             $return .= '<td align="right">' . number_format((int)$s->sell) . '</td>';
-            //if (!(strpos($loc->image,"planet") || strpos($loc->image,"starbase"))) {
+            //if (!($loc_image && strpos($loc_image,"planet") || $loc_image && strpos($loc_image,"starbase"))) {
             //	$return .= (($s->max - $s->amount) > 0) ? '<td align="right">' . number_format((int)$s->max - $s->amount) . '</td>' : '<td align="right">0</td>';
             //}	
         }
@@ -210,7 +212,7 @@ if ($b_loc) {
     $return .= '<td colspan="' . floor($row/2) . '">Available Credits:</td>';
     $return .= '<td colspan="' . ceil($row/2) . '" align="right">' . number_format((int)$loc->credit) . '</td>';
     $return .= '</tr>';
-    if (!strpos($loc->image,"outpost")) {
+    if (!$loc_image && strpos($loc_image,"outpost")) {
         $return .= '<tr style="background-color:#003040;">';
         $return .= '<td colspan="' . floor($row/2) . '">Ticks Past:</td>';
         $return .= '<td colspan="' . ceil($row/2) . '" align="right">';

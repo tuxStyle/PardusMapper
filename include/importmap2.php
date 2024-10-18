@@ -364,7 +364,8 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
             debug($id . ' Not Static NPC');
             if (is_null($r->npc)) {
                 debug($id . ' No NPC Data in DB');
-                if (is_null($r->fg) || $temp[2]) { //Add check that we say the FG is not a building but the DB might have something?
+                $nid = isset($temp[2]) ? (int)$temp[2] : null;
+                if (is_null($r->fg) || $nid) { //Add check that we say the FG is not a building but the DB might have something?
                     //if (is_null($r->fg)||$r_fg == 0) { //Added check that we say the FG is not a building but the DB might have something
                     debug($id . ' setting $npc = ' . $temp[$r_npc] . ' and then' . ' Adding New NPC');
                     $npc = $temp[$r_npc];
@@ -398,7 +399,6 @@ for ($i = 1; $i < sizeof($maparray); $i++) { //Not the tiles the ship is on idea
                             }
                         }
                     }
-                    $nid = isset($temp[2]) ? (int)$temp[2] : null;
                     debug('Adding NPC with nid' . ($uni . $temp[$r_npc] . $id . $nid));
                     DB::npc_add(universe: $uni, image: $temp[$r_npc], id: $id, sector: null, x: $x, y: $y, nid: $nid); // Adding nid
                     ++$sqlcount; // Counting SQL iterations per connection
